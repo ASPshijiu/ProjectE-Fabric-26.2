@@ -52,7 +52,7 @@ class EmcGraphMapperTest {
     }
 
     @Test
-    void supportsReturnedIngredientsAndZeroDependencies() {
+    void supportsReturnedIngredientsAndIgnoresZeroAmounts() {
         collector.setValueBefore("container", EmcValue.of(5));
         collector.setValueBefore("content", EmcValue.of(10));
         collector.addConversion(1, "filled", Map.of("container", 1, "content", 1));
@@ -60,7 +60,28 @@ class EmcGraphMapperTest {
         collector.addConversion(1, "dependent", Map.of("content", 1, "missing", 0));
         Map<String, EmcValue> values = generator.generate();
         assertEquals(EmcValue.of(15), values.get("filled"));
-        assertFalse(values.containsKey("dependent"));
+        assertEquals(EmcValue.of(10), values.get("dependent"));
+    }
+
+    @Test
+    void treatsFreeInputsAsZeroCostWithoutPublishingThem() {
+        collector.setValueBefore("a", EmcValue.of(2));
+        collector.setFree("catalyst");
+        collector.addConversion(1, "out", Map.of("a", 1, "catalyst", 1));
+        Map<String, EmcValue> values = generator.generate();
+        assertEquals(EmcValue.of(2), values.get("out"));
+        assertFalse(values.containsKey("catalyst"));
+    }
+
+    @Test
+    void fixedConversionCannotBeUndercutByRegularRecipes() {
+        collector.setValueBefore("a", EmcValue.of(1));
+        collector.setValueFromConversion(1, "b", Map.of("a", 3));
+        collector.addConversion(1, "b", Map.of("a", 1));
+        collector.addConversion(1, "c", Map.of("b", 2));
+        Map<String, EmcValue> values = generator.generate();
+        assertEquals(EmcValue.of(3), values.get("b"));
+        assertEquals(EmcValue.of(6), values.get("c"));
     }
 
     @Test

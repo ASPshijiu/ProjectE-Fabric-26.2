@@ -4,6 +4,7 @@ import net.minecraft.resources.Identifier;
 
 public final class ProjectEAPI {
     public static final String MOD_ID = "projecte";
+    public static final long FREE_ARITHMETIC_VALUE = -1;
 
     private ProjectEAPI() {
     }
