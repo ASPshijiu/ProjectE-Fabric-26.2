@@ -73,10 +73,28 @@ class EmcReloadListenerTest {
         assertEquals(EmcValue.of(9), service.current().valueFor(keep).orElseThrow());
     }
 
+    @Test
+    void reloadCallbackFiresOnlyOnSuccess() throws Exception {
+        writeEmcResource("projecte", "values", "{\"fake|projecte:gem|\":{\"value\":3}}");
+        EmcMappingService<NormalizedStackKey> service = new EmcMappingService<>();
+        java.util.List<EmcMappingSnapshot<NormalizedStackKey>> fired = new java.util.ArrayList<>();
+        EmcReloadListener listener = new EmcReloadListener(
+              service, new EmcReloadProcessor(), List.of(), List.of(fired::add));
+
+        PreparedReload.run(listener, resourceManager());
+        assertEquals(1, fired.size());
+        assertEquals(service.current(), fired.get(0));
+
+        // A failing reload must not fire the callback.
+        writeEmcResource("projecte", "values", "{\"fake|projecte:bad|\":{\"value\":-1}}");
+        PreparedReload.run(listener, resourceManager());
+        assertEquals(1, fired.size(), "callback must not fire on failed reload");
+    }
+
     private EmcReloadListener newListener(
           EmcMappingService<NormalizedStackKey> service, List<RecipeConversionSource> sources
     ) {
-        return new EmcReloadListener(service, new EmcReloadProcessor(), sources);
+        return new EmcReloadListener(service, new EmcReloadProcessor(), sources, List.of());
     }
 
     private ResourceManager resourceManager() {

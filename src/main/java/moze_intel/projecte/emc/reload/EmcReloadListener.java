@@ -42,19 +42,35 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
     private final EmcMappingService<NormalizedStackKey> service;
     private final EmcReloadProcessor processor;
     private final List<RecipeConversionSource> recipeSources;
+    private final List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> reloadCallbacks;
 
     public EmcReloadListener(Collection<? extends RecipeConversionSource> recipeSources) {
-        this(ProjectEEmc.service(), new EmcReloadProcessor(), List.copyOf(recipeSources));
+        this(ProjectEEmc.service(), new EmcReloadProcessor(), List.copyOf(recipeSources), List.of());
     }
 
     EmcReloadListener(
           EmcMappingService<NormalizedStackKey> service,
           EmcReloadProcessor processor,
-          List<RecipeConversionSource> recipeSources
+          List<RecipeConversionSource> recipeSources,
+          List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> reloadCallbacks
     ) {
         this.service = service;
         this.processor = processor;
         this.recipeSources = List.copyOf(recipeSources);
+        this.reloadCallbacks = List.copyOf(reloadCallbacks);
+    }
+
+    /**
+     * @return a copy of this listener that fires the given callback after each successful reload,
+     *     so gameplay systems (e.g. the player sync handler) can rebroadcast the new shared mapping.
+     */
+    public EmcReloadListener withReloadCallback(
+          java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>> callback
+    ) {
+        java.util.List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> next =
+              new java.util.ArrayList<>(reloadCallbacks);
+        next.add(callback);
+        return new EmcReloadListener(service, processor, recipeSources, List.copyOf(next));
     }
 
     /**
@@ -103,6 +119,9 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         EmcMappingSnapshot<NormalizedStackKey> snapshot = result.snapshot();
         ProjectE.LOGGER.info("EMC reload published snapshot version {} with {} values",
               snapshot.version(), snapshot.values().size());
+        for (java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>> callback : reloadCallbacks) {
+            callback.accept(snapshot);
+        }
     }
 
     private Map<Identifier, String> readExplicitResources(ResourceManager manager) {
