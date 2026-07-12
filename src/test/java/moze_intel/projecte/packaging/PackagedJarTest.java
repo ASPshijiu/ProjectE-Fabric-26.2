@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Path;
 import java.util.zip.ZipFile;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+
+@EnabledIfSystemProperty(named = "projecte.runtimeJar", matches = ".+")
 class PackagedJarTest {
     @Test
     void runtimeJarContainsRequiredFilesAndNoPortingTools() throws Exception {
