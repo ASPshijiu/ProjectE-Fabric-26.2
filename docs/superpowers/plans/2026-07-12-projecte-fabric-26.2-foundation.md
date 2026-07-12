@@ -50,6 +50,8 @@ The foundation phase creates this structure:
 ### Task 1: Bootstrap the Fabric 26.2 Repository
 
 **Files:**
+- Create: ProjectE-Fabric-26.2/.gitattributes
+- Create: ProjectE-Fabric-26.2/.gitattributes
 - Create: ProjectE-Fabric-26.2/.gitignore
 - Create: ProjectE-Fabric-26.2/settings.gradle
 - Create: ProjectE-Fabric-26.2/gradle.properties
@@ -122,6 +124,15 @@ junit_platform_version=1.11.4
 mod_version=0.1.0-alpha.1
 maven_group=moze_intel.projecte
 archives_base_name=projecte-fabric
+~~~
+
+Create .gitattributes:
+
+~~~gitattributes
+* text=auto
+/gradlew text eol=lf
+*.bat text eol=crlf
+/docs/porting/baseline/*.json text eol=lf
 ~~~
 
 Create .gitignore:
