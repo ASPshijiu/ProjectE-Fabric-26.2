@@ -101,16 +101,24 @@ public final class PlayerDataCodecs {
           (learned, full) -> PlayerKnowledge.of(learned, full));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PlayerInputLocks> INPUT_LOCKS_STREAM_CODEC = StreamCodec.composite(
-          NormalizedStackKeyCodec.STREAM_CODEC.apply(ByteBufCodecs.collection(java.util.ArrayList::new, PlayerInputLocks.LOCK_SLOTS)),
+          // Encode each slot as its canonical key string, using the empty-string sentinel for empty
+          // slots (a value ByteBufCodecs cannot carry as null).
+          ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.collection(java.util.ArrayList::new, PlayerInputLocks.LOCK_SLOTS)),
           locks -> {
-              List<NormalizedStackKey> slots = new java.util.ArrayList<>(PlayerInputLocks.LOCK_SLOTS);
-              NormalizedStackKey[] raw = locks.toArray();
-              for (int slot = 0; slot < PlayerInputLocks.LOCK_SLOTS; slot++) {
-                  slots.add(raw[slot]);
+              List<String> encoded = new java.util.ArrayList<>(PlayerInputLocks.LOCK_SLOTS);
+              for (NormalizedStackKey key : locks.toArray()) {
+                  encoded.add(key == null ? "" : key.canonicalString());
               }
-              return slots;
+              return encoded;
           },
-          slots -> PlayerInputLocks.of(slots.toArray(new NormalizedStackKey[0])));
+          encoded -> {
+              NormalizedStackKey[] slots = new NormalizedStackKey[PlayerInputLocks.LOCK_SLOTS];
+              for (int slot = 0; slot < PlayerInputLocks.LOCK_SLOTS && slot < encoded.size(); slot++) {
+                  String entry = encoded.get(slot);
+                  slots[slot] = entry.isEmpty() ? null : NormalizedStackKeyCodec.fromCanonical(entry);
+              }
+              return PlayerInputLocks.of(slots);
+          });
 
     public static final StreamCodec<RegistryFriendlyByteBuf, EmcValue> EMC_STREAM_CODEC =
           ByteBufCodecs.VAR_LONG.<EmcValue>map(EmcValue::of, EmcValue::longValue).cast();
