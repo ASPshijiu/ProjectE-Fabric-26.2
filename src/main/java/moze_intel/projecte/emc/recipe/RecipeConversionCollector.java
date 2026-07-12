@@ -51,4 +51,41 @@ public final class RecipeConversionCollector {
         }
         return List.copyOf(new ArrayList<>(unique));
     }
+    public List<RecipeConversion> collectWithRemainders(
+          Identifier recipeId,
+          int outputCount,
+          NormalizedStackKey output,
+          List<? extends List<NormalizedStackKey>> ingredientChoices,
+          Map<NormalizedStackKey, NormalizedStackKey> remainders,
+          int maximumCombinations
+    ) {
+        Objects.requireNonNull(recipeId, "recipeId");
+        if (outputCount <= 0) {
+            throw new IllegalArgumentException("outputCount must be positive");
+        }
+        Objects.requireNonNull(output, "output");
+        Objects.requireNonNull(ingredientChoices, "ingredientChoices");
+        Objects.requireNonNull(remainders, "remainders");
+
+        List<List<NormalizedStackKey>> expanded = expander.expand(
+              ingredientChoices,
+              maximumCombinations,
+              recipeId.toString()
+        );
+        Set<RecipeConversion> unique = new LinkedHashSet<>();
+        for (List<NormalizedStackKey> selection : expanded) {
+            TreeMap<NormalizedStackKey, Integer> amounts = new TreeMap<>();
+            for (NormalizedStackKey selected : selection) {
+                amounts.merge(selected, 1, Math::addExact);
+                NormalizedStackKey remainder = remainders.get(selected);
+                if (remainder != null) {
+                    amounts.merge(remainder, -1, Math::addExact);
+                }
+            }
+            amounts.entrySet().removeIf(entry -> entry.getValue() == 0);
+            unique.add(new RecipeConversion(recipeId, outputCount, output, amounts));
+        }
+        return List.copyOf(new ArrayList<>(unique));
+    }
+
 }

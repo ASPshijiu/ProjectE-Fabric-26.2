@@ -15,6 +15,8 @@ class RecipeConversionCollectorTest {
     private static final FakeStackKey C = key("c");
     private static final FakeStackKey BUCKET = key("bucket");
     private static final FakeStackKey OUTPUT = key("output");
+    private static final FakeStackKey MILK_BUCKET = key("milk_bucket");
+    private static final FakeStackKey DUST = key("dust");
     private final RecipeConversionCollector collector = new RecipeConversionCollector();
 
     @Test
@@ -45,6 +47,22 @@ class RecipeConversionCollectorTest {
         assertEquals(List.of(
               Map.of(A, 1, C, 1),
               Map.of(B, 1, C, 1)
+        ), conversions.stream().map(RecipeConversion::ingredients).toList());
+    }
+
+    @Test
+    void appliesRemaindersOnlyForSelectedAlternatives() {
+        List<RecipeConversion> conversions = collector.collectWithRemainders(
+              id("remainders"),
+              1,
+              OUTPUT,
+              List.of(List.of(MILK_BUCKET, DUST)),
+              Map.of(MILK_BUCKET, BUCKET),
+              16
+        );
+        assertEquals(List.of(
+              Map.of(DUST, 1),
+              Map.of(MILK_BUCKET, 1, BUCKET, -1)
         ), conversions.stream().map(RecipeConversion::ingredients).toList());
     }
 
