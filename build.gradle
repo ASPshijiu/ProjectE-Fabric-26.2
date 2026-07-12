@@ -66,3 +66,16 @@ java {
 jar {
     from('LICENSE') { rename { "${it}_${base.archivesName.get()}" } }
 }
+
+tasks.register('exportProjectEBaseline', JavaExec) {
+    dependsOn portingClasses
+    classpath = sourceSets.porting.runtimeClasspath
+    mainClass = 'moze_intel.projecte.porting.BaselineExporter'
+    doFirst {
+        setArgs([
+            providers.gradleProperty('projecte_upstream').get(),
+            layout.projectDirectory.file('docs/porting/baseline/projecte-1.21.1.json').asFile.absolutePath,
+            providers.gradleProperty('projecte_upstream_commit').get()
+        ])
+    }
+}
