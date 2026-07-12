@@ -4,7 +4,7 @@ Baseline: ProjectE 1.21.1 commit 15d4ce65bd06eb4222709b984255fbf5080e78bc
 
 | Category | Upstream evidence | Fabric implementation | Status | Verification | Difference |
 | --- | --- | --- | --- | --- | --- |
-| Build and metadata | fabric.mod.json, Gradle build | Foundation tasks 1-2 | Verified | gradlew build; PackagedJarTest pending | None |
+| Build and metadata | fabric.mod.json, Gradle build | Foundation tasks 1-2 | Verified | gradlew build; PackagedJarTest | None |
 | EMC numeric bounds | ProjectE long EMC semantics | EmcValue | Verified | EmcValueTest | Checked overflow is stricter |
 | Registration IDs | PEItems, PEBlocks, registries | Not started | Not started | Frozen baseline | None recorded |
 | EMC mapping | emc package and data files | Not started | Not started | EMC core plan | None recorded |
