@@ -4,7 +4,9 @@ import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 
 /**
@@ -32,8 +34,17 @@ public final class ModItems {
     public static void init() {
         if (PHILOSOPHERS_STONE == null) {
             PHILOSOPHERS_STONE = register(PHILOSOPHERS_STONE_ID,
-                  new PhilosophersStoneItem(new Item.Properties().stacksTo(1)));
+                  new PhilosophersStoneItem(properties(PHILOSOPHERS_STONE_ID).stacksTo(1)));
         }
+    }
+
+    /**
+     * Creates item properties with the id pre-set, as required by Minecraft 26.2 (an item's
+     * description id is derived from its id during construction).
+     */
+    private static Item.Properties properties(Identifier id) {
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, id);
+        return new Item.Properties().setId(key);
     }
 
     private static Item register(Identifier id, Item item) {
