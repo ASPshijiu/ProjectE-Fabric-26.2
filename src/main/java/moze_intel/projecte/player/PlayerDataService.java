@@ -86,6 +86,13 @@ public final class PlayerDataService {
         access.modify(PlayerAttachmentKeys.KNOWLEDGE, PlayerKnowledge.class, current -> current.withFullKnowledge(full));
     }
 
+    /**
+     * Clears all learned items and the full-knowledge flag, returning the player to a fresh state.
+     */
+    public void clearKnowledge() {
+        access.modify(PlayerAttachmentKeys.KNOWLEDGE, PlayerKnowledge.class, current -> PlayerKnowledge.empty());
+    }
+
     public PlayerInputLocks inputLocks() {
         return access.get(PlayerAttachmentKeys.INPUT_LOCKS, PlayerInputLocks.class);
     }

@@ -1,6 +1,7 @@
 package moze_intel.projecte;
 
 import moze_intel.projecte.api.ProjectEAPI;
+import moze_intel.projecte.command.ProjectECommands;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.reload.EmcReloadListener;
 import moze_intel.projecte.player.PlayerAttachments;
@@ -8,6 +9,7 @@ import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import moze_intel.projecte.player.PlayerSyncHandlers;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,9 @@ public final class ProjectE implements ModInitializer {
         EmcReloadListener reloadListener = new EmcReloadListener(java.util.List.of())
               .withReloadCallback((java.util.function.Consumer<moze_intel.projecte.emc.EmcMappingSnapshot<NormalizedStackKey>>) syncHandlers::onEmcReloaded);
         reloadListener.register();
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, context, environment) ->
+              ProjectECommands.register(dispatcher, context));
 
         LOGGER.info("Initializing ProjectE for Fabric 26.2");
     }
