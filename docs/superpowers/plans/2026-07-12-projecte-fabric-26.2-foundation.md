@@ -118,6 +118,7 @@ loader_version=0.19.3
 loom_version=1.17-SNAPSHOT
 fabric_api_version=0.154.2+26.2
 junit_version=5.11.4
+junit_platform_version=1.11.4
 mod_version=0.1.0-alpha.1
 maven_group=moze_intel.projecte
 archives_base_name=projecte-fabric
@@ -182,6 +183,7 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
 
 processResources {
