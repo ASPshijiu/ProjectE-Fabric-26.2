@@ -79,3 +79,33 @@ tasks.register('exportProjectEBaseline', JavaExec) {
         ])
     }
 }
+
+def verificationBaseline = layout.buildDirectory.file('porting/projecte-1.21.1.json')
+
+tasks.register('generateVerificationBaseline', JavaExec) {
+    dependsOn portingClasses
+    classpath = sourceSets.porting.runtimeClasspath
+    mainClass = 'moze_intel.projecte.porting.BaselineExporter'
+    outputs.file verificationBaseline
+    doFirst {
+        setArgs([
+            providers.gradleProperty('projecte_upstream').get(),
+            verificationBaseline.get().asFile.absolutePath,
+            providers.gradleProperty('projecte_upstream_commit').get()
+        ])
+    }
+}
+
+tasks.register('verifyBaseline') {
+    dependsOn generateVerificationBaseline
+    inputs.file layout.projectDirectory.file('docs/porting/baseline/projecte-1.21.1.json')
+    inputs.file verificationBaseline
+    doLast {
+        def expected = layout.projectDirectory.file('docs/porting/baseline/projecte-1.21.1.json').asFile.toPath()
+        def actual = verificationBaseline.get().asFile.toPath()
+        long mismatch = java.nio.file.Files.mismatch(expected, actual)
+        if (mismatch != -1) {
+            throw new GradleException("ProjectE baseline differs at byte ${mismatch}: expected ${expected}, actual ${actual}")
+        }
+    }
+}

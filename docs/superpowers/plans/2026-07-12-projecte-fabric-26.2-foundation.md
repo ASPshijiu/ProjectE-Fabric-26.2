@@ -729,7 +729,7 @@ git commit -m "build: add deterministic ProjectE baseline exporter"
 Run from the target repository:
 
 ~~~powershell
-./gradlew.bat exportProjectEBaseline -Pprojecte_upstream=../.upstream/projecte -Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc
+./gradlew.bat exportProjectEBaseline "-Pprojecte_upstream=../.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
 ~~~
 
 Expected: docs/porting/baseline/projecte-1.21.1.json is created and includes the frozen commit.
@@ -834,7 +834,7 @@ Run:
 
 ~~~powershell
 ./gradlew.bat test --tests moze_intel.projecte.porting.FrozenBaselineTest
-./gradlew.bat verifyBaseline -Pprojecte_upstream=../.upstream/projecte -Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc
+./gradlew.bat verifyBaseline "-Pprojecte_upstream=../.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
 ~~~
 
 Expected: PASS and no change to the committed baseline.
@@ -952,10 +952,10 @@ jobs:
           path: .upstream/projecte
       - name: Build and test on Windows
         if: runner.os == 'Windows'
-        run: .\gradlew.bat build packageAudit verifyBaseline -Pprojecte_upstream=.upstream/projecte -Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc
+        run: .\gradlew.bat build packageAudit verifyBaseline "-Pprojecte_upstream=.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
       - name: Build and test on Linux
         if: runner.os == 'Linux'
-        run: ./gradlew build packageAudit verifyBaseline -Pprojecte_upstream=.upstream/projecte -Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc
+        run: ./gradlew build packageAudit verifyBaseline "-Pprojecte_upstream=.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
       - name: Upload remapped jar
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
@@ -969,7 +969,7 @@ jobs:
 Run:
 
 ~~~powershell
-./gradlew.bat clean build packageAudit verifyBaseline -Pprojecte_upstream=../.upstream/projecte -Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc
+./gradlew.bat clean build packageAudit verifyBaseline "-Pprojecte_upstream=../.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
 ~~~
 
 Expected: BUILD SUCCESSFUL with unit tests, jar audit and baseline verification passing.
@@ -999,7 +999,7 @@ git commit -m "ci: verify Fabric build and parity baseline"
 Run:
 
 ~~~powershell
-./gradlew.bat clean build packageAudit verifyBaseline -Pprojecte_upstream=../.upstream/projecte -Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc
+./gradlew.bat clean build packageAudit verifyBaseline "-Pprojecte_upstream=../.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
 git status --short
 git log --oneline --decorate -8
 ~~~
