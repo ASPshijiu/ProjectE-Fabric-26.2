@@ -109,3 +109,16 @@ tasks.register('verifyBaseline') {
         }
     }
 }
+
+def runtimeJarTask = tasks.named('jar')
+
+tasks.register('packageAudit', Test) {
+    dependsOn runtimeJarTask
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    filter { includeTestsMatching 'moze_intel.projecte.packaging.PackagedJarTest' }
+    doFirst {
+        systemProperty 'projecte.runtimeJar', runtimeJarTask.get().archiveFile.get().asFile.absolutePath
+    }
+}

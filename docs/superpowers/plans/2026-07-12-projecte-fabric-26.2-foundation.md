@@ -888,13 +888,17 @@ class PackagedJarTest {
 - [ ] **Step 2: Add the packageAudit task**
 
 ~~~groovy
+def runtimeJarTask = tasks.named('jar')
+
 tasks.register('packageAudit', Test) {
-    dependsOn remapJar
+    dependsOn runtimeJarTask
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform()
-    systemProperty 'projecte.runtimeJar', remapJar.archiveFile.get().asFile.absolutePath
     filter { includeTestsMatching 'moze_intel.projecte.packaging.PackagedJarTest' }
+    doFirst {
+        systemProperty 'projecte.runtimeJar', runtimeJarTask.get().archiveFile.get().asFile.absolutePath
+    }
 }
 ~~~
 
@@ -920,7 +924,7 @@ git commit -m "test: audit packaged ProjectE runtime jar"
 
 **Interfaces:**
 - Consumes: build, test, packageAudit and verifyBaseline Gradle tasks.
-- Produces: reproducible Windows and Linux validation plus uploaded remapped jar.
+- Produces: reproducible Windows and Linux validation plus uploaded runtime jar.
 
 - [ ] **Step 1: Add the workflow**
 
@@ -956,7 +960,7 @@ jobs:
       - name: Build and test on Linux
         if: runner.os == 'Linux'
         run: ./gradlew build packageAudit verifyBaseline "-Pprojecte_upstream=.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
-      - name: Upload remapped jar
+      - name: Upload runtime jar
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
