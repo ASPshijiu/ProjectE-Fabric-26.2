@@ -1,6 +1,7 @@
 package moze_intel.projecte;
 
 import moze_intel.projecte.api.ProjectEAPI;
+import moze_intel.projecte.content.ModItems;
 import moze_intel.projecte.command.ProjectECommands;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.reload.EmcReloadListener;
@@ -22,6 +23,8 @@ public final class ProjectE implements ModInitializer {
     public void onInitialize() {
         // Register the per-player Fabric data attachments (knowledge, emc, input locks, gem armor).
         PlayerAttachments.init();
+        // Register ProjectE items (Philosopher's Stone, ...).
+        ModItems.init();
 
         // Server-authoritative sync handler: initializes attachments on join and rebroadcasts the
         // shared EMC mapping to every online player after a successful data reload. The actual S2C
