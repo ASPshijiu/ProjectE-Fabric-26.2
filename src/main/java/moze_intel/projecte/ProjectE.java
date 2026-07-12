@@ -8,6 +8,7 @@ import moze_intel.projecte.player.PlayerAttachments;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import moze_intel.projecte.player.PlayerSyncHandlers;
+import moze_intel.projecte.transmutation.world.WorldTransmutationReloadListener;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -42,6 +43,9 @@ public final class ProjectE implements ModInitializer {
         EmcReloadListener reloadListener = new EmcReloadListener(java.util.List.of())
               .withReloadCallback((java.util.function.Consumer<moze_intel.projecte.emc.EmcMappingSnapshot<NormalizedStackKey>>) syncHandlers::onEmcReloaded);
         reloadListener.register();
+
+        // World transmutations (Philosopher's-Stone block conversions) load as server data.
+        new WorldTransmutationReloadListener().register();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, context, environment) ->
               ProjectECommands.register(dispatcher, context));
