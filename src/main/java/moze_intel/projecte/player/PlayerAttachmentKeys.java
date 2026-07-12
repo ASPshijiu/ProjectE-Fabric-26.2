@@ -25,7 +25,13 @@ public final class PlayerAttachmentKeys {
         return new PlayerAttachmentAccess() {
             @Override
             public <A> A modify(Object key, Class<A> type, java.util.function.UnaryOperator<A> modifier) {
-                return target.modifyAttached(resolve(key), modifier);
+                AttachmentType<A> resolved = resolve(key);
+                // Read through getAttachedOrCreate so a missing attachment is initialized before the
+                // modifier runs; modifyAttached alone may return null on first access.
+                A current = target.getAttachedOrCreate(resolved);
+                A next = modifier.apply(current);
+                target.setAttached(resolved, next);
+                return current;
             }
 
             @SuppressWarnings("unchecked")
