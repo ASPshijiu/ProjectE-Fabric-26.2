@@ -29,10 +29,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Item.class)
 public abstract class ItemMixin {
 
+    private static volatile boolean logged = false;
+
     @Inject(method = "appendHoverText", at = @At("RETURN"))
     private void projecte$appendEmcTooltip(ItemStack stack, Item.TooltipContext context,
           TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag,
           CallbackInfo ci) {
+        if (!logged) {
+            logged = true;
+            org.slf4j.LoggerFactory.getLogger("projecte/client")
+                  .info("ItemMixin.appendHoverText injection fired (tooltip mixin is active)");
+        }
         if (stack.isEmpty()) return;
         EmcMappingSnapshot<NormalizedStackKey> snapshot = ProjectEEmc.service().current();
         if (snapshot.values().isEmpty()) return;
