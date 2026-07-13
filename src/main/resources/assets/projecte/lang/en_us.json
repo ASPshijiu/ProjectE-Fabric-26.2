@@ -81,6 +81,8 @@
   "item.projecte.divining_rod_1": "Divining Rod (Low)",
   "item.projecte.divining_rod_2": "Divining Rod (Medium)",
   "item.projecte.divining_rod_3": "Divining Rod (High)",
+  "item.projecte.divining_rod.found": "Found %s ores nearby",
+  "item.projecte.divining_rod.none": "No ores found nearby",
   "item.projecte.destruction_catalyst": "Catalyst of Destruction",
   "item.projecte.hyperkinetic_lens": "Hyperkinetic Lens",
   "item.projecte.catalytic_lens": "Catalytic Lens",

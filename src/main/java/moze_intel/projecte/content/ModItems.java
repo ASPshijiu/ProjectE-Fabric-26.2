@@ -9,6 +9,7 @@ import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.content.items.TomeOfKnowledgeItem;
 import moze_intel.projecte.content.items.TransmutationTabletItem;
 import moze_intel.projecte.content.items.DarkMatterHammerItem;
+import moze_intel.projecte.content.items.DiviningRodItem;
 import moze_intel.projecte.content.items.RedMatterHammerItem;
 import moze_intel.projecte.content.items.RedMatterKatarItem;
 import moze_intel.projecte.content.items.RedMatterMorningStarItem;
@@ -294,9 +295,12 @@ public final class ModItems {
               new LifeStoneItem(properties(ProjectEAPI.id("life_stone")).fireResistant().stacksTo(1)));
 
         // ── Divining Rods ──
-        LOW_DIVINING_ROD = register(ProjectEAPI.id("divining_rod_1"), properties(ProjectEAPI.id("divining_rod_1")).stacksTo(1));
-        MEDIUM_DIVINING_ROD = register(ProjectEAPI.id("divining_rod_2"), properties(ProjectEAPI.id("divining_rod_2")).stacksTo(1));
-        HIGH_DIVINING_ROD = register(ProjectEAPI.id("divining_rod_3"), properties(ProjectEAPI.id("divining_rod_3")).stacksTo(1));
+        LOW_DIVINING_ROD = register(ProjectEAPI.id("divining_rod_1"),
+              new DiviningRodItem(properties(ProjectEAPI.id("divining_rod_1")).stacksTo(1), 3, 1));
+        MEDIUM_DIVINING_ROD = register(ProjectEAPI.id("divining_rod_2"),
+              new DiviningRodItem(properties(ProjectEAPI.id("divining_rod_2")).stacksTo(1), 5, 3));
+        HIGH_DIVINING_ROD = register(ProjectEAPI.id("divining_rod_3"),
+              new DiviningRodItem(properties(ProjectEAPI.id("divining_rod_3")).stacksTo(1), 7, 5));
 
         // ── Catalysts & Lenses ──
         DESTRUCTION_CATALYST = register(ProjectEAPI.id("destruction_catalyst"),
