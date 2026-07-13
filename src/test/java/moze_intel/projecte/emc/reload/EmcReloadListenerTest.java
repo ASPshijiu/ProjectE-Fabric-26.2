@@ -79,7 +79,7 @@ class EmcReloadListenerTest {
         EmcMappingService<NormalizedStackKey> service = new EmcMappingService<>();
         java.util.List<EmcMappingSnapshot<NormalizedStackKey>> fired = new java.util.ArrayList<>();
         EmcReloadListener listener = new EmcReloadListener(
-              service, new EmcReloadProcessor(), List.of(), List.of(fired::add));
+              service, new EmcReloadProcessor(), List.of(), () -> List.of(), List.of(fired::add));
 
         PreparedReload.run(listener, resourceManager());
         assertEquals(1, fired.size());
@@ -94,7 +94,7 @@ class EmcReloadListenerTest {
     private EmcReloadListener newListener(
           EmcMappingService<NormalizedStackKey> service, List<RecipeConversionSource> sources
     ) {
-        return new EmcReloadListener(service, new EmcReloadProcessor(), sources, List.of());
+        return new EmcReloadListener(service, new EmcReloadProcessor(), sources, () -> List.of(), List.of());
     }
 
     private ResourceManager resourceManager() {

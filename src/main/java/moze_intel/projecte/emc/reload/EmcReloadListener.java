@@ -39,25 +39,49 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
      */
     public static final String EXPLICIT_FOLDER = "emc";
 
+    /**
+     * Folder under {@code data/<namespace>/} that holds ProjectE custom-conversion files
+     * ({@code values.before/after} explicit values plus {@code values.conversion} and
+     * {@code groups.<name>.conversions} recipe conversions).
+     */
+    public static final String CUSTOM_CONVERSIONS_FOLDER = "pe_custom_conversions";
+
     private final EmcMappingService<NormalizedStackKey> service;
     private final EmcReloadProcessor processor;
     private final List<RecipeConversionSource> recipeSources;
+    private final java.util.function.Supplier<List<RecipeConversionSource>> serverRecipeSources;
     private final List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> reloadCallbacks;
 
     public EmcReloadListener(Collection<? extends RecipeConversionSource> recipeSources) {
-        this(ProjectEEmc.service(), new EmcReloadProcessor(), List.copyOf(recipeSources), List.of());
+        this(ProjectEEmc.service(), new EmcReloadProcessor(),
+              List.copyOf(recipeSources), () -> List.of(), List.of());
     }
 
     EmcReloadListener(
           EmcMappingService<NormalizedStackKey> service,
           EmcReloadProcessor processor,
           List<RecipeConversionSource> recipeSources,
+          java.util.function.Supplier<List<RecipeConversionSource>> serverRecipeSources,
           List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> reloadCallbacks
     ) {
         this.service = service;
         this.processor = processor;
         this.recipeSources = List.copyOf(recipeSources);
+        this.serverRecipeSources = serverRecipeSources;
         this.reloadCallbacks = List.copyOf(reloadCallbacks);
+    }
+
+    /**
+     * @return a copy of this listener that resolves the server-bound recipe sources (e.g. the
+     *     vanilla {@link VanillaRecipeConversionSource} that needs the live {@code RecipeManager})
+     *     from the given supplier on every reload. The static {@code recipeSources} are always
+     *     applied; the supplier's sources are added when it returns a non-empty list.
+     */
+    public EmcReloadListener withServerRecipeSources(
+          java.util.function.Supplier<List<RecipeConversionSource>> serverRecipeSources
+    ) {
+        return new EmcReloadListener(service, processor, recipeSources,
+              java.util.Objects.requireNonNull(serverRecipeSources), reloadCallbacks);
     }
 
     /**
@@ -70,7 +94,7 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         java.util.List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> next =
               new java.util.ArrayList<>(reloadCallbacks);
         next.add(callback);
-        return new EmcReloadListener(service, processor, recipeSources, List.copyOf(next));
+        return new EmcReloadListener(service, processor, recipeSources, serverRecipeSources, List.copyOf(next));
     }
 
     /**
@@ -90,9 +114,10 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
     @Override
     protected PreparedEmc prepare(PreparableReloadListener.SharedState state) {
         ResourceManager manager = state.resourceManager();
-        Map<Identifier, String> explicit = readExplicitResources(manager);
+        Map<Identifier, String> explicit = readExplicitResources(manager, EXPLICIT_FOLDER);
+        Map<Identifier, String> custom = readExplicitResources(manager, CUSTOM_CONVERSIONS_FOLDER);
         List<RecipeConversion> conversions = collectConversions(registriesOrEmpty(state));
-        return new PreparedEmc(explicit, conversions);
+        return new PreparedEmc(explicit, custom, conversions);
     }
 
     /**
@@ -100,16 +125,27 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
      * recipe source needs one (for example in unit tests that only exercise explicit values).
      */
     private HolderLookup.Provider registriesOrEmpty(PreparableReloadListener.SharedState state) {
-        if (recipeSources.isEmpty()) {
+        boolean needsRegistries = !recipeSources.isEmpty() || !resolveServerRecipeSources().isEmpty();
+        if (!needsRegistries) {
             return HolderLookup.Provider.create(java.util.stream.Stream.empty());
         }
         return state.get(ResourceLoader.REGISTRY_LOOKUP_KEY);
     }
 
+    private List<RecipeConversionSource> resolveServerRecipeSources() {
+        try {
+            List<RecipeConversionSource> resolved = serverRecipeSources.get();
+            return resolved == null ? List.of() : List.copyOf(resolved);
+        } catch (Exception ignored) {
+            // The server may not be available (e.g. unit tests); treat as no server sources.
+            return List.of();
+        }
+    }
+
     @Override
     protected void apply(PreparedEmc prepared, PreparableReloadListener.SharedState state) {
         EmcMappingService.RebuildResult<NormalizedStackKey> result = service.rebuild(
-              () -> processor.rebuild(prepared.explicitResources(), prepared.recipeConversions())
+              () -> processor.rebuild(prepared.explicitResources(), prepared.customConversionResources(), prepared.recipeConversions())
         );
         if (!result.success()) {
             ProjectE.LOGGER.warn("EMC reload failed; preserving snapshot version {}",
@@ -124,9 +160,9 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         }
     }
 
-    private Map<Identifier, String> readExplicitResources(ResourceManager manager) {
+    private Map<Identifier, String> readExplicitResources(ResourceManager manager, String folder) {
         Map<Identifier, Resource> found = manager.listResources(
-              EXPLICIT_FOLDER, EmcReloadListener::isEmcResource);
+              folder, EmcReloadListener::isEmcResource);
         TreeMap<Identifier, String> explicit = new TreeMap<>(
               (left, right) -> left.toString().compareTo(right.toString()));
         for (Map.Entry<Identifier, Resource> entry : found.entrySet()) {
@@ -149,16 +185,29 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         for (RecipeConversionSource source : recipeSources) {
             all.addAll(source.conversions());
         }
+        for (RecipeConversionSource source : resolveServerRecipeSources()) {
+            try {
+                all.addAll(source.conversions());
+            } catch (Exception ignored) {
+                // A failing recipe source must not break the EMC reload; omit its conversions.
+            }
+        }
         return List.copyOf(all);
     }
 
     /**
-     * Parsed reload payload: explicit EMC resources keyed by their identifier and the gathered
-     * recipe conversions. Both are immutable; the apply stage only consumes them.
+     * Parsed reload payload: explicit EMC resources keyed by their identifier, the custom-conversion
+     * resources, and the gathered recipe conversions. All are immutable; the apply stage only
+     * consumes them.
      */
-    record PreparedEmc(Map<Identifier, String> explicitResources, List<RecipeConversion> recipeConversions) {
+    record PreparedEmc(
+          Map<Identifier, String> explicitResources,
+          Map<Identifier, String> customConversionResources,
+          List<RecipeConversion> recipeConversions
+    ) {
         PreparedEmc {
             explicitResources = Map.copyOf(explicitResources);
+            customConversionResources = Map.copyOf(customConversionResources);
             recipeConversions = List.copyOf(recipeConversions);
         }
     }
