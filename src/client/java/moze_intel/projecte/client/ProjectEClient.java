@@ -1,6 +1,7 @@
 package moze_intel.projecte.client;
 
 import moze_intel.projecte.api.ProjectEAPI;
+import moze_intel.projecte.client.screen.AlchemicalBagScreen;
 import moze_intel.projecte.client.screen.TransmutationTableScreen;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.items.IItemCharge;
@@ -35,6 +36,7 @@ public final class ProjectEClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         MenuScreens.register(ModMenuTypes.TRANSMUTATION_TABLE, TransmutationTableScreen::new);
+        MenuScreens.register(ModMenuTypes.ALCHEMICAL_BAG, AlchemicalBagScreen::new);
         EmcTooltipHandler.register();
 
         // Receive the authoritative EMC mapping from the server and publish it into the client's
