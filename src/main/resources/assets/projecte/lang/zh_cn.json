@@ -288,5 +288,37 @@
     "pedestal.projecte.zero.2": "并冻结周围的一切",
     "pedestal.projecte.zero.3": "每%s激活一次",
 
-    "jei.projecte.world_transmute": "世界转化"
+    "jei.projecte.world_transmute": "世界转化",
+
+    "item.projecte.void_ring": "虚空指环",
+    "item.projecte.gem_helmet": "宝石头盔",
+    "item.projecte.gem_chestplate": "宝石胸甲",
+    "item.projecte.gem_leggings": "宝石护腿",
+    "item.projecte.gem_boots": "宝石靴子",
+    "item.projecte.klein_star.emc": "EMC：%s / %s",
+    "item.projecte.divining_rod.found": "在附近发现 %s 个矿石",
+    "item.projecte.divining_rod.none": "附近未发现矿石",
+    "item.projecte.active_on": "已激活",
+    "item.projecte.active_off": "未激活",
+    "item.projecte.emc_value": "EMC：%s",
+
+    "container.projecte.transmutation_table": "转化桌",
+    "container.projecte.transmutation_tablet": "便携式转化桌",
+    "container.projecte.alchemical_bag": "炼金术之袋",
+    "container.projecte.alchemical_chest": "炼金术箱子",
+    "container.projecte.dm_furnace": "暗物质熔炉",
+    "container.projecte.rm_furnace": "红物质熔炉",
+    "container.projecte.dm_pedestal": "暗物质台座",
+    "container.projecte.collector_mk1": "能量收集器MK1",
+    "container.projecte.collector_mk2": "能量收集器MK2",
+    "container.projecte.collector_mk3": "能量收集器MK3",
+    "container.projecte.relay_mk1": "反物质继电器MK1",
+    "container.projecte.relay_mk2": "反物质继电器MK2",
+    "container.projecte.relay_mk3": "反物质继电器MK3",
+    "container.projecte.condenser_mk1": "能量凝聚器",
+    "container.projecte.condenser_mk2": "能量凝聚器MK2",
+
+    "command.projecte.emc": "ProjectE EMC",
+    "command.projecte.knowledge": "ProjectE 转化知识",
+    "itemGroup.projecte": "ProjectE"
 }
