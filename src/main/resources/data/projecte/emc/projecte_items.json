@@ -14,14 +14,8 @@
   "item|projecte:archangel_smite|{}": {
     "value": 281344
   },
-  "item|projecte:black_hole_band|{}": {
-    "value": 280648
-  },
   "item|projecte:body_stone|{}": {
     "value": 934758
-  },
-  "item|projecte:collector_mk1|{}": {
-    "value": 75279
   },
   "item|projecte:condenser_mk1|{}": {
     "value": 42205
@@ -91,24 +85,6 @@
   },
   "item|projecte:iron_band|{}": {
     "value": 2048
-  },
-  "item|projecte:klein_star_drei|{}": {
-    "value": 327680
-  },
-  "item|projecte:klein_star_ein|{}": {
-    "value": 20480
-  },
-  "item|projecte:klein_star_omega|{}": {
-    "value": 20971520
-  },
-  "item|projecte:klein_star_sphere|{}": {
-    "value": 5242880
-  },
-  "item|projecte:klein_star_vier|{}": {
-    "value": 1310720
-  },
-  "item|projecte:klein_star_zwei|{}": {
-    "value": 81920
   },
   "item|projecte:life_stone|{}": {
     "value": 1871814
@@ -184,9 +160,6 @@
   },
   "item|projecte:swiftwolf_rending_gale|{}": {
     "value": 559104
-  },
-  "item|projecte:transmutation_table|{}": {
-    "value": 10118
   },
   "item|projecte:transmutation_tablet|{}": {
     "value": 1124234
