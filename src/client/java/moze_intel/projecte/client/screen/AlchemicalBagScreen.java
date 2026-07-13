@@ -24,7 +24,7 @@ public final class AlchemicalBagScreen extends AbstractContainerScreen<Alchemica
         this.titleLabelX = 8;
         this.titleLabelY = 6;
         this.inventoryLabelX = 8;
-        this.inventoryLabelY = 66;
+        this.inventoryLabelY = 75;
     }
 
     @Override

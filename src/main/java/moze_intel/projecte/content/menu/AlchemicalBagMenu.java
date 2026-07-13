@@ -27,8 +27,8 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
     private static final int BAG_X = 8;
     private static final int BAG_Y = 18;
     private static final int PLAYER_INV_X = 8;
-    private static final int PLAYER_INV_Y = 58;
-    private static final int PLAYER_HOTBAR_Y = 116;
+    private static final int PLAYER_INV_Y = 85;
+    private static final int PLAYER_HOTBAR_Y = 143;
 
     private final Player player;
     private final ItemStack bagStack;
