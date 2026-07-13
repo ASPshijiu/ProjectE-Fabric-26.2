@@ -1,0 +1,206 @@
+{
+  "item|projecte:aeternalis_fuel_block|{}": {
+    "value": 73728
+  },
+  "item|projecte:alchemical_chest|{}": {
+    "value": 9181
+  },
+  "item|projecte:alchemical_coal_block|{}": {
+    "value": 4608
+  },
+  "item|projecte:arcana_ring|{}": {
+    "value": 3739648
+  },
+  "item|projecte:archangel_smite|{}": {
+    "value": 281344
+  },
+  "item|projecte:black_hole_band|{}": {
+    "value": 280648
+  },
+  "item|projecte:body_stone|{}": {
+    "value": 934758
+  },
+  "item|projecte:collector_mk1|{}": {
+    "value": 75279
+  },
+  "item|projecte:condenser_mk1|{}": {
+    "value": 42205
+  },
+  "item|projecte:dark_matter_block|{}": {
+    "value": 557056
+  },
+  "item|projecte:divining_rod_1|{}": {
+    "value": 28
+  },
+  "item|projecte:divining_rod_2|{}": {
+    "value": 92
+  },
+  "item|projecte:divining_rod_3|{}": {
+    "value": 1756
+  },
+  "item|projecte:dm_axe|{}": {
+    "value": 434176
+  },
+  "item|projecte:dm_boots|{}": {
+    "value": 557056
+  },
+  "item|projecte:dm_chestplate|{}": {
+    "value": 1114112
+  },
+  "item|projecte:dm_furnace|{}": {
+    "value": 4456456
+  },
+  "item|projecte:dm_hammer|{}": {
+    "value": 442368
+  },
+  "item|projecte:dm_helmet|{}": {
+    "value": 696320
+  },
+  "item|projecte:dm_hoe|{}": {
+    "value": 294912
+  },
+  "item|projecte:dm_leggings|{}": {
+    "value": 974848
+  },
+  "item|projecte:dm_pick|{}": {
+    "value": 434176
+  },
+  "item|projecte:dm_shears|{}": {
+    "value": 147456
+  },
+  "item|projecte:dm_shovel|{}": {
+    "value": 155648
+  },
+  "item|projecte:dm_sword|{}": {
+    "value": 286720
+  },
+  "item|projecte:evertide_amulet|{}": {
+    "value": 419334
+  },
+  "item|projecte:gem_of_eternal_density|{}": {
+    "value": 319744
+  },
+  "item|projecte:harvest_goddess_band|{}": {
+    "value": 280576
+  },
+  "item|projecte:high_covalence_dust|{}": {
+    "value": 208
+  },
+  "item|projecte:ignition_ring|{}": {
+    "value": 284672
+  },
+  "item|projecte:iron_band|{}": {
+    "value": 2048
+  },
+  "item|projecte:klein_star_drei|{}": {
+    "value": 327680
+  },
+  "item|projecte:klein_star_ein|{}": {
+    "value": 20480
+  },
+  "item|projecte:klein_star_omega|{}": {
+    "value": 20971520
+  },
+  "item|projecte:klein_star_sphere|{}": {
+    "value": 5242880
+  },
+  "item|projecte:klein_star_vier|{}": {
+    "value": 1310720
+  },
+  "item|projecte:klein_star_zwei|{}": {
+    "value": 81920
+  },
+  "item|projecte:life_stone|{}": {
+    "value": 1871814
+  },
+  "item|projecte:low_covalence_dust|{}": {
+    "value": 3
+  },
+  "item|projecte:medium_covalence_dust|{}": {
+    "value": 8
+  },
+  "item|projecte:mind_stone|{}": {
+    "value": 935712
+  },
+  "item|projecte:mobius_fuel_block|{}": {
+    "value": 18432
+  },
+  "item|projecte:nova_cataclysm|{}": {
+    "value": 10560
+  },
+  "item|projecte:nova_catalyst|{}": {
+    "value": 2368
+  },
+  "item|projecte:philosophers_stone|{}": {
+    "value": 9984
+  },
+  "item|projecte:red_matter_block|{}": {
+    "value": 1867776
+  },
+  "item|projecte:repair_talisman|{}": {
+    "value": 494
+  },
+  "item|projecte:rm_axe|{}": {
+    "value": 1974272
+  },
+  "item|projecte:rm_boots|{}": {
+    "value": 2424832
+  },
+  "item|projecte:rm_chestplate|{}": {
+    "value": 4849664
+  },
+  "item|projecte:rm_hammer|{}": {
+    "value": 1654784
+  },
+  "item|projecte:rm_helmet|{}": {
+    "value": 3031040
+  },
+  "item|projecte:rm_hoe|{}": {
+    "value": 1368064
+  },
+  "item|projecte:rm_katar|{}": {
+    "value": 7512064
+  },
+  "item|projecte:rm_leggings|{}": {
+    "value": 4243456
+  },
+  "item|projecte:rm_morning_star|{}": {
+    "value": 7192576
+  },
+  "item|projecte:rm_pick|{}": {
+    "value": 1974272
+  },
+  "item|projecte:rm_shears|{}": {
+    "value": 614400
+  },
+  "item|projecte:rm_shovel|{}": {
+    "value": 761856
+  },
+  "item|projecte:rm_sword|{}": {
+    "value": 1220608
+  },
+  "item|projecte:soul_stone|{}": {
+    "value": 937056
+  },
+  "item|projecte:swiftwolf_rending_gale|{}": {
+    "value": 559104
+  },
+  "item|projecte:transmutation_table|{}": {
+    "value": 10118
+  },
+  "item|projecte:transmutation_tablet|{}": {
+    "value": 1124234
+  },
+  "item|projecte:void_ring|{}": {
+    "value": 1534280
+  },
+  "item|projecte:volcanite_amulet|{}": {
+    "value": 419712
+  },
+  "item|projecte:watch_of_flowing_time|{}": {
+    "value": 568448
+  },
+  "item|projecte:zero_ring|{}": {
+    "value": 280576
+  }
+}
