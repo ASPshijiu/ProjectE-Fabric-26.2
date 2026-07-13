@@ -28,6 +28,13 @@ public final class EmcTooltipHandler {
                 return;
             }
 
+            // Log once that the tooltip handler is alive and the snapshot is populated.
+            if (!snapshotLogged) {
+                snapshotLogged = true;
+                org.slf4j.LoggerFactory.getLogger("projecte/client")
+                      .info("EMC tooltip handler active; snapshot has {} values", snapshot.values().size());
+            }
+
             // Build a simple key from the item's registry id (no component data)
             var itemKey = stack.typeHolder().unwrapKey();
             if (itemKey.isEmpty()) return;
