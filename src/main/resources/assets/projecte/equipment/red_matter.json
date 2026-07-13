@@ -1,0 +1,10 @@
+{
+  "layers": {
+    "humanoid": [
+      {"texture": "projecte:red_matter"}
+    ],
+    "humanoid_leggings": [
+      {"texture": "projecte:red_matter"}
+    ]
+  }
+}

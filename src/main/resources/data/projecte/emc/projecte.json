@@ -1,0 +1,68 @@
+{
+  "item|projecte:alchemical_coal|{}": {
+    "value": 512
+  },
+  "item|projecte:mobius_fuel|{}": {
+    "value": 2048
+  },
+  "item|projecte:aeternalis_fuel|{}": {
+    "value": 8192
+  },
+  "item|projecte:collector_mk1|{}": {
+    "value": 82953
+  },
+  "item|projecte:collector_mk2|{}": {
+    "value": 95753
+  },
+  "item|projecte:collector_mk3|{}": {
+    "value": 114697
+  },
+  "item|projecte:collector_mk4|{}": {
+    "value": 1384520
+  },
+  "item|projecte:collector_mk5|{}": {
+    "value": 11543104
+  },
+  "item|projecte:transmutation_table|{}": {
+    "value": 10244
+  },
+  "item|projecte:alchemy_pad|{}": {
+    "value": 10248
+  },
+  "item|projecte:dark_matter|{}": {
+    "value": 139264
+  },
+  "item|projecte:red_matter|{}": {
+    "value": 466944
+  },
+  "item|projecte:aegu|{}": {
+    "value": 927560
+  },
+  "item|projecte:advanced_aegu|{}": {
+    "value": 7430464
+  },
+  "item|projecte:ultimate_aegu|{}": {
+    "value": 59453696
+  },
+  "item|projecte:black_hole_band|{}": {
+    "value": 280612
+  },
+  "item|projecte:klein_star_ein|{}": {
+    "value": 139264
+  },
+  "item|projecte:klein_star_zwei|{}": {
+    "value": 557056
+  },
+  "item|projecte:klein_star_drei|{}": {
+    "value": 2228224
+  },
+  "item|projecte:klein_star_vier|{}": {
+    "value": 8912896
+  },
+  "item|projecte:klein_star_sphere|{}": {
+    "value": 35651584
+  },
+  "item|projecte:klein_star_omega|{}": {
+    "value": 142606336
+  }
+}

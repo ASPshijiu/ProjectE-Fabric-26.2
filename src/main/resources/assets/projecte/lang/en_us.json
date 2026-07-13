@@ -135,7 +135,14 @@
 
   "key.projecte.charge": "Charge",
   "key.projecte.mode": "Mode Switch",
+  "key.projecte.extra_function": "Extra Function",
+  "key.projecte.fire_projectile": "Fire Projectile",
   "category.projecte": "ProjectE",
+
+  "mode.projecte.switch": "Switched to %s mode",
+  "mode.projecte.philosopher.1": "Cube",
+  "mode.projecte.philosopher.2": "Panel",
+  "mode.projecte.philosopher.3": "Line",
 
   "command.projecte.emc": "ProjectE EMC",
   "command.projecte.knowledge": "ProjectE Knowledge"

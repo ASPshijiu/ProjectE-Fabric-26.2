@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "projecte:block/condenser_mk1/side",
+    "north": "projecte:block/condenser_mk1/front",
+    "south": "projecte:block/condenser_mk1/side",
+    "east": "projecte:block/condenser_mk1/side",
+    "west": "projecte:block/condenser_mk1/side",
+    "up": "projecte:block/condenser_mk1/top",
+    "down": "projecte:block/condenser_mk1/bottom"
+  }
+}

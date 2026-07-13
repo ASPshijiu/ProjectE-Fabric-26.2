@@ -2,10 +2,12 @@ package moze_intel.projecte.network;
 
 import java.util.Map;
 import moze_intel.projecte.content.items.IItemCharge;
+import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.network.payloads.ChargeItemPayload;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
+import moze_intel.projecte.network.payloads.PhilosophersStoneActionPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
@@ -46,6 +48,33 @@ public final class ProjectENetworking {
               ChargeItemPayload.TYPE, ChargeItemPayload.STREAM_CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ChargeItemPayload.TYPE,
               ProjectENetworking::handleChargeItem);
+
+        PayloadTypeRegistry.serverboundPlay().register(
+              PhilosophersStoneActionPayload.TYPE,
+              PhilosophersStoneActionPayload.STREAM_CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(
+              PhilosophersStoneActionPayload.TYPE,
+              ProjectENetworking::handlePhilosophersStoneAction);
+    }
+
+    private static void handlePhilosophersStoneAction(
+          PhilosophersStoneActionPayload payload, ServerPlayNetworking.Context ctx
+    ) {
+        ctx.server().execute(() -> {
+            ServerPlayer player = ctx.player();
+            if (player.isSpectator()) {
+                return;
+            }
+            ItemStack stack = player.getItemInHand(payload.hand());
+            if (!(stack.getItem() instanceof PhilosophersStoneItem stone)) {
+                return;
+            }
+            switch (payload.action()) {
+                case MODE -> stone.cycleMode(player, stack);
+                case EXTRA_FUNCTION -> stone.openPortableCrafting(player, stack);
+                case PROJECTILE -> stone.shootMobRandomizer(player, stack);
+            }
+        });
     }
 
     private static void handleChargeItem(ChargeItemPayload payload, ServerPlayNetworking.Context ctx) {

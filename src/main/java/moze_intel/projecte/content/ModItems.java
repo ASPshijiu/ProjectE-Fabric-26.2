@@ -171,7 +171,10 @@ public final class ModItems {
 
         // ── Philosopher's Stone ──
         PHILOSOPHERS_STONE = register(PHILOSOPHERS_STONE_ID,
-              new PhilosophersStoneItem(properties(PHILOSOPHERS_STONE_ID).stacksTo(1)));
+              new PhilosophersStoneItem(properties(PHILOSOPHERS_STONE_ID)
+                    .stacksTo(1)
+                    .component(ModDataComponents.CHARGE, 0)
+                    .component(ModDataComponents.PHILOSOPHERS_STONE_MODE, 0)));
 
         // ── Repair Talisman ──
         REPAIR_TALISMAN = register(REPAIR_TALISMAN_ID,

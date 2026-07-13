@@ -20,7 +20,8 @@ import net.minecraft.world.level.Level;
  * component. Right-clicking opens the {@link AlchemicalBagMenu}.
  */
 public class AlchemicalBagItem extends Item {
-    private static final Component TITLE = Component.translatable("projecte.container.alchemical_bag");
+    public static final String TITLE_KEY = "container.projecte.alchemical_bag";
+    private static final Component TITLE = Component.translatable(TITLE_KEY);
     private final DyeColor color;
 
     public AlchemicalBagItem(Properties properties, DyeColor color) {
@@ -48,6 +49,6 @@ public class AlchemicalBagItem extends Item {
                 }
             });
         }
-        return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+        return InteractionResult.SUCCESS;
     }
 }

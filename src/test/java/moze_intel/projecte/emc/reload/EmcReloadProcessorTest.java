@@ -9,6 +9,7 @@ import moze_intel.projecte.emc.EmcMappingService;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
+import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.recipe.RecipeConversion;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,27 @@ class EmcReloadProcessorTest {
 
         assertEquals(Map.of(A, EmcValue.of(2), B, EmcValue.of(6)), first);
         assertEquals(first, second);
+    }
+
+    @Test
+    void expandsExplicitTagValuesToEveryConcreteItem() {
+        Identifier ironTag = Identifier.fromNamespaceAndPath("c", "ingots/iron");
+        ItemStackKey firstIngot = new ItemStackKey(
+              Identifier.fromNamespaceAndPath("example", "iron_ingot"), Map.of());
+        ItemStackKey secondIngot = new ItemStackKey(
+              Identifier.fromNamespaceAndPath("other", "iron_ingot"), Map.of());
+        Map<Identifier, String> custom = Map.of(id("pe_custom_conversions/metals.json"), """
+              {"values":{"before":[
+                {"type":"projecte:item","emc_value":256,"tag":"c:ingots/iron"}
+              ]}}
+              """);
+
+        Map<?, EmcValue> values = processor.rebuild(
+              Map.of(), custom, List.of(),
+              tag -> tag.identifier().equals(ironTag) ? List.of(firstIngot, secondIngot) : List.of());
+
+        assertEquals(EmcValue.of(256), values.get(firstIngot));
+        assertEquals(EmcValue.of(256), values.get(secondIngot));
     }
 
     @Test

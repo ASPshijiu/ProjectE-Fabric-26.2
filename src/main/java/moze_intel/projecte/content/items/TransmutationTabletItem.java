@@ -19,7 +19,8 @@ import net.minecraft.world.level.Level;
  * saved data.
  */
 public final class TransmutationTabletItem extends Item {
-    private static final Component TITLE = Component.translatable("projecte.container.transmutation_tablet");
+    public static final String TITLE_KEY = "container.projecte.transmutation_tablet";
+    private static final Component TITLE = Component.translatable(TITLE_KEY);
 
     public TransmutationTabletItem(Properties properties) {
         super(properties);
@@ -40,6 +41,6 @@ public final class TransmutationTabletItem extends Item {
                 }
             });
         }
-        return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+        return InteractionResult.SUCCESS;
     }
 }

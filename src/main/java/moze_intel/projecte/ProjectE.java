@@ -46,10 +46,6 @@ public final class ProjectE implements ModInitializer {
         ModMenuTypes.init();
         ProjectENetworking.init();
 
-        // Capture the server reference for the reload rebroadcast path.
-        ServerLifecycleEvents.SERVER_STARTED.register(s -> server = s);
-        ServerLifecycleEvents.SERVER_STOPPED.register(s -> server = null);
-
         PlayerSyncHandlers syncHandlers = new PlayerSyncHandlers(snapshot ->
               ProjectENetworking.sendEmcMappingToAll(server, snapshot));
         ServerPlayConnectionEvents.JOIN.register((handler, sender, srv) -> {
@@ -68,6 +64,16 @@ public final class ProjectE implements ModInitializer {
               .withServerRecipeSources(ProjectE::buildServerRecipeSources)
               .withReloadCallback(syncHandlers::onEmcReloaded);
         reloadListener.register();
+
+        // The initial data-pack reload precedes the server lifecycle events. Bind the instance at
+        // SERVER_STARTING, then wait until SERVER_STARTED to extend the mapping: RecipeManager is
+        // already available at that point and PlayerList is initialized before sync callbacks run.
+        ServerLifecycleEvents.SERVER_STARTING.register(s -> server = s);
+        ServerLifecycleEvents.SERVER_STARTED.register(s -> {
+            server = s;
+            reloadListener.refreshRecipeMappings();
+        });
+        ServerLifecycleEvents.SERVER_STOPPED.register(s -> server = null);
 
         // World transmutations
         new WorldTransmutationReloadListener().register();

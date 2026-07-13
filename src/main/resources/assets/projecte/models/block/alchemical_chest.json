@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "projecte:block/alchemical_chest/side",
+    "north": "projecte:block/alchemical_chest/front",
+    "south": "projecte:block/alchemical_chest/side",
+    "east": "projecte:block/alchemical_chest/side",
+    "west": "projecte:block/alchemical_chest/side",
+    "up": "projecte:block/alchemical_chest/top",
+    "down": "projecte:block/alchemical_chest/bottom"
+  }
+}

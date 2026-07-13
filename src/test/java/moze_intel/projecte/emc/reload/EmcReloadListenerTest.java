@@ -91,6 +91,26 @@ class EmcReloadListenerTest {
         assertEquals(1, fired.size(), "callback must not fire on failed reload");
     }
 
+    @Test
+    void refreshesRecipeMappingsAfterServerRecipeManagerBecomesAvailable() {
+        FakeStackKey gem = new FakeStackKey(Identifier.fromNamespaceAndPath("projecte", "late_gem"));
+        FakeStackKey ring = new FakeStackKey(Identifier.fromNamespaceAndPath("projecte", "late_ring"));
+        RecipeConversion conversion = new RecipeConversion(
+              Identifier.fromNamespaceAndPath("projecte", "late_ring_recipe"), 1, ring, Map.of(gem, 2));
+        EmcMappingService<NormalizedStackKey> service = new EmcMappingService<>();
+        service.replace(Map.of(gem, EmcValue.of(3)));
+        java.util.List<EmcMappingSnapshot<NormalizedStackKey>> fired = new java.util.ArrayList<>();
+        EmcReloadListener listener = new EmcReloadListener(
+              service, new EmcReloadProcessor(), List.of(),
+              () -> List.of(() -> List.of(conversion)), List.of(fired::add));
+
+        listener.refreshRecipeMappings();
+
+        assertEquals(EmcValue.of(3), service.current().valueFor(gem).orElseThrow());
+        assertEquals(EmcValue.of(6), service.current().valueFor(ring).orElseThrow());
+        assertEquals(List.of(service.current()), fired);
+    }
+
     private EmcReloadListener newListener(
           EmcMappingService<NormalizedStackKey> service, List<RecipeConversionSource> sources
     ) {

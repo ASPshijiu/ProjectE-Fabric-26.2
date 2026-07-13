@@ -27,6 +27,10 @@ public final class ModDataComponents {
     public static final Identifier CHARGE_ID = ProjectEAPI.id("charge");
     public static DataComponentType<Integer> CHARGE;
 
+    /** Stores the Philosopher's Stone area mode (cube, panel, or line). */
+    public static final Identifier PHILOSOPHERS_STONE_MODE_ID = ProjectEAPI.id("philosophers_stone_mode");
+    public static DataComponentType<Integer> PHILOSOPHERS_STONE_MODE;
+
     private static volatile boolean initialized;
 
     public static void init() {
@@ -45,6 +49,15 @@ public final class ModDataComponents {
         CHARGE = Registry.register(
               BuiltInRegistries.DATA_COMPONENT_TYPE,
               CHARGE_ID,
+              DataComponentType.<Integer>builder()
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build()
+        );
+
+        PHILOSOPHERS_STONE_MODE = Registry.register(
+              BuiltInRegistries.DATA_COMPONENT_TYPE,
+              PHILOSOPHERS_STONE_MODE_ID,
               DataComponentType.<Integer>builder()
                     .persistent(Codec.INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT)

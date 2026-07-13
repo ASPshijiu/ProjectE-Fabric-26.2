@@ -1,0 +1,10 @@
+{
+  "layers": {
+    "humanoid": [
+      {"texture": "projecte:gem"}
+    ],
+    "humanoid_leggings": [
+      {"texture": "projecte:gem"}
+    ]
+  }
+}

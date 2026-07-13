@@ -12,9 +12,12 @@ import moze_intel.projecte.ProjectE;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.EmcMappingService;
+import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.TagStackKey;
 import moze_intel.projecte.emc.recipe.RecipeConversion;
+import net.minecraft.core.registries.Registries;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.fabric.api.resource.v1.reloader.SimpleReloadListener;
 import net.minecraft.core.HolderLookup;
@@ -23,6 +26,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.tags.TagKey;
 
 /**
  * Server-data reload listener that rebuilds and atomically republishes the EMC mapping.
@@ -116,8 +120,9 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         ResourceManager manager = state.resourceManager();
         Map<Identifier, String> explicit = readExplicitResources(manager, EXPLICIT_FOLDER);
         Map<Identifier, String> custom = readExplicitResources(manager, CUSTOM_CONVERSIONS_FOLDER);
-        List<RecipeConversion> conversions = collectConversions(registriesOrEmpty(state));
-        return new PreparedEmc(explicit, custom, conversions);
+        HolderLookup.Provider registries = registriesOrEmpty(state);
+        List<RecipeConversion> conversions = collectConversions();
+        return new PreparedEmc(explicit, custom, conversions, createTagResolver(registries));
     }
 
     /**
@@ -145,19 +150,27 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
     @Override
     protected void apply(PreparedEmc prepared, PreparableReloadListener.SharedState state) {
         EmcMappingService.RebuildResult<NormalizedStackKey> result = service.rebuild(
-              () -> processor.rebuild(prepared.explicitResources(), prepared.customConversionResources(), prepared.recipeConversions())
+              () -> processor.rebuild(prepared.explicitResources(), prepared.customConversionResources(),
+                    prepared.recipeConversions(), prepared.tagResolver())
         );
-        if (!result.success()) {
-            ProjectE.LOGGER.warn("EMC reload failed; preserving snapshot version {}",
-                  service.current().version(), result.exception().orElse(null));
+        publishResult("reload", result);
+    }
+
+    /**
+     * Extends the initial explicit mapping after the server's live recipe manager is available.
+     * The first data-pack reload happens before Fabric fires SERVER_STARTING, so server-bound recipe
+     * sources cannot participate until this second, recipe-only pass.
+     */
+    public void refreshRecipeMappings() {
+        List<RecipeConversion> conversions = collectConversions();
+        if (conversions.isEmpty()) {
+            ProjectE.LOGGER.warn("EMC recipe refresh found no recipe conversions; keeping {} values",
+                  service.current().values().size());
             return;
         }
-        EmcMappingSnapshot<NormalizedStackKey> snapshot = result.snapshot();
-        ProjectE.LOGGER.info("EMC reload published snapshot version {} with {} values",
-              snapshot.version(), snapshot.values().size());
-        for (java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>> callback : reloadCallbacks) {
-            callback.accept(snapshot);
-        }
+        EmcMappingService.RebuildResult<NormalizedStackKey> result = service.rebuild(
+              () -> processor.extend(service.current().values(), conversions));
+        publishResult("recipe refresh", result);
     }
 
     private Map<Identifier, String> readExplicitResources(ResourceManager manager, String folder) {
@@ -180,7 +193,7 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         return id.getPath().endsWith(".json");
     }
 
-    private List<RecipeConversion> collectConversions(HolderLookup.Provider registries) {
+    private List<RecipeConversion> collectConversions() {
         List<RecipeConversion> all = new ArrayList<>();
         for (RecipeConversionSource source : recipeSources) {
             all.addAll(source.conversions());
@@ -195,6 +208,36 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         return List.copyOf(all);
     }
 
+    private java.util.function.Function<TagStackKey, List<ItemStackKey>> createTagResolver(
+          HolderLookup.Provider registries
+    ) {
+        return tag -> registries.lookup(Registries.ITEM)
+              .flatMap(items -> items.get(TagKey.create(Registries.ITEM, tag.identifier())))
+              .stream()
+              .flatMap(named -> named.stream())
+              .flatMap(holder -> holder.unwrapKey().stream())
+              .map(key -> new ItemStackKey(key.identifier(), Map.of()))
+              .sorted()
+              .toList();
+    }
+
+    private void publishResult(
+          String phase,
+          EmcMappingService.RebuildResult<NormalizedStackKey> result
+    ) {
+        if (!result.success()) {
+            ProjectE.LOGGER.warn("EMC {} failed; preserving snapshot version {}",
+                  phase, service.current().version(), result.exception().orElse(null));
+            return;
+        }
+        EmcMappingSnapshot<NormalizedStackKey> snapshot = result.snapshot();
+        ProjectE.LOGGER.info("EMC {} published snapshot version {} with {} values",
+              phase, snapshot.version(), snapshot.values().size());
+        for (java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>> callback : reloadCallbacks) {
+            callback.accept(snapshot);
+        }
+    }
+
     /**
      * Parsed reload payload: explicit EMC resources keyed by their identifier, the custom-conversion
      * resources, and the gathered recipe conversions. All are immutable; the apply stage only
@@ -203,12 +246,14 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
     record PreparedEmc(
           Map<Identifier, String> explicitResources,
           Map<Identifier, String> customConversionResources,
-          List<RecipeConversion> recipeConversions
+          List<RecipeConversion> recipeConversions,
+          java.util.function.Function<TagStackKey, List<ItemStackKey>> tagResolver
     ) {
         PreparedEmc {
             explicitResources = Map.copyOf(explicitResources);
             customConversionResources = Map.copyOf(customConversionResources);
             recipeConversions = List.copyOf(recipeConversions);
+            java.util.Objects.requireNonNull(tagResolver, "tagResolver");
         }
     }
 }

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel",
+    "projecte:mobius_fuel"
+  ],
+  "result": {
+    "count": 1,
+    "id": "projecte:mobius_fuel_block"
+  }
+}

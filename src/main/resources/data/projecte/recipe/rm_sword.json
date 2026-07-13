@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "R": "projecte:red_matter",
+    "S": "projecte:dm_sword"
+  },
+  "pattern": [
+    "R",
+    "R",
+    "S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "projecte:rm_sword"
+  }
+}

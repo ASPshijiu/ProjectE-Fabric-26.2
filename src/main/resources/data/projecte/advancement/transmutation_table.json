@@ -1,0 +1,33 @@
+{
+  "parent": "projecte:philosophers_stone",
+  "criteria": {
+    "trans_table": {
+      "conditions": {
+        "items": [
+          {
+            "items": "projecte:transmutation_table"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.projecte.transmutation_table.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "projecte:transmutation_table"
+    },
+    "title": {
+      "translate": "advancements.projecte.transmutation_table"
+    }
+  },
+  "requirements": [
+    [
+      "trans_table"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -10,6 +10,7 @@ import moze_intel.projecte.content.menu.slots.TransmuteOutputSlot;
 import moze_intel.projecte.content.menu.slots.TransmuteUnlearnSlot;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.EmcValue;
+import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
@@ -17,13 +18,13 @@ import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import moze_intel.projecte.transmutation.table.TransmutationOutputResolver;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 /**
  * Server-authoritative transmutation-table menu. Hosts the player inventory plus the
@@ -72,23 +73,37 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     private final SimpleContainer consumeContainer;
     private final SimpleContainer outputContainer;
     private final MinecraftStackKeyFactory keyFactory;
+    private final SyncedLong syncedEmc;
+    private boolean loadingInputLocks;
 
     public TransmutationTableMenu(int containerId, Inventory playerInventory) {
         super(ModMenuTypes.TRANSMUTATION_TABLE, containerId);
         this.player = playerInventory.player;
         this.service = new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player));
         this.keyFactory = new MinecraftStackKeyFactory(player.level().registryAccess());
+        this.syncedEmc = new SyncedLong(() -> service.emc().longValue());
+        addDataSlot(syncedEmc.lowSlot());
+        addDataSlot(syncedEmc.highSlot());
 
-        this.inputLocksContainer = new SimpleContainer(INPUT_SLOTS + 1); // 8 inputs + 1 lock
+        this.inputLocksContainer = new SimpleContainer(INPUT_SLOTS + 1) {
+            @Override
+            public void setChanged() {
+                super.setChanged();
+                if (!loadingInputLocks && !player.level().isClientSide()) {
+                    persistInputLocks();
+                }
+            }
+        }; // 8 inputs + 1 lock
         this.unlearnContainer = new SimpleContainer(1);
         this.consumeContainer = new SimpleContainer(1);
         this.outputContainer = new SimpleContainer(OUTPUT_SLOTS) {
             @Override
             public int getMaxStackSize() {
                 return 64;
-            }
+              }
         };
 
+        loadInputLocks();
         addTableSlots();
         addPlayerInventory(playerInventory);
         // Populate outputs from the resolver initially (server side; client gets them via slot sync).
@@ -152,12 +167,8 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     }
 
     private ItemStack displayStackFor(NormalizedStackKey key) {
-        if (key instanceof moze_intel.projecte.emc.ItemStackKey itemKey) {
-            var optionalItem = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemKey.identifier());
-            if (optionalItem.isEmpty() || optionalItem.get().equals(Items.AIR)) {
-                return ItemStack.EMPTY;
-            }
-            return new ItemStack(optionalItem.get());
+        if (key instanceof ItemStackKey itemKey) {
+            return keyFactory.stack(itemKey);
         }
         // Tag/Fake keys have no concrete item to display.
         return ItemStack.EMPTY;
@@ -167,7 +178,32 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
      * @return the current EMC balance of the owning player (for client display).
      */
     public EmcValue playerEmc() {
-        return service.emc();
+        return player.level().isClientSide() ? EmcValue.of(syncedEmc.value()) : service.emc();
+    }
+
+    private void loadInputLocks() {
+        loadingInputLocks = true;
+        try {
+            for (int slot = 0; slot < INPUT_SLOTS + 1; slot++) {
+                ItemStack stack = service.inputLock(slot)
+                      .map(this::displayStackFor)
+                      .orElse(ItemStack.EMPTY);
+                inputLocksContainer.setItem(slot, stack);
+            }
+        } finally {
+            loadingInputLocks = false;
+        }
+    }
+
+    private void persistInputLocks() {
+        var persisted = service.inputLocks();
+        for (int slot = 0; slot < INPUT_SLOTS + 1; slot++) {
+            ItemStack stack = inputLocksContainer.getItem(slot);
+            NormalizedStackKey key = stack.isEmpty() ? null : keyFactory.key(stack);
+            if (!java.util.Objects.equals(persisted.get(slot), key)) {
+                service.setInputLock(slot, key);
+            }
+        }
     }
 
     @Override
@@ -180,44 +216,55 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         int firstPlayer = firstPlayerSlot();
 
         if (index >= firstOutput && index < firstPlayer) {
-            // Output slot shift-click: route through the slot's EMC-charging remove() so the
-            // extraction is paid for. Pull the full stack out, insert into the player inventory,
-            // and return whatever was moved.
-            ItemStack taken = slot.remove(slot.getItem().getCount());
+            // Work out the real destination capacity before the output slot charges EMC.
+            int room = MenuQuickMove.roomForOneStack(
+                  slot.getItem(), slots.subList(firstPlayer, slots.size()));
+            if (room <= 0) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack taken = slot.remove(room);
             if (taken.isEmpty()) {
                 return ItemStack.EMPTY;
             }
-            ItemStack leftover = taken.copy();
-            for (int i = firstPlayer; i < slots.size() && !leftover.isEmpty(); i++) {
-                leftover = slots.get(i).safeInsert(leftover);
+            moveItemStackTo(taken, firstPlayer, slots.size(), false);
+            if (!taken.isEmpty()) {
+                refundOutputEmc(taken);
             }
-            return leftover.isEmpty() ? ItemStack.EMPTY : leftover;
+            // The output slot is virtual and remains populated, so stop the vanilla repeat loop.
+            return ItemStack.EMPTY;
         }
 
-        ItemStack copy = slot.getItem().copy();
-        if (index < INPUT_SLOTS + 3) {
-            // Table slots -> player inventory.
-            if (!moveItemStackTo(copy, firstPlayer, slots.size(), false)) {
-                return ItemStack.EMPTY;
-            }
-        } else {
-            // Player inventory -> consume slot (burn for EMC).
-            if (!moveItemStackTo(copy, INPUT_SLOTS + 2, INPUT_SLOTS + 3, false)) {
-                return ItemStack.EMPTY;
-            }
-        }
-
-        if (copy.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return copy;
+        return MenuQuickMove.move(slot, stack -> index < INPUT_SLOTS + 3
+              // Table slots -> player inventory.
+              ? moveItemStackTo(stack, firstPlayer, slots.size(), false)
+              // Player inventory -> consume slot (burn for EMC).
+              : moveItemStackTo(stack, INPUT_SLOTS + 2, INPUT_SLOTS + 3, false));
     }
 
     @Override
     public boolean stillValid(Player player) {
         return this.player.equals(player) && !player.isDeadOrDying();
+    }
+
+    @Override
+    public void removed(Player player) {
+        ItemStack unlearn = unlearnContainer.removeItemNoUpdate(0);
+        super.removed(player);
+        if (unlearn.isEmpty()) {
+            return;
+        }
+        if (player.isDeadOrDying()
+              || player instanceof ServerPlayer serverPlayer && serverPlayer.hasDisconnected()) {
+            player.drop(unlearn, false);
+        } else {
+            player.getInventory().placeItemBackInInventory(unlearn);
+        }
+    }
+
+    private void refundOutputEmc(ItemStack stack) {
+        keyFactory.optionalKey(stack)
+              .flatMap(ProjectEEmc.service().current()::valueFor)
+              .ifPresent(value -> service.addEmc(value.multiply(stack.getCount())));
     }
 
     @Override
@@ -227,11 +274,6 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
             refreshOutputs();
         }
         super.broadcastChanges();
-    }
-
-    @SuppressWarnings("unused")
-    private static ItemStack empty() {
-        return new ItemStack(Items.AIR);
     }
 
     /** Index helpers for slot categories. */

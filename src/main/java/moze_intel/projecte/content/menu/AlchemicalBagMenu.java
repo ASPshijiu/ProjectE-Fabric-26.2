@@ -57,7 +57,12 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < BAG_COLUMNS; col++) {
                 addSlot(new Slot(bagInventory, col + row * BAG_COLUMNS,
-                      BAG_X + col * 18, BAG_Y + row * 18));
+                      BAG_X + col * 18, BAG_Y + row * 18) {
+                    @Override
+                    public boolean mayPlace(ItemStack stack) {
+                        return !(stack.getItem() instanceof moze_intel.projecte.content.items.AlchemicalBagItem);
+                    }
+                });
             }
         }
         addPlayerInventory(playerInventory);
@@ -81,13 +86,22 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory inventory) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9,
-                      PLAYER_INV_X + col * 18, PLAYER_INV_Y + row * 18));
+                addPlayerSlot(inventory, col + row * 9 + 9,
+                      PLAYER_INV_X + col * 18, PLAYER_INV_Y + row * 18);
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, PLAYER_INV_X + col * 18, PLAYER_HOTBAR_Y));
+            addPlayerSlot(inventory, col, PLAYER_INV_X + col * 18, PLAYER_HOTBAR_Y);
         }
+    }
+
+    private void addPlayerSlot(Inventory inventory, int index, int x, int y) {
+        addSlot(new Slot(inventory, index, x, y) {
+            @Override
+            public boolean mayPickup(Player player) {
+                return getItem() != bagStack;
+            }
+        });
     }
 
     @Override
@@ -96,25 +110,11 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
         if (slot == null || !slot.hasItem()) {
             return ItemStack.EMPTY;
         }
-        ItemStack original = slot.getItem();
-        ItemStack copy = original.copy();
-        if (index < BAG_SLOTS) {
-            // Bag -> player inventory.
-            if (!moveItemStackTo(copy, BAG_SLOTS, slots.size(), false)) {
-                return ItemStack.EMPTY;
-            }
-        } else {
-            // Player inventory -> bag.
-            if (!moveItemStackTo(copy, 0, BAG_SLOTS, false)) {
-                return ItemStack.EMPTY;
-            }
-        }
-        if (copy.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return copy;
+        return MenuQuickMove.move(slot, stack -> index < BAG_SLOTS
+              // Bag -> player inventory.
+              ? moveItemStackTo(stack, BAG_SLOTS, slots.size(), false)
+              // Player inventory -> bag.
+              : moveItemStackTo(stack, 0, BAG_SLOTS, false));
     }
 
     @Override
