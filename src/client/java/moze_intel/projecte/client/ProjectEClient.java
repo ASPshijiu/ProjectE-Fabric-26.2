@@ -40,8 +40,11 @@ public final class ProjectEClient implements ClientModInitializer {
         // Receive the authoritative EMC mapping from the server and publish it into the client's
         // display cache. Must run on the client thread; the Fabric handler already dispatches there.
         ClientPlayNetworking.registerGlobalReceiver(EmcMappingSyncPayload.TYPE,
-              (payload, ctx) -> ctx.client().execute(() ->
-                    ProjectEEmc.service().replace(payload.values())));
+              (payload, ctx) -> ctx.client().execute(() -> {
+                  int size = payload.values().size();
+                  LOGGER.info("Received EMC mapping sync payload with {} values", size);
+                  ProjectEEmc.service().replace(payload.values());
+              }));
 
         // Charge keybind (V): adjust the held item's charge. Shift = discharge. Find the chargeable
         // item in either hand, send the C2S payload so the server applies it authoritatively, and

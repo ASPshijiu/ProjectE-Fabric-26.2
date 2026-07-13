@@ -36,9 +36,10 @@ public final class ProjectENetworking {
         if (initialized) return;
         initialized = true;
 
-        // Server-to-client: the shared EMC mapping snapshot.
-        PayloadTypeRegistry.clientboundPlay().register(
-              EmcMappingSyncPayload.TYPE, EmcMappingSyncPayload.STREAM_CODEC);
+        // Server-to-client: the shared EMC mapping snapshot. Use registerLarge because the full
+        // mapping (hundreds of entries) can exceed the default play-payload size budget.
+        PayloadTypeRegistry.clientboundPlay().registerLarge(
+              EmcMappingSyncPayload.TYPE, EmcMappingSyncPayload.STREAM_CODEC, 1_000_000);
 
         // Client-to-server: charge the held item.
         PayloadTypeRegistry.serverboundPlay().register(
@@ -69,6 +70,8 @@ public final class ProjectENetworking {
      */
     public static void sendEmcMapping(ServerPlayer player, EmcMappingSnapshot<NormalizedStackKey> snapshot) {
         Map<NormalizedStackKey, moze_intel.projecte.emc.EmcValue> values = snapshot.values();
+        moze_intel.projecte.ProjectE.LOGGER.info(
+              "Sending EMC mapping to {} ({} values)", player.getName().getString(), values.size());
         if (values.isEmpty()) {
             return;
         }
