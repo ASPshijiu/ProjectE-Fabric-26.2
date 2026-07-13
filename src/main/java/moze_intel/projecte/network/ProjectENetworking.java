@@ -1,13 +1,17 @@
 package moze_intel.projecte.network;
 
 import java.util.Map;
+import moze_intel.projecte.content.items.IItemCharge;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.NormalizedStackKey;
+import moze_intel.projecte.network.payloads.ChargeItemPayload;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Registers ProjectE's custom packet payloads with the Fabric networking API and provides the
@@ -35,6 +39,28 @@ public final class ProjectENetworking {
         // Server-to-client: the shared EMC mapping snapshot.
         PayloadTypeRegistry.clientboundPlay().register(
               EmcMappingSyncPayload.TYPE, EmcMappingSyncPayload.STREAM_CODEC);
+
+        // Client-to-server: charge the held item.
+        PayloadTypeRegistry.serverboundPlay().register(
+              ChargeItemPayload.TYPE, ChargeItemPayload.STREAM_CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(ChargeItemPayload.TYPE,
+              ProjectENetworking::handleChargeItem);
+    }
+
+    private static void handleChargeItem(ChargeItemPayload payload, ServerPlayNetworking.Context ctx) {
+        ServerPlayer player = ctx.player();
+        if (player.isSpectator()) return;
+        ItemStack stack = player.getItemInHand(payload.hand());
+        if (stack.isEmpty() || !(stack.getItem() instanceof IItemCharge chargeable)) return;
+        int delta = payload.negative() ? -1 : 1;
+        int before = chargeable.getCharge(stack);
+        ctx.server().execute(() -> {
+            if (chargeable.changeCharge(player, stack, delta)) {
+                player.playSound(payload.negative()
+                      ? SoundEvents.TRIDENT_RETURN : SoundEvents.PLAYER_LEVELUP,
+                      0.4F, payload.negative() ? 0.6F : 1.0F);
+            }
+        });
     }
 
     /**

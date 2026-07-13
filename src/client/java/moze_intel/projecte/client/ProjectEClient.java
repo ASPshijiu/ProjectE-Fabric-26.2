@@ -3,12 +3,18 @@ package moze_intel.projecte.client;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.client.screen.TransmutationTableScreen;
 import moze_intel.projecte.content.ModMenuTypes;
+import moze_intel.projecte.content.items.IItemCharge;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.network.payloads.ChargeItemPayload;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -37,6 +43,35 @@ public final class ProjectEClient implements ClientModInitializer {
               (payload, ctx) -> ctx.client().execute(() ->
                     ProjectEEmc.service().replace(payload.values())));
 
+        // Charge keybind (V): adjust the held item's charge. Shift = discharge. Find the chargeable
+        // item in either hand, send the C2S payload so the server applies it authoritatively, and
+        // apply locally for snappy feedback.
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (CHARGE_KEY.consumeClick()) {
+                InteractionHand hand = findChargeableHand(client);
+                if (hand == null) continue;
+                ItemStack stack = client.player.getItemInHand(hand);
+                if (!(stack.getItem() instanceof IItemCharge chargeable)) continue;
+                boolean negative = (org.lwjgl.glfw.GLFW.glfwGetKey(
+                      client.getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) == 1
+                      || org.lwjgl.glfw.GLFW.glfwGetKey(
+                      client.getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) == 1);
+                chargeable.changeCharge(client.player, stack, negative ? -1 : 1);
+                ClientPlayNetworking.send(new ChargeItemPayload(hand, negative));
+            }
+        });
+
         LOGGER.info("Initializing ProjectE client for Fabric 26.2");
+    }
+
+    private static InteractionHand findChargeableHand(Minecraft client) {
+        if (client.player == null) return null;
+        for (InteractionHand hand : InteractionHand.values()) {
+            ItemStack stack = client.player.getItemInHand(hand);
+            if (stack.getItem() instanceof IItemCharge) {
+                return hand;
+            }
+        }
+        return null;
     }
 }
