@@ -2,8 +2,13 @@ package moze_intel.projecte.transmutation.world;
 
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
 
 /**
  * Performs a server-side world transmutation: looks up the transmutation for the clicked block in
@@ -62,7 +67,29 @@ public final class WorldTransmutationAction {
         if (resultState == null) {
             return false;
         }
-        return level.setBlockAndUpdate(pos, resultState);
+        SignBlockEntity originalSign = level.getBlockEntity(pos) instanceof SignBlockEntity sign
+              ? sign : null;
+        if (!level.setBlockAndUpdate(pos, resultState)) {
+            return false;
+        }
+        if (originalSign != null
+              && level.getBlockEntity(pos) instanceof SignBlockEntity replacementSign) {
+            copySignData(originalSign, replacementSign, level.registryAccess());
+            replacementSign.setChanged();
+            level.sendBlockUpdated(
+                  pos, replacementSign.getBlockState(), replacementSign.getBlockState(), Block.UPDATE_ALL);
+        }
+        return true;
+    }
+
+    static void copySignData(
+          SignBlockEntity source,
+          SignBlockEntity target,
+          HolderLookup.Provider registries
+    ) {
+        target.loadCustomOnly(TagValueInput.create(
+              ProblemReporter.DISCARDING, registries, source.saveCustomOnly(registries)));
+        target.setAllowedPlayerEditor(source.getPlayerWhoMayEdit());
     }
 
     /**
