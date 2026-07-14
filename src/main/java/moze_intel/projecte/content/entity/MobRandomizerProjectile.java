@@ -4,9 +4,7 @@ import java.util.List;
 import moze_intel.projecte.ProjectE;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
-import moze_intel.projecte.emc.EmcValue;
-import moze_intel.projecte.player.PlayerAttachmentKeys;
-import moze_intel.projecte.player.PlayerDataService;
+import moze_intel.projecte.emc.PlayerFuelConsumer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -88,8 +86,7 @@ public final class MobRandomizerProjectile extends Snowball {
             return false;
         }
 
-        PlayerDataService service = new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player));
-        if (!service.tryRemoveEmc(EmcValue.of(PhilosophersStoneItem.MOB_RANDOMIZER_EMC_COST))) {
+        if (PlayerFuelConsumer.consume(player, PhilosophersStoneItem.MOB_RANDOMIZER_EMC_COST) < 0) {
             replacement.discard();
             return false;
         }
