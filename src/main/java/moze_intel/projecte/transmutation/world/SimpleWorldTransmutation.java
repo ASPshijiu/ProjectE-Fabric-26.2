@@ -11,6 +11,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A world transmutation from one block to another, with an optional alternate (shift) result.
@@ -48,6 +50,21 @@ public record SimpleWorldTransmutation(
 
     public boolean hasAlternate() {
         return !result.equals(altResult);
+    }
+
+    /**
+     * Applies this selected rule to a target state, returning {@code null} when the target does not
+     * have the same origin block. A charged Philosopher's Stone selects one rule from its center
+     * block and reuses it across the whole area.
+     */
+    public @Nullable BlockState result(BlockState state, boolean useAlternate) {
+        Objects.requireNonNull(state, "state");
+        if (state.getBlock() != origin.value()) {
+            return null;
+        }
+        Block resultBlock = (useAlternate ? altResult : result).value();
+        return WorldTransmutationAction.copySharedStateProperties(
+              state, resultBlock.defaultBlockState());
     }
 
     public static final Codec<SimpleWorldTransmutation> CODEC = RecordCodecBuilder.create(instance -> instance.group(

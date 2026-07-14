@@ -2,6 +2,7 @@ package moze_intel.projecte.transmutation.world;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonElement;
@@ -59,5 +60,17 @@ class SimpleWorldTransmutationTest {
               () -> new SimpleWorldTransmutation(null, stone, stone));
         assertThrows(NullPointerException.class,
               () -> new SimpleWorldTransmutation(stone, null, stone));
+    }
+
+    @Test
+    void selectedTransmutationOnlyTransformsMatchingOrigins() {
+        SimpleWorldTransmutation stoneToCobble = new SimpleWorldTransmutation(
+              block("minecraft:stone"), block("minecraft:cobblestone"), block("minecraft:grass_block"));
+
+        assertEquals(Blocks.COBBLESTONE.defaultBlockState(),
+              stoneToCobble.result(Blocks.STONE.defaultBlockState(), false));
+        assertEquals(Blocks.GRASS_BLOCK.defaultBlockState(),
+              stoneToCobble.result(Blocks.STONE.defaultBlockState(), true));
+        assertNull(stoneToCobble.result(Blocks.DIRT.defaultBlockState(), false));
     }
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import moze_intel.projecte.content.ModDataComponents;
 import moze_intel.projecte.content.entity.MobRandomizerProjectile;
+import moze_intel.projecte.transmutation.world.SimpleWorldTransmutation;
 import moze_intel.projecte.transmutation.world.WorldTransmutationAction;
 import moze_intel.projecte.transmutation.world.WorldTransmutationStore;
 import net.fabricmc.fabric.api.item.v1.FabricItem;
@@ -186,10 +187,15 @@ public class PhilosophersStoneItem extends Item implements IItemCharge, FabricIt
           Direction horizontalDirection,
           boolean alternate
     ) {
-        if (level.isClientSide()) {
-            return WorldTransmutationStore.current().forOrigin(level.getBlockState(center).getBlock()).isEmpty()
-                  ? InteractionResult.PASS : InteractionResult.SUCCESS;
+        var transmutations = WorldTransmutationStore.current()
+              .forOrigin(level.getBlockState(center).getBlock());
+        if (transmutations.isEmpty()) {
+            return InteractionResult.PASS;
         }
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        SimpleWorldTransmutation transmutation = transmutations.getFirst();
         int changed = 0;
         for (BlockPos target : targetPositions(
               center, clickedFace, horizontalDirection, getMode(stack), getCharge(stack))) {
@@ -201,7 +207,7 @@ public class PhilosophersStoneItem extends Item implements IItemCharge, FabricIt
                   || !serverPlayer.mayUseItemAt(target, clickedFace, stack))) {
                 continue;
             }
-            if (WorldTransmutationAction.apply(level, target, alternate)) {
+            if (WorldTransmutationAction.apply(level, target, transmutation, alternate)) {
                 changed++;
                 if (level instanceof ServerLevel serverLevel && level.getRandom().nextInt(8) == 0) {
                     serverLevel.sendParticles(

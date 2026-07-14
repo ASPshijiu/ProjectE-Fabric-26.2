@@ -35,12 +35,32 @@ public final class WorldTransmutationAction {
         if (candidates.isEmpty()) {
             return false;
         }
-        SimpleWorldTransmutation transmutation = candidates.get(0);
-        BlockState resultState = copySharedStateProperties(
-              originState, transmutation.result().value().defaultBlockState());
-        if (useAlternate) {
-            resultState = copySharedStateProperties(
-                  originState, transmutation.altResult().value().defaultBlockState());
+        return apply(level, pos, originState, candidates.getFirst(), useAlternate);
+    }
+
+    /** Applies a rule selected from the originally clicked block to one target position. */
+    public static boolean apply(
+          Level level,
+          BlockPos pos,
+          SimpleWorldTransmutation transmutation,
+          boolean useAlternate
+    ) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(pos, "pos");
+        return apply(level, pos, level.getBlockState(pos), transmutation, useAlternate);
+    }
+
+    private static boolean apply(
+          Level level,
+          BlockPos pos,
+          BlockState originState,
+          SimpleWorldTransmutation transmutation,
+          boolean useAlternate
+    ) {
+        Objects.requireNonNull(transmutation, "transmutation");
+        BlockState resultState = transmutation.result(originState, useAlternate);
+        if (resultState == null) {
+            return false;
         }
         return level.setBlockAndUpdate(pos, resultState);
     }
