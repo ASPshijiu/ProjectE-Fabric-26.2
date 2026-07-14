@@ -18,6 +18,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -108,6 +110,21 @@ class PhilosophersStoneItemTest {
         String initializer = Files.readString(
               Path.of("src/main/java/moze_intel/projecte/ProjectE.java"));
         assertTrue(initializer.contains("PhilosophersStoneInteractionHandler.register();"));
+    }
+
+    @Test
+    void sneakingPrefersACloserFluidHit() {
+        BlockHitResult clicked = new BlockHitResult(
+              new Vec3(0.5, 64.5, 2.0), Direction.NORTH,
+              new BlockPos(0, 64, 2), false);
+        BlockHitResult fluid = new BlockHitResult(
+              new Vec3(0.5, 64.5, 1.0), Direction.NORTH,
+              new BlockPos(0, 64, 1), false);
+
+        assertEquals(fluid,
+              PhilosophersStoneItem.selectTransmutationHit(clicked, fluid, true));
+        assertEquals(clicked,
+              PhilosophersStoneItem.selectTransmutationHit(clicked, fluid, false));
     }
 
     private static PhilosophersStoneItem allocateWithoutRegistering() throws Exception {

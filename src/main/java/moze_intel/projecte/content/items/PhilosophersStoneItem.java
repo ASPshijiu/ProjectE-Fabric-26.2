@@ -158,10 +158,28 @@ public class PhilosophersStoneItem extends Item implements IItemCharge, FabricIt
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Player player = context.getPlayer();
+        BlockHitResult clicked = new BlockHitResult(
+              context.getClickLocation(), context.getClickedFace(),
+              context.getClickedPos(), context.isInside());
+        BlockHitResult fluidHit = player == null ? clicked
+              : getPlayerPOVHitResult(context.getLevel(), player, ClipContext.Fluid.SOURCE_ONLY);
+        BlockHitResult selected = selectTransmutationHit(
+              clicked, fluidHit, context.isSecondaryUseActive());
         return transmute(
-              context.getLevel(), player, context.getItemInHand(), context.getClickedPos(),
-              context.getClickedFace(), context.getHorizontalDirection(),
+              context.getLevel(), player, context.getItemInHand(), selected.getBlockPos(),
+              selected.getDirection(), context.getHorizontalDirection(),
               context.isSecondaryUseActive());
+    }
+
+    static BlockHitResult selectTransmutationHit(
+          BlockHitResult clicked, BlockHitResult fluidHit, boolean secondaryUse
+    ) {
+        if (secondaryUse
+              && fluidHit.getType() == HitResult.Type.BLOCK
+              && !fluidHit.getBlockPos().equals(clicked.getBlockPos())) {
+            return fluidHit;
+        }
+        return clicked;
     }
 
     @Override
