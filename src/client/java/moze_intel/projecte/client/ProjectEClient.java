@@ -1,8 +1,10 @@
 package moze_intel.projecte.client;
 
 import moze_intel.projecte.api.ProjectEAPI;
+import moze_intel.projecte.client.render.MobRandomizerRenderer;
 import moze_intel.projecte.client.screen.AlchemicalBagScreen;
 import moze_intel.projecte.client.screen.TransmutationTableScreen;
+import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.items.IItemCharge;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
@@ -17,6 +19,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -48,6 +51,9 @@ public final class ProjectEClient implements ClientModInitializer {
         KeyMappingHelper.registerKeyMapping(MODE_KEY);
         KeyMappingHelper.registerKeyMapping(EXTRA_FUNCTION_KEY);
         KeyMappingHelper.registerKeyMapping(FIRE_PROJECTILE_KEY);
+
+        EntityRenderers.register(
+              ModEntityTypes.MOB_RANDOMIZER, MobRandomizerRenderer::new);
 
         MenuScreens.register(ModMenuTypes.TRANSMUTATION_TABLE, TransmutationTableScreen::new);
         MenuScreens.register(ModMenuTypes.ALCHEMICAL_BAG, AlchemicalBagScreen::new);

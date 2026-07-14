@@ -3,6 +3,7 @@ package moze_intel.projecte;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.ModCreativeTab;
 import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModItems;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.ModBlocks;
@@ -41,6 +42,7 @@ public final class ProjectE implements ModInitializer {
     public void onInitialize() {
         PlayerAttachments.init();
         ModDataComponents.init();
+        ModEntityTypes.init();
         ModItems.init();
         PhilosophersStoneInteractionHandler.register();
         ModCreativeTab.init();

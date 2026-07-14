@@ -3,9 +3,11 @@ package moze_intel.projecte.content.entity;
 import java.util.List;
 import moze_intel.projecte.ProjectE;
 import moze_intel.projecte.api.ProjectEAPI;
+import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import moze_intel.projecte.emc.PlayerFuelConsumer;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
@@ -13,28 +15,43 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.animal.rabbit.Rabbit;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 
-/**
- * Server-side snowball variant used by the Philosopher's Stone. The vanilla snowball entity type
- * keeps client rendering and tracking compatible without registering a custom entity type.
- */
+/** Dedicated no-gravity projectile used by the Philosopher's Stone mob randomizer. */
 public final class MobRandomizerProjectile extends Snowball {
     private static final TagKey<EntityType<?>> PEACEFUL = TagKey.create(
           Registries.ENTITY_TYPE, ProjectEAPI.id("randomizer/peaceful"));
     private static final TagKey<EntityType<?>> HOSTILE = TagKey.create(
           Registries.ENTITY_TYPE, ProjectEAPI.id("randomizer/hostile"));
 
-    public MobRandomizerProjectile(Level level, LivingEntity owner, ItemStack displayStack) {
-        super(level, owner, displayStack);
+    public MobRandomizerProjectile(EntityType<? extends Snowball> type, Level level) {
+        super(type, level);
         setNoGravity(true);
+    }
+
+    public MobRandomizerProjectile(Level level, LivingEntity owner) {
+        this(ModEntityTypes.MOB_RANDOMIZER, level);
+        setPos(owner.getX(), owner.getEyeY() - 0.10000000149011612D, owner.getZ());
+        setOwner(owner);
+    }
+
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == EntityEvent.DEATH) {
+            for (int i = 0; i < 8; i++) {
+                level().addParticle(
+                      ParticleTypes.PORTAL,
+                      getX(), getY() + random.nextDouble() * 2.0D, getZ(),
+                      random.nextGaussian(), 0.0D, random.nextGaussian());
+            }
+        }
     }
 
     @Override

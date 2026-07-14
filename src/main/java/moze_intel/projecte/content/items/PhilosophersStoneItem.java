@@ -26,7 +26,6 @@ import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
@@ -104,8 +103,7 @@ public class PhilosophersStoneItem extends Item implements IItemCharge, FabricIt
         if (player.getCooldowns().isOnCooldown(stack)) {
             return false;
         }
-        MobRandomizerProjectile projectile = new MobRandomizerProjectile(
-              player.level(), player, new ItemStack(Items.ENDER_PEARL));
+        MobRandomizerProjectile projectile = new MobRandomizerProjectile(player.level(), player);
         projectile.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, 1.5F, 1.0F);
         if (!player.level().addFreshEntity(projectile)) {
             return false;
