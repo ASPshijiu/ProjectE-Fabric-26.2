@@ -69,7 +69,7 @@ public final class PlayerInventoryTickHandler {
 
                     // Repair once per second if talisman present
                     if (hasTalisman) {
-                        RepairTalismanItem.tickRepair(player, true);
+                        RepairTalismanItem.tickRepair(inventory, true);
                     }
                 }
             }
