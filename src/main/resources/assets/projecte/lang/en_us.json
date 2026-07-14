@@ -143,6 +143,7 @@
   "mode.projecte.philosopher.1": "Cube",
   "mode.projecte.philosopher.2": "Panel",
   "mode.projecte.philosopher.3": "Line",
+  "tooltip.projecte.philostone": "Press %s to open a crafting grid",
 
   "command.projecte.emc": "ProjectE EMC",
   "command.projecte.knowledge": "ProjectE Knowledge"

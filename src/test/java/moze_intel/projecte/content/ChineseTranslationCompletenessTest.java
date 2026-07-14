@@ -17,6 +17,9 @@ class ChineseTranslationCompletenessTest {
         JsonObject english = read("en_us.json");
         JsonObject chinese = read("zh_cn.json");
 
+        assertTrue(english.has("tooltip.projecte.philostone"),
+              "en_us.json is missing the Philosopher's Stone crafting hint");
+
         for (String key : english.keySet()) {
             assertTrue(chinese.has(key), "zh_cn.json is missing " + key);
             String value = chinese.get(key).getAsString();

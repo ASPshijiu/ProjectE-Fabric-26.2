@@ -1,6 +1,7 @@
 package moze_intel.projecte.content.items;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -16,6 +17,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.KeybindContents;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.phys.BlockHitResult;
@@ -125,6 +128,18 @@ class PhilosophersStoneItemTest {
               PhilosophersStoneItem.selectTransmutationHit(clicked, fluid, true));
         assertEquals(clicked,
               PhilosophersStoneItem.selectTransmutationHit(clicked, fluid, false));
+    }
+
+    @Test
+    void portableCraftingTooltipUsesTheConfiguredExtraFunctionKey() {
+        Component tooltip = PhilosophersStoneItem.portableCraftingTooltip();
+        TranslatableContents text = assertInstanceOf(
+              TranslatableContents.class, tooltip.getContents());
+        assertEquals("tooltip.projecte.philostone", text.getKey());
+        Component keyArgument = assertInstanceOf(Component.class, text.getArgs()[0]);
+        KeybindContents keybind = assertInstanceOf(
+              KeybindContents.class, keyArgument.getContents());
+        assertEquals("key.projecte.extra_function", keybind.getName());
     }
 
     private static PhilosophersStoneItem allocateWithoutRegistering() throws Exception {
