@@ -3,9 +3,12 @@ package moze_intel.projecte.content.items;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import net.fabricmc.fabric.api.item.v1.FabricItem;
 import net.minecraft.core.Holder;
 import net.minecraft.core.BlockPos;
@@ -89,6 +92,22 @@ class PhilosophersStoneItemTest {
               "openPortableCrafting", net.minecraft.server.level.ServerPlayer.class, ItemStack.class);
         PhilosophersStoneItem.class.getDeclaredMethod(
               "shootMobRandomizer", net.minecraft.server.level.ServerPlayer.class, ItemStack.class);
+    }
+
+    @Test
+    void registersInteractionBeforeInteractiveBlocksConsumeTheClick() throws Exception {
+        Class<?> handler;
+        try {
+            handler = Class.forName(
+                  "moze_intel.projecte.event.PhilosophersStoneInteractionHandler");
+        } catch (ClassNotFoundException exception) {
+            fail("The stone needs a Fabric pre-block interaction handler", exception);
+            return;
+        }
+        handler.getDeclaredMethod("register");
+        String initializer = Files.readString(
+              Path.of("src/main/java/moze_intel/projecte/ProjectE.java"));
+        assertTrue(initializer.contains("PhilosophersStoneInteractionHandler.register();"));
     }
 
     private static PhilosophersStoneItem allocateWithoutRegistering() throws Exception {

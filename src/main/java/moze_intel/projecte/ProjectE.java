@@ -13,6 +13,7 @@ import moze_intel.projecte.emc.reload.EmcReloadListener;
 import moze_intel.projecte.emc.reload.RecipeConversionSource;
 import moze_intel.projecte.emc.reload.VanillaRecipeConversionSource;
 import moze_intel.projecte.event.PlayerInventoryTickHandler;
+import moze_intel.projecte.event.PhilosophersStoneInteractionHandler;
 import moze_intel.projecte.network.ProjectENetworking;
 import moze_intel.projecte.player.PlayerAttachments;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
@@ -41,6 +42,7 @@ public final class ProjectE implements ModInitializer {
         PlayerAttachments.init();
         ModDataComponents.init();
         ModItems.init();
+        PhilosophersStoneInteractionHandler.register();
         ModCreativeTab.init();
         ModBlocks.init();
         ModMenuTypes.init();
