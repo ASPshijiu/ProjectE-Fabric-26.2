@@ -15,7 +15,7 @@ public class RepairTalismanItem extends Item {
 
     /**
      * Call from a server-side inventory tick handler once per second.
-     * Finds the first damaged, repairable item and repairs 1 durability.
+     * Repairs every damaged, repairable item by 1 durability.
      */
     public static void tickRepair(Container inventory, boolean hasTalisman) {
         if (!hasTalisman) return;
@@ -26,7 +26,6 @@ public class RepairTalismanItem extends Item {
             if (stack.getItem() instanceof RepairTalismanItem) continue; // don't repair itself
 
             stack.setDamageValue(stack.getDamageValue() - 1);
-            return; // one repair per tick
         }
     }
 
