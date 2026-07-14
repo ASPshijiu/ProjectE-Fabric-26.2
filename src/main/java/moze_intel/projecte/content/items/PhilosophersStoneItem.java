@@ -6,6 +6,7 @@ import moze_intel.projecte.content.ModDataComponents;
 import moze_intel.projecte.content.entity.MobRandomizerProjectile;
 import moze_intel.projecte.transmutation.world.WorldTransmutationAction;
 import moze_intel.projecte.transmutation.world.WorldTransmutationStore;
+import net.fabricmc.fabric.api.item.v1.FabricItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -22,6 +23,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
@@ -34,10 +36,10 @@ import net.minecraft.world.phys.HitResult;
  * shift-right-clicking performs the alternate result. The conversion is fully server-authoritative
  * through {@link WorldTransmutationAction}.
  */
-public class PhilosophersStoneItem extends Item implements IItemCharge {
+public class PhilosophersStoneItem extends Item implements IItemCharge, FabricItem {
     public static final long MOB_RANDOMIZER_EMC_COST = 384;
 
-    public PhilosophersStoneItem(Properties properties) {
+    public PhilosophersStoneItem(Item.Properties properties) {
         super(properties);
     }
 
@@ -46,8 +48,9 @@ public class PhilosophersStoneItem extends Item implements IItemCharge {
         return 4;
     }
 
-    public ItemStack getRecipeRemainder(ItemStack stack) {
-        return stack.copy();
+    @Override
+    public ItemStackTemplate getCraftingRemainder(ItemStack stack) {
+        return ItemStackTemplate.fromNonEmptyStack(stack.copyWithCount(1));
     }
 
     public Mode getMode(ItemStack stack) {

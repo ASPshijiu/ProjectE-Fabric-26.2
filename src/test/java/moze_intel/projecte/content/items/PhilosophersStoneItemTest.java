@@ -1,15 +1,20 @@
 package moze_intel.projecte.content.items;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import net.fabricmc.fabric.api.item.v1.FabricItem;
+import net.minecraft.core.Holder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStackTemplate;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -62,18 +67,16 @@ class PhilosophersStoneItemTest {
     }
 
     @Test
-    void craftingReturnsAnUnconsumedCopyOfTheStone() throws Exception {
-        Method remainder;
-        try {
-            remainder = PhilosophersStoneItem.class.getDeclaredMethod(
-                  "getRecipeRemainder", ItemStack.class);
-        } catch (NoSuchMethodException exception) {
-            fail("PhilosophersStoneItem must declare getRecipeRemainder", exception);
-            return;
-        }
+    void fabricCraftingRemainderPreservesTheStoneAndItsComponents() throws Exception {
+        assertTrue(FabricItem.class.isAssignableFrom(PhilosophersStoneItem.class),
+              "The stone must use Fabric's stack-aware crafting remainder API");
         PhilosophersStoneItem stone = allocateWithoutRegistering();
-        ItemStack original = new ItemStack(Items.STONE);
-        ItemStack returned = (ItemStack) remainder.invoke(stone, original);
+        ItemStack original = new ItemStack(Holder.direct(stone, DataComponentMap.EMPTY));
+        original.set(DataComponents.CUSTOM_NAME, Component.literal("charged stone"));
+
+        ItemStackTemplate template = ((FabricItem) stone).getCraftingRemainder(original);
+        assertNotNull(template);
+        ItemStack returned = template.create();
 
         assertTrue(returned != original);
         assertTrue(ItemStack.matches(original, returned));
