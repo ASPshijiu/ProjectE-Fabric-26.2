@@ -43,4 +43,20 @@ class RepairTalismanItemTest {
         assertEquals(6, damagedPickaxe.getDamageValue());
         assertEquals(10, damagedAxe.getDamageValue());
     }
+
+    @Test
+    void skipsSwingingMainHandItem() {
+        ItemStack damagedPickaxe = new ItemStack(Items.IRON_PICKAXE);
+        damagedPickaxe.set(DataComponents.MAX_DAMAGE, 250);
+        damagedPickaxe.set(DataComponents.DAMAGE, 7);
+        ItemStack damagedAxe = new ItemStack(Items.IRON_AXE);
+        damagedAxe.set(DataComponents.MAX_DAMAGE, 250);
+        damagedAxe.set(DataComponents.DAMAGE, 11);
+        SimpleContainer inventory = new SimpleContainer(damagedPickaxe, damagedAxe);
+
+        RepairTalismanItem.tickRepair(inventory, true, damagedPickaxe);
+
+        assertEquals(7, damagedPickaxe.getDamageValue());
+        assertEquals(10, damagedAxe.getDamageValue());
+    }
 }

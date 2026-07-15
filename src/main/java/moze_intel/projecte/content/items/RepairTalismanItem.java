@@ -18,12 +18,17 @@ public class RepairTalismanItem extends Item {
      * Repairs every damaged, repairable item by 1 durability.
      */
     public static void tickRepair(Container inventory, boolean hasTalisman) {
+        tickRepair(inventory, hasTalisman, ItemStack.EMPTY);
+    }
+
+    public static void tickRepair(Container inventory, boolean hasTalisman, ItemStack activeMainHand) {
         if (!hasTalisman) return;
 
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty() || !stack.isDamaged()) continue;
             if (stack.getItem() instanceof RepairTalismanItem) continue; // don't repair itself
+            if (stack == activeMainHand) continue;
 
             stack.setDamageValue(stack.getDamageValue() - 1);
         }
