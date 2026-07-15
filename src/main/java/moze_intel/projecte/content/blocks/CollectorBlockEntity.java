@@ -3,6 +3,7 @@ package moze_intel.projecte.content.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -28,6 +29,7 @@ public final class CollectorBlockEntity {
         final int emcPerSecond;
         final long maximumEmc;
         long storedEmc;
+        double unprocessedEmc;
         NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int emcPerSecond) {
@@ -63,6 +65,7 @@ public final class CollectorBlockEntity {
         protected void loadAdditional(ValueInput input) {
             super.loadAdditional(input);
             storedEmc = Math.max(0, Math.min(input.getLongOr("emc", 0), maximumEmc));
+            unprocessedEmc = input.getDoubleOr("unprocessed_emc", 0);
             items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
             ContainerHelper.loadAllItems(input, items);
         }
@@ -71,16 +74,29 @@ public final class CollectorBlockEntity {
         protected void saveAdditional(ValueOutput output) {
             super.saveAdditional(output);
             output.putLong("emc", storedEmc);
+            output.putDouble("unprocessed_emc", unprocessedEmc);
             ContainerHelper.saveAllItems(output, items);
         }
 
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
-            int light = level.getMaxLocalRawBrightness(pos);
-            if (light > 0) {
-                entity.setStoredEmc(entity.storedEmc
-                      + (long) entity.emcPerSecond * light / 15);
+            int sunLevel = level.environmentAttributes()
+                  .getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)
+                  ? 16
+                  : level.getMaxLocalRawBrightness(pos.above()) + 1;
+            entity.generateEmc(sunLevel);
+        }
+
+        void generateEmc(int sunLevel) {
+            if (storedEmc >= maximumEmc) return;
+            unprocessedEmc += emcPerSecond * (sunLevel / 320.0);
+            long emcToStore = (long) unprocessedEmc;
+            if (emcToStore > 0) {
+                long inserted = Math.min(emcToStore, maximumEmc - storedEmc);
+                setStoredEmc(storedEmc + inserted);
+                unprocessedEmc -= inserted;
             }
+            setChanged();
         }
     }
 

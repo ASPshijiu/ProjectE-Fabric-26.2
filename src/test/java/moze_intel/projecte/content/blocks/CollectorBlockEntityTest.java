@@ -66,6 +66,62 @@ class CollectorBlockEntityTest {
         assertEquals(0, mk1.getStoredEmc());
     }
 
+    @Test
+    void fullLightProducesConfiguredEmcPerSecondForEveryTier() {
+        TestCollector mk1 = new TestCollector(1, 4);
+        TestCollector mk2 = new TestCollector(2, 12);
+        TestCollector mk3 = new TestCollector(3, 40);
+
+        generateForTicks(mk1, 16, 20);
+        generateForTicks(mk2, 16, 20);
+        generateForTicks(mk3, 16, 20);
+
+        assertEquals(4, mk1.getStoredEmc());
+        assertEquals(12, mk2.getStoredEmc());
+        assertEquals(40, mk3.getStoredEmc());
+    }
+
+    @Test
+    void fractionalEmcAccumulatesAcrossTicks() {
+        TestCollector collector = new TestCollector(1, 4);
+
+        generateForTicks(collector, 4, 19);
+        assertEquals(0, collector.getStoredEmc());
+
+        collector.generateEmc(4);
+        assertEquals(1, collector.getStoredEmc());
+    }
+
+    @Test
+    void saveAndLoadPreserveFractionalEmc() {
+        TestCollector source = new TestCollector(1, 4);
+        generateForTicks(source, 4, 10);
+
+        CompoundTag saved = source.saveCustomOnly(registries);
+        TestCollector restored = new TestCollector(1, 4);
+        restored.loadCustomOnly(TagValueInput.create(
+              ProblemReporter.DISCARDING, registries, saved));
+        generateForTicks(restored, 4, 10);
+
+        assertEquals(1, restored.getStoredEmc());
+    }
+
+    @Test
+    void collectorStopsGeneratingAtMaximumCapacity() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(collector.getMaximumEmc());
+
+        generateForTicks(collector, 16, 20);
+
+        assertEquals(collector.getMaximumEmc(), collector.getStoredEmc());
+    }
+
+    private static void generateForTicks(TestCollector collector, int light, int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            collector.generateEmc(light);
+        }
+    }
+
     private static final class TestCollector extends CollectorBlockEntity.Base {
         private TestCollector() {
             this(1, 4);
