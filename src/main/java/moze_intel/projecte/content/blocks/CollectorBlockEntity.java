@@ -26,6 +26,7 @@ public final class CollectorBlockEntity {
     public static abstract class Base extends net.minecraft.world.level.block.entity.BaseContainerBlockEntity {
         final int tier;
         final int emcPerSecond;
+        final long maximumEmc;
         long storedEmc;
         NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
 
@@ -33,6 +34,12 @@ public final class CollectorBlockEntity {
             super(type, pos, state);
             this.tier = tier;
             this.emcPerSecond = emcPerSecond;
+            this.maximumEmc = switch (tier) {
+                case 1 -> 10_000;
+                case 2 -> 30_000;
+                case 3 -> 60_000;
+                default -> throw new IllegalArgumentException("Unknown collector tier: " + tier);
+            };
         }
 
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.collector_mk" + tier); }
@@ -43,17 +50,19 @@ public final class CollectorBlockEntity {
 
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
-            if (storedEmc != emc) {
-                storedEmc = emc;
+            long clamped = Math.max(0, Math.min(emc, maximumEmc));
+            if (storedEmc != clamped) {
+                storedEmc = clamped;
                 setChanged();
             }
         }
         public int getEmcPerSecond() { return emcPerSecond; }
+        public long getMaximumEmc() { return maximumEmc; }
 
         @Override
         protected void loadAdditional(ValueInput input) {
             super.loadAdditional(input);
-            storedEmc = input.getLongOr("emc", 0);
+            storedEmc = Math.max(0, Math.min(input.getLongOr("emc", 0), maximumEmc));
             items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
             ContainerHelper.loadAllItems(input, items);
         }

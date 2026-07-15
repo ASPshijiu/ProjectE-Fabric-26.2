@@ -36,7 +36,7 @@ class CollectorBlockEntityTest {
     @Test
     void saveAndLoadPreserveStoredEmcAndInventory() {
         TestCollector source = new TestCollector();
-        source.setStoredEmc(123_456);
+        source.setStoredEmc(9_876);
         source.setItem(0, new ItemStack(Items.DIAMOND));
 
         CompoundTag saved = source.saveCustomOnly(registries);
@@ -44,18 +44,41 @@ class CollectorBlockEntityTest {
         restored.loadCustomOnly(TagValueInput.create(
               ProblemReporter.DISCARDING, registries, saved));
 
-        assertEquals(123_456, restored.getStoredEmc());
+        assertEquals(9_876, restored.getStoredEmc());
         assertTrue(restored.getItem(0).is(Items.DIAMOND));
         assertEquals(1, restored.getItem(0).getCount());
     }
 
+    @Test
+    void storedEmcIsCappedByCollectorTier() {
+        TestCollector mk1 = new TestCollector(1, 4);
+        TestCollector mk2 = new TestCollector(2, 12);
+        TestCollector mk3 = new TestCollector(3, 40);
+
+        mk1.setStoredEmc(Long.MAX_VALUE);
+        mk2.setStoredEmc(Long.MAX_VALUE);
+        mk3.setStoredEmc(Long.MAX_VALUE);
+
+        assertEquals(10_000, mk1.getStoredEmc());
+        assertEquals(30_000, mk2.getStoredEmc());
+        assertEquals(60_000, mk3.getStoredEmc());
+        mk1.setStoredEmc(-1);
+        assertEquals(0, mk1.getStoredEmc());
+    }
+
     private static final class TestCollector extends CollectorBlockEntity.Base {
         private TestCollector() {
-            this(BlockPos.ZERO, Blocks.FURNACE.defaultBlockState());
+            this(1, 4);
         }
 
-        private TestCollector(BlockPos pos, BlockState state) {
-            super(collectorType, pos, state, 1, 4);
+        private TestCollector(int tier, int emcPerSecond) {
+            this(BlockPos.ZERO, Blocks.FURNACE.defaultBlockState(), tier, emcPerSecond);
+        }
+
+        private TestCollector(
+              BlockPos pos, BlockState state, int tier, int emcPerSecond
+        ) {
+            super(collectorType, pos, state, tier, emcPerSecond);
         }
     }
 }
