@@ -54,6 +54,11 @@ public class KleinStarItem extends Item {
     public static long addEmc(ItemStack stack, long amount) {
         long current = getStoredEmc(stack);
         long max = stack.getItem() instanceof KleinStarItem ks ? ks.getMaxEmc() : 0;
+        if (amount >= 0) {
+            long accepted = Math.min(amount, Math.max(0, max - current));
+            setStoredEmc(stack, current + accepted);
+            return amount - accepted;
+        }
         long newVal = current + amount;
         if (newVal > max) {
             setStoredEmc(stack, max);
