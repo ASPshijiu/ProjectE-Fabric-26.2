@@ -1,17 +1,23 @@
 package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.content.menu.AlchemicalBagMenu;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
 
 /**
@@ -31,6 +37,36 @@ public class AlchemicalBagItem extends Item {
 
     public DyeColor getColor() {
         return color;
+    }
+
+    static void repairContents(ItemStack bagStack) {
+        SimpleContainer contents = new SimpleContainer(AlchemicalBagMenu.BAG_SLOTS);
+        ItemContainerContents stored = bagStack.getOrDefault(
+              DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        stored.copyInto(contents.items);
+
+        boolean hasTalisman = false;
+        for (int slot = 0; slot < contents.getContainerSize(); slot++) {
+            if (RepairTalismanItem.isTalisman(contents.getItem(slot))) {
+                hasTalisman = true;
+                break;
+            }
+        }
+        if (!hasTalisman) return;
+
+        RepairTalismanItem.tickRepair(contents, true);
+        bagStack.set(DataComponents.CONTAINER,
+              ItemContainerContents.fromItems(contents.getItems()));
+    }
+
+    @Override
+    public void inventoryTick(
+          ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot equipmentSlot
+    ) {
+        super.inventoryTick(stack, level, entity, equipmentSlot);
+        if (entity.tickCount % 20 == 0) {
+            repairContents(stack);
+        }
     }
 
     @Override
