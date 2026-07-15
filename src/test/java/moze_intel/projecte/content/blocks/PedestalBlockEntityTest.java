@@ -7,7 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
+import moze_intel.projecte.content.items.RepairTalismanItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
@@ -63,6 +68,38 @@ class PedestalBlockEntityTest {
               ItemStack.EMPTY, null, null, null, null, null, null);
 
         assertSame(InteractionResult.TRY_WITH_EMPTY_HAND, result);
+    }
+
+    @Test
+    void activeRepairTalismanRepairsNearbyInventories() throws Exception {
+        SimpleContainer pedestal = new SimpleContainer(talismanStack());
+        ItemStack damagedPickaxe = damagedPickaxe(7);
+        SimpleContainer nearbyInventory = new SimpleContainer(damagedPickaxe);
+
+        boolean handled = PedestalBlockEntity.repairNearbyInventories(
+              pedestal, true, List.of(
+                    new PedestalBlockEntity.RepairTarget(nearbyInventory, ItemStack.EMPTY)));
+
+        assertTrue(handled);
+        assertEquals(6, damagedPickaxe.getDamageValue());
+    }
+
+    private static ItemStack damagedPickaxe(int damage) {
+        ItemStack stack = new ItemStack(Items.IRON_PICKAXE);
+        stack.set(DataComponents.MAX_DAMAGE, 250);
+        stack.set(DataComponents.DAMAGE, damage);
+        return stack;
+    }
+
+    private static ItemStack talismanStack() throws Exception {
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field field = unsafeClass.getDeclaredField("theUnsafe");
+        field.setAccessible(true);
+        Object unsafe = field.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        RepairTalismanItem item =
+              (RepairTalismanItem) allocateInstance.invoke(unsafe, RepairTalismanItem.class);
+        return new ItemStack(Holder.direct(item, DataComponentMap.EMPTY));
     }
 
     private static PedestalBlock allocateBlockWithoutRegistering() throws Exception {

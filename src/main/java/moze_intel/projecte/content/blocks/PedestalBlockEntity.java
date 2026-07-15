@@ -1,11 +1,13 @@
 package moze_intel.projecte.content.blocks;
 
 import moze_intel.projecte.content.ModBlockEntities;
+import moze_intel.projecte.content.items.RepairTalismanItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -14,11 +16,14 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Dark Matter Pedestal — stores one item and applies its pedestal effect while active.
  */
 public class PedestalBlockEntity extends BaseContainerBlockEntity {
+    private static final int EFFECT_RANGE = 4;
+    private static final int REPAIR_INTERVAL = 20;
     private static final Component NAME = Component.translatable("container.projecte.dm_pedestal");
     private NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     private boolean active;
@@ -34,8 +39,34 @@ public class PedestalBlockEntity extends BaseContainerBlockEntity {
     @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; }
 
     public static void tick(Level level, BlockPos pos, BlockState state, PedestalBlockEntity entity) {
-        if (level.isClientSide()) return;
+        if (level.isClientSide()
+              || level.getGameTime() % REPAIR_INTERVAL != 0
+              || !entity.isActive()
+              || !RepairTalismanItem.isTalisman(entity.getItem(0))) {
+            return;
+        }
+
+        var targets = level.getEntitiesOfClass(Player.class, new AABB(pos).inflate(EFFECT_RANGE))
+              .stream()
+              .map(player -> new RepairTarget(
+                    player.getInventory(),
+                    player.swinging ? player.getMainHandItem() : ItemStack.EMPTY))
+              .toList();
+        repairNearbyInventories(entity, entity.isActive(), targets);
     }
+
+    static boolean repairNearbyInventories(
+          Container pedestal, boolean active, Iterable<RepairTarget> targets
+    ) {
+        if (!active || !RepairTalismanItem.isTalisman(pedestal.getItem(0))) return false;
+
+        for (RepairTarget target : targets) {
+            RepairTalismanItem.tickRepair(target.inventory(), true, target.activeMainHand());
+        }
+        return true;
+    }
+
+    record RepairTarget(Container inventory, ItemStack activeMainHand) {}
 
     static boolean insertItem(Container pedestal, ItemStack held) {
         if (held.isEmpty() || !pedestal.isEmpty()) return false;
