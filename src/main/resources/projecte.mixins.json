@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "moze_intel.projecte.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "AbstractFurnaceBlockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

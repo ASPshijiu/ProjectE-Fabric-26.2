@@ -19,6 +19,7 @@
     ]
   },
   "mixins": [
+    "projecte.mixins.json",
     "projecte.client.mixins.json"
   ],
   "depends": {
