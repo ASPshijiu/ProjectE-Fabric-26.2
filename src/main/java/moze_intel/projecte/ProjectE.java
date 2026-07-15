@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 public final class ProjectE implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(ProjectEAPI.MOD_ID);
@@ -106,5 +107,10 @@ public final class ProjectE implements ModInitializer {
         }
         return List.of(new VanillaRecipeConversionSource(
               current.getRecipeManager(), current.registryAccess()));
+    }
+
+    /** Returns the active logical server when one is running. */
+    public static Optional<MinecraftServer> currentServer() {
+        return Optional.ofNullable(server);
     }
 }
