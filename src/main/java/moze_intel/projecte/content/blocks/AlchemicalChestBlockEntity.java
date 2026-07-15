@@ -1,14 +1,17 @@
 package moze_intel.projecte.content.blocks;
 
 import moze_intel.projecte.content.ModBlockEntities;
+import moze_intel.projecte.content.items.RepairTalismanItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -21,6 +24,24 @@ public class AlchemicalChestBlockEntity extends RandomizableContainerBlockEntity
 
     public AlchemicalChestBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ALCHEMICAL_CHEST, pos, state);
+    }
+
+    public static void tick(
+          Level level, BlockPos pos, BlockState state, AlchemicalChestBlockEntity entity
+    ) {
+        if (!level.isClientSide() && level.getGameTime() % 20 == 0 && repairContents(entity)) {
+            entity.setChanged();
+        }
+    }
+
+    static boolean repairContents(Container contents) {
+        for (int slot = 0; slot < contents.getContainerSize(); slot++) {
+            if (RepairTalismanItem.isTalisman(contents.getItem(slot))) {
+                RepairTalismanItem.tickRepair(contents, true);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override public int getContainerSize() { return SIZE; }
