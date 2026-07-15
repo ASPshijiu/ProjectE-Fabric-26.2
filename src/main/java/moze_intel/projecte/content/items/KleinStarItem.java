@@ -2,6 +2,7 @@ package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.content.ModDataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -75,6 +76,27 @@ public class KleinStarItem extends Item {
         long toRemove = Math.min(current, amount);
         setStoredEmc(stack, current - toRemove);
         return toRemove;
+    }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return getStoredEmc(stack) > 0;
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        return Math.round(13.0F * getStoredFraction(stack));
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        return Mth.hsvToRgb(getStoredFraction(stack) / 3.0F, 1.0F, 1.0F);
+    }
+
+    private float getStoredFraction(ItemStack stack) {
+        long maxEmc = getMaxEmc();
+        if (maxEmc <= 0) return 0;
+        return (float) Mth.clamp(getStoredEmc(stack) / (double) maxEmc, 0, 1);
     }
 
     @Override
