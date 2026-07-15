@@ -3,6 +3,7 @@ package moze_intel.projecte.content.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -10,6 +11,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /** Energy Condenser MK1-2 (102 slots). */
 public final class CondenserBlockEntity {
@@ -35,7 +38,27 @@ public final class CondenserBlockEntity {
         @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return SIZE; }
 
         public long getStoredEmc() { return storedEmc; }
-        public void setStoredEmc(long e) { this.storedEmc = e; }
+        public void setStoredEmc(long emc) {
+            if (storedEmc != emc) {
+                storedEmc = emc;
+                setChanged();
+            }
+        }
+
+        @Override
+        protected void loadAdditional(ValueInput input) {
+            super.loadAdditional(input);
+            storedEmc = input.getLongOr("emc", 0);
+            items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
+            ContainerHelper.loadAllItems(input, items);
+        }
+
+        @Override
+        protected void saveAdditional(ValueOutput output) {
+            super.saveAdditional(output);
+            output.putLong("emc", storedEmc);
+            ContainerHelper.saveAllItems(output, items);
+        }
 
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
