@@ -292,15 +292,18 @@ public final class ModBlocks {
 
     private static BlockItem registerBlockItem(Identifier id, Block block) {
         return Registry.register(BuiltInRegistries.ITEM, id,
-              new BlockItem(block, new Item.Properties()
-                    .setId(ResourceKey.create(Registries.ITEM, id))));
+              new BlockItem(block, blockItemProperties(id)));
     }
 
     private static BlockItem registerFireImmuneBlockItem(Identifier id, Block block) {
         return Registry.register(BuiltInRegistries.ITEM, id,
-              new BlockItem(block, new Item.Properties()
-                    .fireResistant()
-                    .setId(ResourceKey.create(Registries.ITEM, id))));
+              new BlockItem(block, blockItemProperties(id).fireResistant()));
+    }
+
+    static Item.Properties blockItemProperties(Identifier id) {
+        return new Item.Properties()
+              .useBlockDescriptionPrefix()
+              .setId(ResourceKey.create(Registries.ITEM, id));
     }
 
     private static <T extends net.minecraft.world.level.block.entity.BlockEntity> BlockEntityType<T> registerBlockEntity(
