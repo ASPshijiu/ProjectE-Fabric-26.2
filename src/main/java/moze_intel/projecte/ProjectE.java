@@ -7,6 +7,7 @@ import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModFuels;
 import moze_intel.projecte.content.ModItems;
 import moze_intel.projecte.content.ModMenuTypes;
+import moze_intel.projecte.content.ModRecipeSerializers;
 import moze_intel.projecte.content.ModBlocks;
 import moze_intel.projecte.command.ProjectECommands;
 import moze_intel.projecte.emc.NormalizedStackKey;
@@ -43,6 +44,7 @@ public final class ProjectE implements ModInitializer {
     public void onInitialize() {
         PlayerAttachments.init();
         ModDataComponents.init();
+        ModRecipeSerializers.init();
         ModEntityTypes.init();
         ModItems.init();
         PhilosophersStoneInteractionHandler.register();

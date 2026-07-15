@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "projecte:crafting_shapeless_kleinstar",
   "category": "equipment",
   "ingredients": [
     "projecte:klein_star_drei",
