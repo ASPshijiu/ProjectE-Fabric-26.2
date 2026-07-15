@@ -25,11 +25,20 @@ public final class RelayBlockEntity {
     abstract static class Base extends BaseContainerBlockEntity {
         final int tier;
         final int transferRate;
+        final long maximumEmc;
         long storedEmc;
         NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int rate) {
-            super(type, pos, state); this.tier = tier; this.transferRate = rate;
+            super(type, pos, state);
+            this.tier = tier;
+            this.transferRate = rate;
+            this.maximumEmc = switch (tier) {
+                case 1 -> 100_000;
+                case 2 -> 1_000_000;
+                case 3 -> 10_000_000;
+                default -> throw new IllegalArgumentException("Unknown relay tier: " + tier);
+            };
         }
 
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.relay_mk" + tier); }
@@ -39,16 +48,18 @@ public final class RelayBlockEntity {
 
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
-            if (storedEmc != emc) {
-                storedEmc = emc;
+            long clamped = Math.max(0, Math.min(emc, maximumEmc));
+            if (storedEmc != clamped) {
+                storedEmc = clamped;
                 setChanged();
             }
         }
+        public long getMaximumEmc() { return maximumEmc; }
 
         @Override
         protected void loadAdditional(ValueInput input) {
             super.loadAdditional(input);
-            storedEmc = input.getLongOr("emc", 0);
+            storedEmc = Math.max(0, Math.min(input.getLongOr("emc", 0), maximumEmc));
             items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
             ContainerHelper.loadAllItems(input, items);
         }
