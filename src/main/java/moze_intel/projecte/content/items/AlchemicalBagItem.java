@@ -22,7 +22,7 @@ import net.minecraft.world.level.Level;
 
 /**
  * Alchemical Bag — a color-coded portable storage container. Each of the 16 dye colors has its own
- * item but the same 27-slot inventory, persisted on the stack via the vanilla {@code CONTAINER}
+ * item but the same 104-slot inventory, persisted on the stack via the vanilla {@code CONTAINER}
  * component. Right-clicking opens the {@link AlchemicalBagMenu}.
  */
 public class AlchemicalBagItem extends Item {

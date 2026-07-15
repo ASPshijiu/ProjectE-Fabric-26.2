@@ -22,13 +22,14 @@ import net.minecraft.world.item.component.ItemContainerContents;
  * the menu opens and flushed back through a {@link ContainerListener} on every change.
  */
 public final class AlchemicalBagMenu extends AbstractContainerMenu {
-    public static final int BAG_SLOTS = 27;
-    private static final int BAG_COLUMNS = 9;
-    private static final int BAG_X = 8;
-    private static final int BAG_Y = 18;
-    private static final int PLAYER_INV_X = 8;
-    private static final int PLAYER_INV_Y = 85;
-    private static final int PLAYER_HOTBAR_Y = 143;
+    public static final int BAG_SLOTS = 104;
+    private static final int BAG_COLUMNS = 13;
+    private static final int BAG_ROWS = 8;
+    private static final int BAG_X = 12;
+    private static final int BAG_Y = 5;
+    private static final int PLAYER_INV_X = 48;
+    private static final int PLAYER_INV_Y = 152;
+    private static final int PLAYER_HOTBAR_Y = 210;
 
     private final Player player;
     private final ItemStack bagStack;
@@ -53,8 +54,8 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
         // Write back on every change so the item carries the inventory.
         addSlotListener(new BagPersistenceListener());
 
-        // Bag slots (3 rows x 9).
-        for (int row = 0; row < 3; row++) {
+        // Bag slots (8 rows x 13), matching the upstream ProjectE layout.
+        for (int row = 0; row < BAG_ROWS; row++) {
             for (int col = 0; col < BAG_COLUMNS; col++) {
                 addSlot(new Slot(bagInventory, col + row * BAG_COLUMNS,
                       BAG_X + col * 18, BAG_Y + row * 18) {
