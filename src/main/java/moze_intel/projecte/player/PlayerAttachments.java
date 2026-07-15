@@ -10,9 +10,9 @@ import net.minecraft.resources.Identifier;
 /**
  * Central registration of all per-player Fabric data attachments.
  *
- * <p>Each attachment is persistent (saved with the world), copies on death, and syncs only to the
- * owning player ({@link AttachmentSyncPredicate#targetOnly()}) so gameplay reads its own state
- * client-side while other players never learn someone else's EMC or knowledge.
+ * <p>Each attachment is persistent (saved with the world) and copies on death. Attachments needed
+ * outside server-owned menus sync only to the owning player
+ * ({@link AttachmentSyncPredicate#targetOnly()}).
  */
 public final class PlayerAttachments {
     public static final AttachmentType<PlayerKnowledge> KNOWLEDGE = AttachmentRegistry.<PlayerKnowledge>builder()
@@ -42,6 +42,13 @@ public final class PlayerAttachments {
           .copyOnDeath()
           .buildAndRegister(id("gem_armor_state"));
 
+    public static final AttachmentType<AlchemicalBagData> ALCHEMICAL_BAGS =
+          AttachmentRegistry.<AlchemicalBagData>builder()
+                .initializer(AlchemicalBagData::empty)
+                .persistent(AlchemicalBagData.CODEC)
+                .copyOnDeath()
+                .buildAndRegister(id("alchemical_bags"));
+
     private PlayerAttachments() {
     }
 
@@ -52,7 +59,7 @@ public final class PlayerAttachments {
     public static void init() {
         // Touching each field forces class-load and registration.
         @SuppressWarnings("unused")
-        Object touch = new Object[]{KNOWLEDGE, EMC, INPUT_LOCKS, GEM_ARMOR};
+        Object touch = new Object[]{KNOWLEDGE, EMC, INPUT_LOCKS, GEM_ARMOR, ALCHEMICAL_BAGS};
     }
 
     private static Identifier id(String path) {

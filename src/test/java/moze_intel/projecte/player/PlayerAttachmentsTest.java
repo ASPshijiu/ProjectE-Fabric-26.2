@@ -36,6 +36,12 @@ class PlayerAttachmentsTest {
     }
 
     @Test
+    void alchemicalBagAttachmentHasAPlayerScopedDefault() {
+        assertEquals(AlchemicalBagData.empty(),
+              PlayerAttachmentKeys.initialValue(PlayerAttachmentKeys.ALCHEMICAL_BAGS));
+    }
+
+    @Test
     void emcCodecRejectsNegativePersistenceValues() {
         com.google.gson.JsonElement encoded = com.mojang.serialization.JsonOps.INSTANCE
               .createInt(-5);

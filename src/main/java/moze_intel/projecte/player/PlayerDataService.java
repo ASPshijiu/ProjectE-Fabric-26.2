@@ -4,6 +4,8 @@ import java.util.Objects;
 import java.util.Optional;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.NormalizedStackKey;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.component.ItemContainerContents;
 
 /**
  * Server-side facade over a single player's ProjectE data attachments.
@@ -112,5 +114,29 @@ public final class PlayerDataService {
 
     public void setGemArmor(boolean enabled) {
         access.modify(PlayerAttachmentKeys.GEM_ARMOR, Boolean.class, current -> enabled);
+    }
+
+    public ItemContainerContents alchemicalBagContents(DyeColor color) {
+        Objects.requireNonNull(color, "color");
+        return access.get(PlayerAttachmentKeys.ALCHEMICAL_BAGS, AlchemicalBagData.class)
+              .contents(color);
+    }
+
+    public void setAlchemicalBagContents(DyeColor color, ItemContainerContents contents) {
+        Objects.requireNonNull(color, "color");
+        Objects.requireNonNull(contents, "contents");
+        access.modify(PlayerAttachmentKeys.ALCHEMICAL_BAGS, AlchemicalBagData.class,
+              current -> current.withContents(color, contents));
+    }
+
+    public ItemContainerContents migrateAlchemicalBagContents(
+          DyeColor color, ItemContainerContents legacyContents
+    ) {
+        Objects.requireNonNull(color, "color");
+        Objects.requireNonNull(legacyContents, "legacyContents");
+        AlchemicalBagMigration.Result migrated = AlchemicalBagMigration.merge(
+              alchemicalBagContents(color), legacyContents);
+        setAlchemicalBagContents(color, migrated.shared());
+        return migrated.remaining();
     }
 }

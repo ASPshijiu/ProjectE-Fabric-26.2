@@ -2,8 +2,10 @@ package moze_intel.projecte.content.menu;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import moze_intel.projecte.content.ModMenuTypes;
-import net.minecraft.core.component.DataComponents;
+import moze_intel.projecte.content.items.AlchemicalBagSession;
+import moze_intel.projecte.player.AlchemicalBagData;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -14,15 +16,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 
 /**
- * Container menu for the Alchemical Bag. Hosts a 27-slot bag inventory backed by the held stack's
- * {@link DataComponents#CONTAINER} component, plus the player's main inventory and hotbar. Every
- * bag-slot change is written back to the component so the bag's contents persist on the item.
+ * Container menu for the Alchemical Bag. Hosts a 104-slot inventory backed by the player's
+ * color-linked attachment, plus the player's main inventory and hotbar. Every bag-slot change is
+ * written back to the shared player storage.
  *
- * <p>The bag inventory is transient ({@link SimpleContainer}); it is loaded from the component when
- * the menu opens and flushed back through a {@link ContainerListener} on every change.
+ * <p>The bag inventory is transient ({@link SimpleContainer}); it is loaded from the player's
+ * attachment when the menu opens and flushed back through a {@link ContainerListener}.
  */
 public final class AlchemicalBagMenu extends AbstractContainerMenu {
-    public static final int BAG_SLOTS = 104;
+    public static final int BAG_SLOTS = AlchemicalBagData.SLOTS;
     private static final int BAG_COLUMNS = 13;
     private static final int BAG_ROWS = 8;
     private static final int BAG_X = 12;
@@ -34,24 +36,36 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
     private final Player player;
     private final ItemStack bagStack;
     private final SimpleContainer bagInventory;
+    private final Consumer<ItemContainerContents> persistence;
 
     public AlchemicalBagMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, findBagStack(playerInventory.player));
+        this(containerId, playerInventory, findBagStack(playerInventory.player),
+              ItemContainerContents.EMPTY, ignored -> { });
     }
 
-    public AlchemicalBagMenu(int containerId, Inventory playerInventory, ItemStack bagStack) {
+    public AlchemicalBagMenu(
+          int containerId, Inventory playerInventory, ItemStack bagStack,
+          AlchemicalBagSession session
+    ) {
+        this(containerId, playerInventory, bagStack, session.contents(), session::save);
+    }
+
+    private AlchemicalBagMenu(
+          int containerId, Inventory playerInventory, ItemStack bagStack,
+          ItemContainerContents initialContents,
+          Consumer<ItemContainerContents> persistence
+    ) {
         super(ModMenuTypes.ALCHEMICAL_BAG, containerId);
         this.player = playerInventory.player;
         this.bagStack = bagStack;
+        this.persistence = persistence;
         this.bagInventory = new SimpleContainer(BAG_SLOTS);
-        // Load persisted contents from the component.
-        ItemContainerContents contents = bagStack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         net.minecraft.core.NonNullList<ItemStack> loaded = net.minecraft.core.NonNullList.withSize(BAG_SLOTS, ItemStack.EMPTY);
-        contents.copyInto(loaded);
+        initialContents.copyInto(loaded);
         for (int i = 0; i < BAG_SLOTS && i < loaded.size(); i++) {
             bagInventory.setItem(i, loaded.get(i));
         }
-        // Write back on every change so the item carries the inventory.
+        // Write back on every change so the player attachment remains authoritative.
         addSlotListener(new BagPersistenceListener());
 
         // Bag slots (8 rows x 13), matching the upstream ProjectE layout.
@@ -124,9 +138,7 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
               && bagStack.getItem() instanceof moze_intel.projecte.content.items.AlchemicalBagItem;
     }
 
-    /**
-     * Flushes the bag inventory back to the held stack's CONTAINER component on every slot change.
-     */
+    /** Flushes the menu inventory back to the player's color-linked bag attachment. */
     private final class BagPersistenceListener implements ContainerListener {
         @Override
         public void slotChanged(AbstractContainerMenu menu, int slotIndex, ItemStack stack) {
@@ -142,12 +154,11 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
     }
 
     private void persistBag() {
-        if (bagStack.isEmpty()) return;
         List<ItemStack> items = new ArrayList<>(BAG_SLOTS);
         for (int i = 0; i < BAG_SLOTS; i++) {
             items.add(bagInventory.getItem(i));
         }
-        bagStack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        persistence.accept(ItemContainerContents.fromItems(items));
     }
 
     @Override

@@ -4,14 +4,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
 import java.util.Optional;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
+import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.resources.Identifier;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class PlayerDataServiceTest {
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        MinecraftTestHarness.bootstrap();
+    }
+
     private static FakeStackKey key(String path) {
         return new FakeStackKey(Identifier.fromNamespaceAndPath("projecte", path));
     }
@@ -123,5 +137,41 @@ class PlayerDataServiceTest {
         assertTrue(svc.gemArmorEnabled());
         svc.setGemArmor(false);
         assertFalse(svc.gemArmorEnabled());
+    }
+
+    @Test
+    void samePlayerServicesShareAlchemicalBagContentsByColor() {
+        PlayerAttachmentAccess access = PlayerAttachmentAccess.inMemory(
+              PlayerAttachmentKeys::initialValue);
+        PlayerDataService writer = new PlayerDataService(access);
+        PlayerDataService reader = new PlayerDataService(access);
+        ItemStack diamonds = new ItemStack(Items.DIAMOND, 4);
+        diamonds.set(DataComponents.MAX_STACK_SIZE, 64);
+        ItemContainerContents contents = ItemContainerContents.fromItems(List.of(diamonds));
+
+        writer.setAlchemicalBagContents(DyeColor.WHITE, contents);
+        ItemContainerContents stored = reader.alchemicalBagContents(DyeColor.WHITE);
+
+        NonNullList<ItemStack> inventory = NonNullList.withSize(104, ItemStack.EMPTY);
+        stored.copyInto(inventory);
+        assertEquals(4, inventory.getFirst().getCount());
+    }
+
+    @Test
+    void legacyBagMigrationUpdatesSharedContentsAndReturnsRemainder() {
+        PlayerAttachmentAccess access = PlayerAttachmentAccess.inMemory(
+              PlayerAttachmentKeys::initialValue);
+        PlayerDataService service = new PlayerDataService(access);
+        ItemStack diamonds = new ItemStack(Items.DIAMOND, 4);
+        diamonds.set(DataComponents.MAX_STACK_SIZE, 64);
+        ItemContainerContents legacy = ItemContainerContents.fromItems(List.of(diamonds));
+
+        ItemContainerContents remaining = service.migrateAlchemicalBagContents(
+              DyeColor.WHITE, legacy);
+
+        NonNullList<ItemStack> shared = NonNullList.withSize(104, ItemStack.EMPTY);
+        service.alchemicalBagContents(DyeColor.WHITE).copyInto(shared);
+        assertEquals(4, shared.getFirst().getCount());
+        assertTrue(remaining.nonEmptyItemCopyStream().findAny().isEmpty());
     }
 }

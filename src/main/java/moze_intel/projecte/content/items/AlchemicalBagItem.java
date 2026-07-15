@@ -1,6 +1,8 @@
 package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.content.menu.AlchemicalBagMenu;
+import moze_intel.projecte.player.PlayerAttachmentKeys;
+import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,8 +24,8 @@ import net.minecraft.world.level.Level;
 
 /**
  * Alchemical Bag — a color-coded portable storage container. Each of the 16 dye colors has its own
- * item but the same 104-slot inventory, persisted on the stack via the vanilla {@code CONTAINER}
- * component. Right-clicking opens the {@link AlchemicalBagMenu}.
+ * item linked to a 104-slot inventory in the owning player's persistent data. Right-clicking opens
+ * the {@link AlchemicalBagMenu}; earlier per-stack container data is migrated without data loss.
  */
 public class AlchemicalBagItem extends Item {
     public static final String TITLE_KEY = "container.projecte.alchemical_bag";
@@ -40,9 +42,16 @@ public class AlchemicalBagItem extends Item {
     }
 
     static void repairContents(ItemStack bagStack) {
-        SimpleContainer contents = new SimpleContainer(AlchemicalBagMenu.BAG_SLOTS);
         ItemContainerContents stored = bagStack.getOrDefault(
               DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        ItemContainerContents repaired = repairContents(stored);
+        if (repaired != stored) {
+            bagStack.set(DataComponents.CONTAINER, repaired);
+        }
+    }
+
+    static ItemContainerContents repairContents(ItemContainerContents stored) {
+        SimpleContainer contents = new SimpleContainer(AlchemicalBagMenu.BAG_SLOTS);
         stored.copyInto(contents.items);
 
         boolean hasTalisman = false;
@@ -52,11 +61,10 @@ public class AlchemicalBagItem extends Item {
                 break;
             }
         }
-        if (!hasTalisman) return;
+        if (!hasTalisman) return stored;
 
         RepairTalismanItem.tickRepair(contents, true);
-        bagStack.set(DataComponents.CONTAINER,
-              ItemContainerContents.fromItems(contents.getItems()));
+        return ItemContainerContents.fromItems(contents.getItems());
     }
 
     @Override
@@ -64,8 +72,11 @@ public class AlchemicalBagItem extends Item {
           ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot equipmentSlot
     ) {
         super.inventoryTick(stack, level, entity, equipmentSlot);
-        if (entity.tickCount % 20 == 0) {
-            repairContents(stack);
+        if (entity.tickCount % 20 == 0 && entity instanceof Player player) {
+            AlchemicalBagSession session = AlchemicalBagSession.connect(
+                  new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player)),
+                  color);
+            session.repairContents();
         }
     }
 
@@ -73,6 +84,9 @@ public class AlchemicalBagItem extends Item {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
             ItemStack stack = player.getItemInHand(hand);
+            AlchemicalBagSession session = AlchemicalBagSession.open(
+                  new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(serverPlayer)),
+                  color, stack);
             serverPlayer.openMenu(new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
@@ -81,7 +95,7 @@ public class AlchemicalBagItem extends Item {
 
                 @Override
                 public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player p) {
-                    return new AlchemicalBagMenu(containerId, inventory, stack);
+                    return new AlchemicalBagMenu(containerId, inventory, stack, session);
                 }
             });
         }
