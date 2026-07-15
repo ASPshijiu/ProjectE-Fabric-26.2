@@ -3,11 +3,14 @@ package moze_intel.projecte.content.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * Energy Collector MK1-3 block entities. Each tier uses a static type
@@ -39,13 +42,36 @@ public final class CollectorBlockEntity {
         @Override protected net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv) { return null; }
 
         public long getStoredEmc() { return storedEmc; }
-        public void setStoredEmc(long e) { this.storedEmc = e; }
+        public void setStoredEmc(long emc) {
+            if (storedEmc != emc) {
+                storedEmc = emc;
+                setChanged();
+            }
+        }
         public int getEmcPerSecond() { return emcPerSecond; }
+
+        @Override
+        protected void loadAdditional(ValueInput input) {
+            super.loadAdditional(input);
+            storedEmc = input.getLongOr("emc", 0);
+            items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
+            ContainerHelper.loadAllItems(input, items);
+        }
+
+        @Override
+        protected void saveAdditional(ValueOutput output) {
+            super.saveAdditional(output);
+            output.putLong("emc", storedEmc);
+            ContainerHelper.saveAllItems(output, items);
+        }
 
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
             int light = level.getMaxLocalRawBrightness(pos);
-            if (light > 0) entity.storedEmc += (long) entity.emcPerSecond * light / 15;
+            if (light > 0) {
+                entity.setStoredEmc(entity.storedEmc
+                      + (long) entity.emcPerSecond * light / 15);
+            }
         }
     }
 
