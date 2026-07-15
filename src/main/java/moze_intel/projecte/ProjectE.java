@@ -4,6 +4,7 @@ import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.ModCreativeTab;
 import moze_intel.projecte.content.ModDataComponents;
 import moze_intel.projecte.content.ModEntityTypes;
+import moze_intel.projecte.content.ModFuels;
 import moze_intel.projecte.content.ModItems;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.ModBlocks;
@@ -47,6 +48,7 @@ public final class ProjectE implements ModInitializer {
         PhilosophersStoneInteractionHandler.register();
         ModCreativeTab.init();
         ModBlocks.init();
+        ModFuels.init();
         ModMenuTypes.init();
         ProjectENetworking.init();
 
