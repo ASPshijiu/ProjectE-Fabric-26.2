@@ -1,12 +1,14 @@
 package moze_intel.projecte.content.blocks;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -85,6 +87,14 @@ public final class CollectorBlockEntity {
                   ? 16
                   : level.getMaxLocalRawBrightness(pos.above()) + 1;
             entity.generateEmc(sunLevel);
+            if (entity.storedEmc > 0) {
+                for (Direction direction : Direction.values()) {
+                    BlockPos relayPos = pos.relative(direction);
+                    if (level.isLoaded(relayPos)) {
+                        sendRelayBonus(level.getBlockEntity(relayPos));
+                    }
+                }
+            }
         }
 
         void generateEmc(int sunLevel) {
@@ -97,6 +107,12 @@ public final class CollectorBlockEntity {
                 unprocessedEmc -= inserted;
             }
             setChanged();
+        }
+
+        static void sendRelayBonus(BlockEntity neighbor) {
+            if (neighbor instanceof RelayBlockEntity.Base relay) {
+                relay.addBonus();
+            }
         }
     }
 

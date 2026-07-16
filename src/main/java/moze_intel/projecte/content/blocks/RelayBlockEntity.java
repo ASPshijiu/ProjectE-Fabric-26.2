@@ -26,7 +26,9 @@ public final class RelayBlockEntity {
         final int tier;
         final int transferRate;
         final long maximumEmc;
+        final double collectorBonus;
         long storedEmc;
+        double bonusEmc;
         NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int rate) {
@@ -37,6 +39,12 @@ public final class RelayBlockEntity {
                 case 1 -> 100_000;
                 case 2 -> 1_000_000;
                 case 3 -> 10_000_000;
+                default -> throw new IllegalArgumentException("Unknown relay tier: " + tier);
+            };
+            this.collectorBonus = switch (tier) {
+                case 1 -> 0.05;
+                case 2 -> 0.15;
+                case 3 -> 0.5;
                 default -> throw new IllegalArgumentException("Unknown relay tier: " + tier);
             };
         }
@@ -60,6 +68,7 @@ public final class RelayBlockEntity {
         protected void loadAdditional(ValueInput input) {
             super.loadAdditional(input);
             storedEmc = Math.max(0, Math.min(input.getLongOr("emc", 0), maximumEmc));
+            bonusEmc = input.getDoubleOr("bonus_emc", 0);
             items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
             ContainerHelper.loadAllItems(input, items);
         }
@@ -68,7 +77,18 @@ public final class RelayBlockEntity {
         protected void saveAdditional(ValueOutput output) {
             super.saveAdditional(output);
             output.putLong("emc", storedEmc);
+            output.putDouble("bonus_emc", bonusEmc);
             ContainerHelper.saveAllItems(output, items);
+        }
+
+        void addBonus() {
+            bonusEmc += collectorBonus;
+            if (bonusEmc >= 1) {
+                long emcToStore = (long) bonusEmc;
+                setStoredEmc(storedEmc + emcToStore);
+                bonusEmc -= emcToStore;
+            }
+            setChanged();
         }
 
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {

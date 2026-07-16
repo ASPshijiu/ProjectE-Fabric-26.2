@@ -66,6 +66,70 @@ class RelayBlockEntityTest {
         assertEquals(0, mk1.getStoredEmc());
     }
 
+    @Test
+    void collectorBonusMatchesRelayTier() {
+        TestRelay mk1 = new TestRelay(1, 64);
+        TestRelay mk2 = new TestRelay(2, 192);
+        TestRelay mk3 = new TestRelay(3, 640);
+
+        addCollectorBonus(mk1, 20);
+        addCollectorBonus(mk2, 7);
+        addCollectorBonus(mk3, 2);
+
+        assertEquals(1, mk1.getStoredEmc());
+        assertEquals(1, mk2.getStoredEmc());
+        assertEquals(1, mk3.getStoredEmc());
+    }
+
+    @Test
+    void saveAndLoadPreserveFractionalCollectorBonus() {
+        TestRelay source = new TestRelay(1, 64);
+        addCollectorBonus(source, 10);
+
+        CompoundTag saved = source.saveCustomOnly(registries);
+        TestRelay restored = new TestRelay(1, 64);
+        restored.loadCustomOnly(TagValueInput.create(
+              ProblemReporter.DISCARDING, registries, saved));
+        addCollectorBonus(restored, 10);
+
+        assertEquals(1, restored.getStoredEmc());
+    }
+
+    @Test
+    void collectorBonusDoesNotAccumulateWhileRelayIsFull() {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setStoredEmc(relay.getMaximumEmc());
+        addCollectorBonus(relay, 20);
+
+        relay.setStoredEmc(relay.getMaximumEmc() - 1);
+        addCollectorBonus(relay, 19);
+        assertEquals(relay.getMaximumEmc() - 1, relay.getStoredEmc());
+
+        addCollectorBonus(relay, 1);
+        assertEquals(relay.getMaximumEmc(), relay.getStoredEmc());
+    }
+
+    @Test
+    void collectorPassesBonusToAdjacentRelay() {
+        TestRelay relay = new TestRelay(1, 64);
+
+        for (int tick = 0; tick < 20; tick++) {
+            sendRelayBonus(relay);
+        }
+
+        assertEquals(1, relay.getStoredEmc());
+    }
+
+    private static void addCollectorBonus(TestRelay relay, int times) {
+        for (int count = 0; count < times; count++) {
+            relay.addBonus();
+        }
+    }
+
+    private static void sendRelayBonus(TestRelay relay) {
+        CollectorBlockEntity.Base.sendRelayBonus(relay);
+    }
+
     private static final class TestRelay extends RelayBlockEntity.Base {
         private TestRelay() {
             this(1, 64);
