@@ -108,16 +108,16 @@ public final class CollectorBlockEntity {
 
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
+            entity.compactInputs();
             int sunLevel = level.environmentAttributes()
                   .getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)
                   ? 16
                   : level.getMaxLocalRawBrightness(pos.above()) + 1;
             entity.generateEmc(sunLevel);
-            if (entity.chargeItem()) {
-                return;
-            }
+            boolean handled = entity.chargeItem();
             ItemStack upgrading = entity.items.get(entity.inputSlots);
-            if (!upgrading.isEmpty() && !(upgrading.getItem() instanceof KleinStarItem)) {
+            if (!handled && !upgrading.isEmpty()
+                  && !(upgrading.getItem() instanceof KleinStarItem)) {
                 if (entity.stackKeys == null) {
                     entity.stackKeys = new MinecraftStackKeyFactory(level.registryAccess());
                 }
@@ -132,12 +132,10 @@ public final class CollectorBlockEntity {
                       .flatMap(named -> named.stream())
                       .map(holder -> holder.value())
                       .toList();
-                if (entity.upgradeFuel(
-                      stack -> nextFuel(stack, fuels, emcValue), emcValue)) {
-                    return;
-                }
+                handled = entity.upgradeFuel(
+                      stack -> nextFuel(stack, fuels, emcValue), emcValue);
             }
-            if (entity.storedEmc > 0) {
+            if (!handled && entity.storedEmc > 0) {
                 List<RelayBlockEntity.Base> relays = new ArrayList<>();
                 for (Direction direction : Direction.values()) {
                     BlockPos relayPos = pos.relative(direction);
@@ -151,6 +149,7 @@ public final class CollectorBlockEntity {
                 sendEmcToRelays(entity, relays);
                 relays.forEach(Base::sendRelayBonus);
             }
+            entity.rotateOutput();
         }
 
         void generateEmc(int sunLevel) {
@@ -232,6 +231,91 @@ public final class CollectorBlockEntity {
                 }
             }
             return ItemStack.EMPTY;
+        }
+
+        void compactInputs() {
+            List<ItemStack> stacks = new ArrayList<>();
+            int upgradingSlot = inputSlots;
+            if (!items.get(upgradingSlot).isEmpty()) {
+                stacks.add(items.get(upgradingSlot).copy());
+                items.set(upgradingSlot, ItemStack.EMPTY);
+            }
+            for (int slot = 0; slot < inputSlots; slot++) {
+                if (!items.get(slot).isEmpty()) {
+                    stacks.add(items.get(slot).copy());
+                    items.set(slot, ItemStack.EMPTY);
+                }
+            }
+            if (stacks.isEmpty()) return;
+
+            for (ItemStack stack : stacks) {
+                insertIntoProcessingSlots(stack);
+            }
+            setChanged();
+        }
+
+        void rotateOutput() {
+            int outputSlot = inputSlots + 1;
+            ItemStack output = items.get(outputSlot);
+            if (output.isEmpty()) return;
+
+            ItemStack lock = items.get(inputSlots + 2);
+            if (!lock.isEmpty() && output.is(lock.getItem())
+                  && output.getCount() < output.getMaxStackSize()) {
+                return;
+            }
+
+            items.set(outputSlot, insertIntoMainInventory(output));
+            setChanged();
+        }
+
+        private ItemStack insertIntoProcessingSlots(ItemStack source) {
+            ItemStack remaining = source.copy();
+            remaining = mergeIntoSlot(remaining, inputSlots);
+            for (int slot = 0; slot < inputSlots && !remaining.isEmpty(); slot++) {
+                remaining = mergeIntoSlot(remaining, slot);
+            }
+            remaining = fillEmptySlot(remaining, inputSlots);
+            for (int slot = 0; slot < inputSlots && !remaining.isEmpty(); slot++) {
+                remaining = fillEmptySlot(remaining, slot);
+            }
+            return remaining;
+        }
+
+        private ItemStack insertIntoMainInventory(ItemStack source) {
+            ItemStack remaining = source.copy();
+            for (int slot = 0; slot < inputSlots && !remaining.isEmpty(); slot++) {
+                remaining = mergeIntoSlot(remaining, slot);
+            }
+            for (int slot = 0; slot < inputSlots && !remaining.isEmpty(); slot++) {
+                remaining = fillEmptySlot(remaining, slot);
+            }
+            return remaining;
+        }
+
+        private ItemStack mergeIntoSlot(ItemStack remaining, int slot) {
+            if (remaining.isEmpty()) return ItemStack.EMPTY;
+
+            ItemStack target = items.get(slot);
+            if (!ItemStack.isSameItemSameComponents(target, remaining)) return remaining;
+
+            int moved = Math.min(
+                  remaining.getCount(), target.getMaxStackSize() - target.getCount());
+            if (moved > 0) {
+                target.grow(moved);
+                remaining.shrink(moved);
+            }
+            return remaining;
+        }
+
+        private ItemStack fillEmptySlot(ItemStack remaining, int slot) {
+            if (remaining.isEmpty()) return ItemStack.EMPTY;
+            if (!items.get(slot).isEmpty()) return remaining;
+
+            int moved = Math.min(remaining.getCount(), remaining.getMaxStackSize());
+            items.set(slot, remaining.copyWithCount(moved));
+            remaining.shrink(moved);
+            return remaining;
         }
 
         static long sendEmcToRelays(

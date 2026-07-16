@@ -246,6 +246,98 @@ class CollectorBlockEntityTest {
     }
 
     @Test
+    void compactionMovesFirstMainStackIntoUpgradingSlot() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(3, itemStack(Items.COAL, 5));
+
+        collector.compactInputs();
+
+        assertTrue(collector.getItem(collector.inputSlots).is(Items.COAL));
+        assertEquals(5, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(3).isEmpty());
+    }
+
+    @Test
+    void compactionMergesMatchingStacksInUpgradingSlotFirst() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 60));
+        collector.setItem(0, itemStack(Items.COAL, 10));
+
+        collector.compactInputs();
+
+        assertEquals(64, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(0).is(Items.COAL));
+        assertEquals(6, collector.getItem(0).getCount());
+    }
+
+    @Test
+    void compactionDoesNotTouchOutputOrLockSlots() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(0, itemStack(Items.COAL, 1));
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.DIAMOND, 2));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.EMERALD, 1));
+
+        collector.compactInputs();
+
+        assertEquals(2, collector.getItem(collector.inputSlots + 1).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).is(Items.DIAMOND));
+        assertTrue(collector.getItem(collector.inputSlots + 2).is(Items.EMERALD));
+    }
+
+    @Test
+    void unlockedOutputReturnsToMainInventory() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.DIAMOND, 5));
+
+        collector.rotateOutput();
+
+        assertTrue(collector.getItem(0).is(Items.DIAMOND));
+        assertEquals(5, collector.getItem(0).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).isEmpty());
+    }
+
+    @Test
+    void matchingLockHoldsPartialOutput() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.DIAMOND, 5));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.DIAMOND, 1));
+
+        collector.rotateOutput();
+
+        assertEquals(5, collector.getItem(collector.inputSlots + 1).getCount());
+        assertTrue(collector.getItem(0).isEmpty());
+    }
+
+    @Test
+    void matchingLockReleasesFullOutputStack() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.DIAMOND, 64));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.DIAMOND, 1));
+
+        collector.rotateOutput();
+
+        assertEquals(64, collector.getItem(0).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).isEmpty());
+    }
+
+    @Test
+    void outputRemainsWhenMainInventoryIsFull() {
+        TestCollector collector = new TestCollector(1, 4);
+        for (int slot = 0; slot < collector.inputSlots; slot++) {
+            collector.setItem(slot, itemStack(Items.EMERALD, 64));
+        }
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.DIAMOND, 5));
+
+        collector.rotateOutput();
+
+        assertEquals(5, collector.getItem(collector.inputSlots + 1).getCount());
+        for (int slot = 0; slot < collector.inputSlots; slot++) {
+            assertEquals(64, collector.getItem(slot).getCount());
+            assertTrue(collector.getItem(slot).is(Items.EMERALD));
+        }
+    }
+
+    @Test
     void storedEmcIsCappedByCollectorTier() {
         TestCollector mk1 = new TestCollector(1, 4);
         TestCollector mk2 = new TestCollector(2, 12);
