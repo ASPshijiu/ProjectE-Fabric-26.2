@@ -1,5 +1,10 @@
 package moze_intel.projecte.content.blocks;
 
+import java.util.function.ToLongFunction;
+import moze_intel.projecte.content.items.KleinStarItem;
+import moze_intel.projecte.emc.EmcValue;
+import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
@@ -31,6 +36,7 @@ public final class RelayBlockEntity {
         long storedEmc;
         double bonusEmc;
         NonNullList<ItemStack> items;
+        MinecraftStackKeyFactory stackKeys;
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int rate) {
             super(type, pos, state);
@@ -107,8 +113,37 @@ public final class RelayBlockEntity {
             setChanged();
         }
 
+        boolean burnOneInput(ToLongFunction<ItemStack> emcValue) {
+            for (int slot = 0; slot < inputSlots; slot++) {
+                ItemStack stack = items.get(slot);
+                if (stack.isEmpty()) continue;
+                if (stack.getItem() instanceof KleinStarItem) return false;
+
+                long value = emcValue.applyAsLong(stack);
+                if (value <= 0) continue;
+                if (value > getNeededEmc()) return false;
+
+                insertEmc(value);
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    items.set(slot, ItemStack.EMPTY);
+                }
+                setChanged();
+                return true;
+            }
+            return false;
+        }
+
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
+            if (entity.stackKeys == null) {
+                entity.stackKeys = new MinecraftStackKeyFactory(level.registryAccess());
+            }
+            var snapshot = ProjectEEmc.service().current();
+            entity.burnOneInput(stack -> entity.stackKeys.optionalKey(stack)
+                  .flatMap(snapshot::valueFor)
+                  .orElse(EmcValue.ZERO)
+                  .longValue());
         }
     }
 

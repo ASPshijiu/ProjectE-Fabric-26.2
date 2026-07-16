@@ -1,13 +1,20 @@
 package moze_intel.projecte.content.blocks;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.function.ToLongFunction;
+import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -93,6 +100,66 @@ class RelayBlockEntityTest {
     }
 
     @Test
+    void burnsOneItemFromInputSlotsPerTick() {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setItem(3, stack(Items.REDSTONE, 1));
+        relay.setItem(4, stack(Items.REDSTONE, 1));
+
+        assertTrue(burnOneInput(relay, ignored -> 64));
+
+        assertEquals(64, relay.getStoredEmc());
+        assertTrue(relay.getItem(3).isEmpty());
+        assertEquals(1, relay.getItem(4).getCount());
+    }
+
+    @Test
+    void doesNotBurnItemWhenItsEmcExceedsRemainingCapacity() {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setStoredEmc(relay.getMaximumEmc() - 32);
+        relay.setItem(0, stack(Items.REDSTONE, 1));
+
+        assertFalse(burnOneInput(relay, ignored -> 64));
+
+        assertEquals(relay.getMaximumEmc() - 32, relay.getStoredEmc());
+        assertEquals(1, relay.getItem(0).getCount());
+    }
+
+    @Test
+    void doesNotBurnItemWithoutEmcValue() {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setItem(0, stack(Items.REDSTONE, 1));
+
+        assertFalse(burnOneInput(relay, ignored -> 0));
+
+        assertEquals(0, relay.getStoredEmc());
+        assertEquals(1, relay.getItem(0).getCount());
+    }
+
+    @Test
+    void doesNotBurnItemFromChargingSlot() {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setItem(7, stack(Items.DIAMOND, 1));
+
+        assertFalse(burnOneInput(relay, ignored -> 8_192));
+
+        assertEquals(0, relay.getStoredEmc());
+        assertEquals(1, relay.getItem(7).getCount());
+    }
+
+    @Test
+    void doesNotConsumeKleinStarAsLooseFuel() throws Exception {
+        TestRelay relay = new TestRelay(1, 64);
+        KleinStarItem star = allocateKleinStar("ein");
+        ItemStack starStack = new ItemStack(Holder.direct(star, DataComponentMap.EMPTY));
+        relay.setItem(0, starStack);
+
+        assertFalse(burnOneInput(relay, ignored -> 139_264));
+
+        assertEquals(0, relay.getStoredEmc());
+        assertTrue(relay.getItem(0).is(star));
+    }
+
+    @Test
     void collectorBonusMatchesRelayTier() {
         TestRelay mk1 = new TestRelay(1, 64);
         TestRelay mk2 = new TestRelay(2, 192);
@@ -154,6 +221,32 @@ class RelayBlockEntityTest {
 
     private static void sendRelayBonus(TestRelay relay) {
         CollectorBlockEntity.Base.sendRelayBonus(relay);
+    }
+
+    private static boolean burnOneInput(
+          TestRelay relay, ToLongFunction<ItemStack> emcValue
+    ) {
+        return relay.burnOneInput(emcValue);
+    }
+
+    private static KleinStarItem allocateKleinStar(String tier) throws Exception {
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        unsafeField.setAccessible(true);
+        Object unsafe = unsafeField.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        KleinStarItem star = (KleinStarItem) allocateInstance.invoke(
+              unsafe, KleinStarItem.class);
+        Field tierField = KleinStarItem.class.getDeclaredField("tier");
+        tierField.setAccessible(true);
+        tierField.set(star, tier);
+        return star;
+    }
+
+    private static ItemStack stack(net.minecraft.world.item.Item item, int count) {
+        ItemStack stack = new ItemStack(item);
+        stack.setCount(count);
+        return stack;
     }
 
     private static final class TestRelay extends RelayBlockEntity.Base {
