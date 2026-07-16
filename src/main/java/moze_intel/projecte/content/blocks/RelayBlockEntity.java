@@ -1,11 +1,14 @@
 package moze_intel.projecte.content.blocks;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.ToLongFunction;
 import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.ContainerHelper;
@@ -13,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -156,8 +160,42 @@ public final class RelayBlockEntity {
             return true;
         }
 
+        static long sendEmcToCondensers(
+              Base relay, List<CondenserBlockEntity.Base> adjacentCondensers
+        ) {
+            if (relay.storedEmc <= 0 || adjacentCondensers.isEmpty()) return 0;
+            List<CondenserBlockEntity.Base> acceptingCondensers = adjacentCondensers.stream()
+                  .filter(CondenserBlockEntity.Base::canAcceptEmc)
+                  .toList();
+            if (acceptingCondensers.isEmpty()) return 0;
+
+            long transfer = Math.min(relay.storedEmc, relay.transferRate);
+            long transferPerCondenser = transfer / acceptingCondensers.size();
+            if (transferPerCondenser == 0) return 0;
+
+            long sent = 0;
+            for (CondenserBlockEntity.Base condenser : acceptingCondensers) {
+                sent += condenser.insertEmc(transferPerCondenser);
+            }
+            relay.setStoredEmc(relay.storedEmc - sent);
+            return sent;
+        }
+
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
+            if (entity.storedEmc > 0) {
+                List<CondenserBlockEntity.Base> condensers = new ArrayList<>();
+                for (Direction direction : Direction.values()) {
+                    BlockPos condenserPos = pos.relative(direction);
+                    if (level.isLoaded(condenserPos)) {
+                        BlockEntity neighbor = level.getBlockEntity(condenserPos);
+                        if (neighbor instanceof CondenserBlockEntity.Base condenser) {
+                            condensers.add(condenser);
+                        }
+                    }
+                }
+                sendEmcToCondensers(entity, condensers);
+            }
             if (entity.stackKeys == null) {
                 entity.stackKeys = new MinecraftStackKeyFactory(level.registryAccess());
             }

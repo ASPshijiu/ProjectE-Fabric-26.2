@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.ToLongFunction;
 import moze_intel.projecte.content.items.KleinStarItem;
@@ -275,6 +276,103 @@ class RelayBlockEntityTest {
     }
 
     @Test
+    void sendsEmcAtRelayTierRate() {
+        TestRelay mk1 = relayWithEmc(1, 64, 1_000);
+        TestRelay mk2 = relayWithEmc(2, 192, 1_000);
+        TestRelay mk3 = relayWithEmc(3, 640, 1_000);
+        TestCondenser mk1Target = acceptingCondenser();
+        TestCondenser mk2Target = acceptingCondenser();
+        TestCondenser mk3Target = acceptingCondenser();
+
+        assertEquals(64, sendEmcToCondensers(mk1, List.of(mk1Target)));
+        assertEquals(192, sendEmcToCondensers(mk2, List.of(mk2Target)));
+        assertEquals(640, sendEmcToCondensers(mk3, List.of(mk3Target)));
+
+        assertEquals(64, mk1Target.getStoredEmc());
+        assertEquals(192, mk2Target.getStoredEmc());
+        assertEquals(640, mk3Target.getStoredEmc());
+    }
+
+    @Test
+    void transferCannotExceedRelayBalance() {
+        TestRelay relay = relayWithEmc(1, 64, 32);
+        TestCondenser condenser = acceptingCondenser();
+
+        assertEquals(32, sendEmcToCondensers(relay, List.of(condenser)));
+
+        assertEquals(0, relay.getStoredEmc());
+        assertEquals(32, condenser.getStoredEmc());
+    }
+
+    @Test
+    void splitsTransferEvenlyBetweenCondensers() {
+        TestRelay relay = relayWithEmc(1, 64, 100);
+        TestCondenser first = acceptingCondenser();
+        TestCondenser second = acceptingCondenser();
+
+        assertEquals(64, sendEmcToCondensers(relay, List.of(first, second)));
+
+        assertEquals(36, relay.getStoredEmc());
+        assertEquals(32, first.getStoredEmc());
+        assertEquals(32, second.getStoredEmc());
+    }
+
+    @Test
+    void undividedTransferRemainderStaysInRelay() {
+        TestRelay relay = relayWithEmc(1, 64, 100);
+        TestCondenser first = acceptingCondenser();
+        TestCondenser second = acceptingCondenser();
+        TestCondenser third = acceptingCondenser();
+
+        assertEquals(63, sendEmcToCondensers(
+              relay, List.of(first, second, third)));
+
+        assertEquals(37, relay.getStoredEmc());
+        assertEquals(21, first.getStoredEmc());
+        assertEquals(21, second.getStoredEmc());
+        assertEquals(21, third.getStoredEmc());
+    }
+
+    @Test
+    void invalidTargetDoesNotReduceAcceptingCondenserShare() {
+        TestRelay relay = relayWithEmc(1, 64, 100);
+        TestCondenser invalid = new TestCondenser();
+        TestCondenser accepting = acceptingCondenser();
+
+        assertEquals(64, sendEmcToCondensers(
+              relay, List.of(invalid, accepting)));
+
+        assertEquals(0, invalid.getStoredEmc());
+        assertEquals(64, accepting.getStoredEmc());
+    }
+
+    @Test
+    void fullCondenserDoesNotReduceAcceptingCondenserShare() {
+        TestRelay relay = relayWithEmc(1, 64, 100);
+        TestCondenser full = acceptingCondenser();
+        TestCondenser accepting = acceptingCondenser();
+        full.setStoredEmc(Long.MAX_VALUE);
+
+        assertEquals(64, sendEmcToCondensers(
+              relay, List.of(full, accepting)));
+
+        assertEquals(Long.MAX_VALUE, full.getStoredEmc());
+        assertEquals(64, accepting.getStoredEmc());
+    }
+
+    @Test
+    void transferDeductsOnlyWhatCondenserAccepts() {
+        TestRelay relay = relayWithEmc(1, 64, 100);
+        TestCondenser condenser = acceptingCondenser();
+        condenser.setStoredEmc(Long.MAX_VALUE - 32);
+
+        assertEquals(32, sendEmcToCondensers(relay, List.of(condenser)));
+
+        assertEquals(68, relay.getStoredEmc());
+        assertEquals(Long.MAX_VALUE, condenser.getStoredEmc());
+    }
+
+    @Test
     void collectorBonusMatchesRelayTier() {
         TestRelay mk1 = new TestRelay(1, 64);
         TestRelay mk2 = new TestRelay(2, 192);
@@ -348,6 +446,27 @@ class RelayBlockEntityTest {
         return relay.chargeOutput();
     }
 
+    private static long sendEmcToCondensers(
+          TestRelay relay, List<CondenserBlockEntity.Base> condensers
+    ) {
+        return RelayBlockEntity.Base.sendEmcToCondensers(relay, condensers);
+    }
+
+    private static TestRelay relayWithEmc(
+          int tier, int transferRate, long storedEmc
+    ) {
+        TestRelay relay = new TestRelay(tier, transferRate);
+        relay.setStoredEmc(storedEmc);
+        return relay;
+    }
+
+    private static TestCondenser acceptingCondenser() {
+        TestCondenser condenser = new TestCondenser();
+        condenser.setTarget(new ItemStack(Items.DIAMOND));
+        condenser.refreshTargetEmc(ignored -> 8_192);
+        return condenser;
+    }
+
     private static KleinStarItem allocateKleinStar(String tier) throws Exception {
         Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
         Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
@@ -388,6 +507,12 @@ class RelayBlockEntityTest {
               BlockPos pos, BlockState state, int tier, int transferRate
         ) {
             super(relayType, pos, state, tier, transferRate);
+        }
+    }
+
+    private static final class TestCondenser extends CondenserBlockEntity.Base {
+        private TestCondenser() {
+            super(relayType, BlockPos.ZERO, Blocks.FURNACE.defaultBlockState(), 1);
         }
     }
 }
