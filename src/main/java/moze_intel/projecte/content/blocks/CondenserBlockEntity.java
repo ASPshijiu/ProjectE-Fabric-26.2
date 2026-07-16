@@ -18,31 +18,40 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
-/** Energy Condenser MK1-2 (102 slots). */
+/** Energy Condenser MK1-2. */
 public final class CondenserBlockEntity {
     private CondenserBlockEntity() {}
 
     public static BlockEntityType<MK1> MK1_TYPE;
     public static BlockEntityType<MK2> MK2_TYPE;
 
-    private static final int SIZE = 102;
-
     abstract static class Base extends BaseContainerBlockEntity {
         final int tier;
+        final int inputSlots;
+        final int outputStart;
         long storedEmc;
         long requiredEmc;
-        NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
+        NonNullList<ItemStack> items;
         ItemStack target = ItemStack.EMPTY;
         MinecraftStackKeyFactory stackKeys;
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier) {
-            super(type, pos, state); this.tier = tier;
+            super(type, pos, state);
+            this.tier = tier;
+            this.inputSlots = switch (tier) {
+                case 1 -> 91;
+                case 2 -> 42;
+                default -> throw new IllegalArgumentException("Unknown condenser tier: " + tier);
+            };
+            this.outputStart = tier == 1 ? 0 : inputSlots;
+            int totalSlots = tier == 1 ? inputSlots : inputSlots * 2;
+            this.items = NonNullList.withSize(totalSlots, ItemStack.EMPTY);
         }
 
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.condenser_mk" + tier); }
         @Override protected NonNullList<ItemStack> getItems() { return items; }
         @Override protected void setItems(NonNullList<ItemStack> l) { this.items = l; }
-        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return SIZE; }
+        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return items.size(); }
 
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
@@ -91,7 +100,7 @@ public final class CondenserBlockEntity {
         long consumeInput(ToLongFunction<ItemStack> emcValue) {
             if (requiredEmc <= 0 || tier == 2 && !hasOutputSpace()) return 0;
 
-            for (int slot = 0; slot < items.size(); slot++) {
+            for (int slot = 0; slot < inputSlots; slot++) {
                 ItemStack stack = items.get(slot);
                 if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, target)) {
                     continue;
@@ -123,7 +132,8 @@ public final class CondenserBlockEntity {
         boolean hasOutputSpace() {
             if (requiredEmc <= 0 || target.isEmpty()) return false;
 
-            for (ItemStack stack : items) {
+            for (int slot = outputStart; slot < items.size(); slot++) {
+                ItemStack stack = items.get(slot);
                 if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, target)
                       && stack.getCount() < stack.getMaxStackSize()) {
                     return true;
@@ -145,14 +155,15 @@ public final class CondenserBlockEntity {
         }
 
         private boolean insertTarget() {
-            for (ItemStack stack : items) {
+            for (int slot = outputStart; slot < items.size(); slot++) {
+                ItemStack stack = items.get(slot);
                 if (ItemStack.isSameItemSameComponents(stack, target)
                       && stack.getCount() < stack.getMaxStackSize()) {
                     stack.grow(1);
                     return true;
                 }
             }
-            for (int slot = 0; slot < items.size(); slot++) {
+            for (int slot = outputStart; slot < items.size(); slot++) {
                 if (items.get(slot).isEmpty()) {
                     items.set(slot, target.copyWithCount(1));
                     return true;

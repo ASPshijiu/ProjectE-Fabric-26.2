@@ -35,11 +35,11 @@ class CondenserBlockEntityTest {
     }
 
     @Test
-    void saveAndLoadPreserveStoredEmcAndFullInventory() {
+    void saveAndLoadPreserveStoredEmcAndMk1Inventory() {
         TestCondenser source = new TestCondenser();
         source.setStoredEmc(987_654);
         source.setItem(0, new ItemStack(Items.DIAMOND));
-        source.setItem(101, new ItemStack(Items.EMERALD));
+        source.setItem(90, new ItemStack(Items.EMERALD));
 
         CompoundTag saved = source.saveCustomOnly(registries);
         TestCondenser restored = new TestCondenser();
@@ -48,8 +48,14 @@ class CondenserBlockEntityTest {
 
         assertEquals(987_654, restored.getStoredEmc());
         assertTrue(restored.getItem(0).is(Items.DIAMOND));
-        assertTrue(restored.getItem(101).is(Items.EMERALD));
-        assertEquals(102, restored.getContainerSize());
+        assertTrue(restored.getItem(90).is(Items.EMERALD));
+        assertEquals(91, restored.getContainerSize());
+    }
+
+    @Test
+    void inventorySizeMatchesCondenserTier() {
+        assertEquals(91, new TestCondenser(1).getContainerSize());
+        assertEquals(84, new TestCondenser(2).getContainerSize());
     }
 
     @Test
@@ -134,14 +140,29 @@ class CondenserBlockEntityTest {
     void mk2DoesNotConsumeInputWhenOutputInventoryIsFull() {
         TestCondenser condenser = new TestCondenser(2);
         prepareTarget(condenser);
-        for (int slot = 0; slot < condenser.getContainerSize(); slot++) {
+        ItemStack input = new ItemStack(Items.REDSTONE);
+        condenser.items.set(0, input);
+        for (int slot = 42; slot < 84; slot++) {
             condenser.items.set(slot, new ItemStack(Items.REDSTONE));
         }
 
         assertEquals(0, consumeInput(condenser, ignored -> 64));
 
         assertEquals(0, condenser.getStoredEmc());
-        assertEquals(1, condenser.getItem(0).getCount());
+        assertEquals(1, input.getCount());
+    }
+
+    @Test
+    void mk2DoesNotConsumeItemsFromOutputInventory() {
+        TestCondenser condenser = new TestCondenser(2);
+        prepareTarget(condenser);
+        ItemStack output = new ItemStack(Items.REDSTONE);
+        condenser.items.set(42, output);
+
+        assertEquals(0, consumeInput(condenser, ignored -> 64));
+
+        assertEquals(0, condenser.getStoredEmc());
+        assertEquals(1, output.getCount());
     }
 
     @Test
@@ -276,6 +297,20 @@ class CondenserBlockEntityTest {
 
         assertEquals(0, condenser.getStoredEmc());
         assertEquals(3, countItem(condenser, Items.DIAMOND));
+    }
+
+    @Test
+    void mk2ProducesOnlyIntoOutputInventory() {
+        TestCondenser condenser = new TestCondenser(2);
+        prepareTarget(condenser);
+        condenser.setStoredEmc(8_192);
+
+        assertEquals(1, produceOutput(condenser));
+
+        for (int slot = 0; slot < 42; slot++) {
+            assertTrue(condenser.getItem(slot).isEmpty());
+        }
+        assertTrue(condenser.getItem(42).is(Items.DIAMOND));
     }
 
     @Test
