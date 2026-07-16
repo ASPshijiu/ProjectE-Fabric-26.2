@@ -3,6 +3,7 @@ package moze_intel.projecte.client;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.client.render.MobRandomizerRenderer;
 import moze_intel.projecte.client.screen.AlchemicalBagScreen;
+import moze_intel.projecte.client.screen.CondenserScreen;
 import moze_intel.projecte.client.screen.TransmutationTableScreen;
 import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModMenuTypes;
@@ -57,6 +58,8 @@ public final class ProjectEClient implements ClientModInitializer {
 
         MenuScreens.register(ModMenuTypes.TRANSMUTATION_TABLE, TransmutationTableScreen::new);
         MenuScreens.register(ModMenuTypes.ALCHEMICAL_BAG, AlchemicalBagScreen::new);
+        MenuScreens.register(ModMenuTypes.CONDENSER_MK1, CondenserScreen::new);
+        MenuScreens.register(ModMenuTypes.CONDENSER_MK2, CondenserScreen::new);
 
         // Receive the authoritative EMC mapping from the server and publish it into the client's
         // display cache. Must run on the client thread; the Fabric handler already dispatches there.

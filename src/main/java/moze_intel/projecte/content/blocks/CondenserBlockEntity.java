@@ -1,6 +1,7 @@
 package moze_intel.projecte.content.blocks;
 
 import java.util.function.ToLongFunction;
+import moze_intel.projecte.content.menu.CondenserMenu;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
@@ -25,7 +26,7 @@ public final class CondenserBlockEntity {
     public static BlockEntityType<MK1> MK1_TYPE;
     public static BlockEntityType<MK2> MK2_TYPE;
 
-    abstract static class Base extends BaseContainerBlockEntity {
+    public abstract static class Base extends BaseContainerBlockEntity {
         final int tier;
         final int inputSlots;
         final int outputStart;
@@ -51,8 +52,9 @@ public final class CondenserBlockEntity {
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.condenser_mk" + tier); }
         @Override protected NonNullList<ItemStack> getItems() { return items; }
         @Override protected void setItems(NonNullList<ItemStack> l) { this.items = l; }
-        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return items.size(); }
+        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return new CondenserMenu(id, inv, this); } @Override public int getContainerSize() { return items.size(); }
 
+        public int getTier() { return tier; }
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
             if (storedEmc != emc) {
@@ -87,7 +89,7 @@ public final class CondenserBlockEntity {
             setChanged();
         }
 
-        void refreshTargetEmc(ToLongFunction<ItemStack> emcValue) {
+        public void refreshTargetEmc(ToLongFunction<ItemStack> emcValue) {
             long refreshed = target.isEmpty()
                   ? 0
                   : Math.max(0, emcValue.applyAsLong(target));
