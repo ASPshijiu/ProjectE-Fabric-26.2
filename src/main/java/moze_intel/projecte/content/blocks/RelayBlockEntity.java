@@ -27,9 +27,10 @@ public final class RelayBlockEntity {
         final int transferRate;
         final long maximumEmc;
         final double collectorBonus;
+        final int inputSlots;
         long storedEmc;
         double bonusEmc;
-        NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
+        NonNullList<ItemStack> items;
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int rate) {
             super(type, pos, state);
@@ -47,12 +48,19 @@ public final class RelayBlockEntity {
                 case 3 -> 0.5;
                 default -> throw new IllegalArgumentException("Unknown relay tier: " + tier);
             };
+            this.inputSlots = switch (tier) {
+                case 1 -> 7;
+                case 2 -> 13;
+                case 3 -> 21;
+                default -> throw new IllegalArgumentException("Unknown relay tier: " + tier);
+            };
+            this.items = NonNullList.withSize(inputSlots + 1, ItemStack.EMPTY);
         }
 
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.relay_mk" + tier); }
         @Override protected NonNullList<ItemStack> getItems() { return items; }
         @Override protected void setItems(NonNullList<ItemStack> l) { this.items = l; }
-        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return 1; }
+        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return inputSlots + 1; }
 
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {

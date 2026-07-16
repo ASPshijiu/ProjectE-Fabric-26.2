@@ -67,6 +67,32 @@ class RelayBlockEntityTest {
     }
 
     @Test
+    void inventorySizeMatchesRelayTier() {
+        TestRelay mk1 = new TestRelay(1, 64);
+        TestRelay mk2 = new TestRelay(2, 192);
+        TestRelay mk3 = new TestRelay(3, 640);
+
+        assertEquals(8, mk1.getContainerSize());
+        assertEquals(14, mk2.getContainerSize());
+        assertEquals(22, mk3.getContainerSize());
+    }
+
+    @Test
+    void saveAndLoadPreserveChargingSlot() {
+        TestRelay source = new TestRelay(1, 64);
+        assertEquals(8, source.getContainerSize());
+        source.setItem(7, new ItemStack(Items.DIAMOND));
+
+        CompoundTag saved = source.saveCustomOnly(registries);
+        TestRelay restored = new TestRelay(1, 64);
+        restored.loadCustomOnly(TagValueInput.create(
+              ProblemReporter.DISCARDING, registries, saved));
+
+        assertTrue(restored.getItem(7).is(Items.DIAMOND));
+        assertEquals(1, restored.getItem(7).getCount());
+    }
+
+    @Test
     void collectorBonusMatchesRelayTier() {
         TestRelay mk1 = new TestRelay(1, 64);
         TestRelay mk2 = new TestRelay(2, 192);
