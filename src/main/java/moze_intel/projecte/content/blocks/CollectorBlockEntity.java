@@ -185,8 +185,13 @@ public final class CollectorBlockEntity {
             ItemStack upgrading = items.get(inputSlots);
             if (upgrading.isEmpty()) return false;
 
-            ItemStack result = nextFuel.apply(upgrading);
-            if (result.isEmpty()) return false;
+            ItemStack standardUpgrade = nextFuel.apply(upgrading);
+            if (standardUpgrade.isEmpty()) return false;
+
+            ItemStack lock = items.get(inputSlots + 2);
+            ItemStack result = lock.isEmpty()
+                  ? standardUpgrade
+                  : lock.copyWithCount(1);
 
             long inputEmc = emcValue.applyAsLong(upgrading);
             long outputEmc = emcValue.applyAsLong(result);

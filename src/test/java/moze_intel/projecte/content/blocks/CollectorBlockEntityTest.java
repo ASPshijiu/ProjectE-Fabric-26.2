@@ -200,6 +200,81 @@ class CollectorBlockEntityTest {
     }
 
     @Test
+    void lockSkipsIntermediateFuelAtLockedEmcCost() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(8_064);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 1));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.EMERALD, 32));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L,
+              Items.DIAMOND, 512L,
+              Items.EMERALD, 8_192L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.DIAMOND, 1), emcValue));
+
+        assertEquals(0, collector.getStoredEmc());
+        assertTrue(collector.getItem(collector.inputSlots).isEmpty());
+        assertTrue(collector.getItem(collector.inputSlots + 1).is(Items.EMERALD));
+        assertEquals(1, collector.getItem(collector.inputSlots + 1).getCount());
+        assertEquals(32, collector.getItem(collector.inputSlots + 2).getCount());
+    }
+
+    @Test
+    void lockedUpgradeWaitsForFullEmcDifference() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(8_063);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 1));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.EMERALD, 1));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L,
+              Items.DIAMOND, 512L,
+              Items.EMERALD, 8_192L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.DIAMOND, 1), emcValue));
+
+        assertEquals(8_063, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).isEmpty());
+    }
+
+    @Test
+    void lowerValueLockDoesNotConsumeFuelOrEmc() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(10_000);
+        collector.setItem(collector.inputSlots, itemStack(Items.DIAMOND, 1));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.COAL, 1));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L,
+              Items.DIAMOND, 8_192L,
+              Items.EMERALD, 10_000L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.EMERALD, 1), emcValue));
+
+        assertEquals(10_000, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).isEmpty());
+    }
+
+    @Test
+    void highestFuelDoesNotUpgradeEvenWithLock() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(10_000);
+        collector.setItem(collector.inputSlots, itemStack(Items.DIAMOND, 1));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.EMERALD, 1));
+
+        assertFalse(collector.upgradeFuel(
+              ignored -> ItemStack.EMPTY,
+              emcValues(Map.of(Items.DIAMOND, 8_192L, Items.EMERALD, 10_000L))));
+
+        assertEquals(10_000, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).isEmpty());
+    }
+
+    @Test
     void validFuelWaitsForEnoughEmc() {
         TestCollector collector = new TestCollector(1, 4);
         collector.setStoredEmc(383);
