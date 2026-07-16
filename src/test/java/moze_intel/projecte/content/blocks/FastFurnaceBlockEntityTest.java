@@ -67,6 +67,27 @@ class FastFurnaceBlockEntityTest {
         assertEquals(96, burnDuration(rm, fuelValues));
     }
 
+    @Test
+    void appliesTieredOreAndRawMaterialYieldChances() {
+        assertEquals(2, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 0.5F, true, false, 0.49F));
+        assertEquals(1, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 0.5F, true, false, 0.5F));
+        assertEquals(2, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 0.5F, false, true, 0.32F));
+        assertEquals(1, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 0.5F, false, true, 0.34F));
+
+        assertEquals(2, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 1.0F, true, false, 0.99F));
+        assertEquals(2, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 1.0F, false, true, 0.65F));
+        assertEquals(1, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 1.0F, false, true, 0.67F));
+        assertEquals(1, FastFurnaceBlockEntity.scaledOutputCount(
+              1, 1.0F, false, false, 0.0F));
+    }
+
     private static int burnDuration(
           AbstractFurnaceBlockEntity furnace, FuelValues fuelValues
     ) throws Exception {

@@ -1,9 +1,11 @@
 package moze_intel.projecte.content.blocks;
 
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
@@ -20,6 +22,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /** Shared Dark Matter and Red Matter furnace timing behavior. */
 public final class FastFurnaceBlockEntity {
+    private static final int INPUT_SLOT = 0;
+
     private FastFurnaceBlockEntity() {}
 
     public static BlockEntityType<DM> DM_TYPE;
@@ -49,9 +53,41 @@ public final class FastFurnaceBlockEntity {
         data.set(AbstractFurnaceBlockEntity.DATA_COOKING_TOTAL_TIME, cookingTime);
     }
 
+    static int scaledOutputCount(
+          int count,
+          float oreDoubleChance,
+          boolean ore,
+          boolean rawMaterial,
+          float randomValue
+    ) {
+        float doubleChance = ore
+              ? oreDoubleChance
+              : rawMaterial ? oreDoubleChance * 2 / 3 : 0;
+        if (randomValue >= doubleChance) return count;
+        return (int) Math.min(Integer.MAX_VALUE, 2L * count);
+    }
+
+    public static ItemStack scaleOutput(
+          AbstractFurnaceBlockEntity furnace, ItemStack result, RandomSource random
+    ) {
+        if (!(furnace instanceof Base matterFurnace) || result.isEmpty()) return result;
+
+        ItemStack input = furnace.getItem(INPUT_SLOT);
+        int scaledCount = scaledOutputCount(
+              result.getCount(),
+              matterFurnace.oreDoubleChance,
+              input.is(ConventionalItemTags.ORES),
+              input.is(ConventionalItemTags.RAW_MATERIALS),
+              random.nextFloat());
+        return scaledCount == result.getCount()
+              ? result
+              : result.copyWithCount(scaledCount);
+    }
+
     private abstract static class Base extends AbstractFurnaceBlockEntity {
         private final int targetCookingTime;
         private final int efficiencyBonus;
+        private final float oreDoubleChance;
         private final RecipeManager.CachedCheck<SingleRecipeInput, SmeltingRecipe> recipes =
               RecipeManager.createCheck(RecipeType.SMELTING);
 
@@ -60,11 +96,13 @@ public final class FastFurnaceBlockEntity {
               BlockPos pos,
               BlockState state,
               int targetCookingTime,
-              int efficiencyBonus
+              int efficiencyBonus,
+              float oreDoubleChance
         ) {
             super(type, pos, state, RecipeType.SMELTING);
             this.targetCookingTime = targetCookingTime;
             this.efficiencyBonus = efficiencyBonus;
+            this.oreDoubleChance = oreDoubleChance;
         }
 
         @Override
@@ -99,7 +137,7 @@ public final class FastFurnaceBlockEntity {
               "container.projecte.dm_furnace");
 
         public DM(BlockPos pos, BlockState state) {
-            super(DM_TYPE, pos, state, SharedConstants.TICKS_PER_SECOND / 2, 3);
+            super(DM_TYPE, pos, state, SharedConstants.TICKS_PER_SECOND / 2, 3, 0.5F);
         }
 
         @Override
@@ -122,7 +160,7 @@ public final class FastFurnaceBlockEntity {
               "container.projecte.rm_furnace");
 
         public RM(BlockPos pos, BlockState state) {
-            super(RM_TYPE, pos, state, 3, 4);
+            super(RM_TYPE, pos, state, 3, 4, 1.0F);
         }
 
         @Override
