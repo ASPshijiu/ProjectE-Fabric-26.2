@@ -63,6 +63,14 @@ public final class RelayBlockEntity {
             }
         }
         public long getMaximumEmc() { return maximumEmc; }
+        long getNeededEmc() { return maximumEmc - storedEmc; }
+
+        long insertEmc(long emc) {
+            if (emc <= 0) return 0;
+            long inserted = Math.min(emc, getNeededEmc());
+            setStoredEmc(storedEmc + inserted);
+            return inserted;
+        }
 
         @Override
         protected void loadAdditional(ValueInput input) {

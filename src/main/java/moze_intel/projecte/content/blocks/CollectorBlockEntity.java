@@ -1,5 +1,7 @@
 package moze_intel.projecte.content.blocks;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -88,12 +90,18 @@ public final class CollectorBlockEntity {
                   : level.getMaxLocalRawBrightness(pos.above()) + 1;
             entity.generateEmc(sunLevel);
             if (entity.storedEmc > 0) {
+                List<RelayBlockEntity.Base> relays = new ArrayList<>();
                 for (Direction direction : Direction.values()) {
                     BlockPos relayPos = pos.relative(direction);
                     if (level.isLoaded(relayPos)) {
-                        sendRelayBonus(level.getBlockEntity(relayPos));
+                        BlockEntity neighbor = level.getBlockEntity(relayPos);
+                        if (neighbor instanceof RelayBlockEntity.Base relay) {
+                            relays.add(relay);
+                        }
                     }
                 }
+                sendEmcToRelays(entity, relays);
+                relays.forEach(Base::sendRelayBonus);
             }
         }
 
@@ -107,6 +115,27 @@ public final class CollectorBlockEntity {
                 unprocessedEmc -= inserted;
             }
             setChanged();
+        }
+
+        static long sendEmcToRelays(
+              Base collector, List<RelayBlockEntity.Base> adjacentRelays
+        ) {
+            if (collector.storedEmc <= 0 || adjacentRelays.isEmpty()) return 0;
+            List<RelayBlockEntity.Base> acceptingRelays = adjacentRelays.stream()
+                  .filter(relay -> relay.getNeededEmc() > 0)
+                  .toList();
+            if (acceptingRelays.isEmpty()) return 0;
+
+            long transfer = Math.min(collector.storedEmc, collector.emcPerSecond);
+            long transferPerRelay = transfer / acceptingRelays.size();
+            if (transferPerRelay == 0) return 0;
+
+            long sent = 0;
+            for (RelayBlockEntity.Base relay : acceptingRelays) {
+                sent += relay.insertEmc(transferPerRelay);
+            }
+            collector.setStoredEmc(collector.storedEmc - sent);
+            return sent;
         }
 
         static void sendRelayBonus(BlockEntity neighbor) {

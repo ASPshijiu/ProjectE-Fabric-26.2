@@ -3,6 +3,7 @@ package moze_intel.projecte.content.blocks;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Objects;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.core.BlockPos;
@@ -116,10 +117,87 @@ class CollectorBlockEntityTest {
         assertEquals(collector.getMaximumEmc(), collector.getStoredEmc());
     }
 
+    @Test
+    void sendsConfiguredEmcToSingleRelay() {
+        TestCollector collector = new TestCollector(1, 4);
+        TestRelay relay = new TestRelay();
+        collector.setStoredEmc(100);
+
+        long sent = sendEmcToRelays(collector, List.of(relay));
+
+        assertEquals(4, sent);
+        assertEquals(96, collector.getStoredEmc());
+        assertEquals(4, relay.getStoredEmc());
+    }
+
+    @Test
+    void splitsTransferEvenlyBetweenRelays() {
+        TestCollector collector = new TestCollector(1, 4);
+        TestRelay first = new TestRelay();
+        TestRelay second = new TestRelay();
+        collector.setStoredEmc(100);
+
+        long sent = sendEmcToRelays(collector, List.of(first, second));
+
+        assertEquals(4, sent);
+        assertEquals(96, collector.getStoredEmc());
+        assertEquals(2, first.getStoredEmc());
+        assertEquals(2, second.getStoredEmc());
+    }
+
+    @Test
+    void fullRelayDoesNotReduceOtherRelayShare() {
+        TestCollector collector = new TestCollector(1, 4);
+        TestRelay full = new TestRelay();
+        TestRelay accepting = new TestRelay();
+        collector.setStoredEmc(100);
+        full.setStoredEmc(full.getMaximumEmc());
+
+        long sent = sendEmcToRelays(collector, List.of(full, accepting));
+
+        assertEquals(4, sent);
+        assertEquals(96, collector.getStoredEmc());
+        assertEquals(full.getMaximumEmc(), full.getStoredEmc());
+        assertEquals(4, accepting.getStoredEmc());
+    }
+
+    @Test
+    void transferDeductsOnlyWhatRelayAccepts() {
+        TestCollector collector = new TestCollector(1, 4);
+        TestRelay relay = new TestRelay();
+        collector.setStoredEmc(10);
+        relay.setStoredEmc(relay.getMaximumEmc() - 2);
+
+        long sent = sendEmcToRelays(collector, List.of(relay));
+
+        assertEquals(2, sent);
+        assertEquals(8, collector.getStoredEmc());
+        assertEquals(relay.getMaximumEmc(), relay.getStoredEmc());
+    }
+
+    @Test
+    void transferCannotExceedCollectorBalance() {
+        TestCollector collector = new TestCollector(1, 4);
+        TestRelay relay = new TestRelay();
+        collector.setStoredEmc(2);
+
+        long sent = sendEmcToRelays(collector, List.of(relay));
+
+        assertEquals(2, sent);
+        assertEquals(0, collector.getStoredEmc());
+        assertEquals(2, relay.getStoredEmc());
+    }
+
     private static void generateForTicks(TestCollector collector, int light, int ticks) {
         for (int tick = 0; tick < ticks; tick++) {
             collector.generateEmc(light);
         }
+    }
+
+    private static long sendEmcToRelays(
+          TestCollector collector, List<RelayBlockEntity.Base> relays
+    ) {
+        return CollectorBlockEntity.Base.sendEmcToRelays(collector, relays);
     }
 
     private static final class TestCollector extends CollectorBlockEntity.Base {
@@ -135,6 +213,12 @@ class CollectorBlockEntityTest {
               BlockPos pos, BlockState state, int tier, int emcPerSecond
         ) {
             super(collectorType, pos, state, tier, emcPerSecond);
+        }
+    }
+
+    private static final class TestRelay extends RelayBlockEntity.Base {
+        private TestRelay() {
+            super(collectorType, BlockPos.ZERO, Blocks.FURNACE.defaultBlockState(), 1, 64);
         }
     }
 }
