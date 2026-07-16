@@ -81,6 +81,22 @@ class CollectorBlockEntityTest {
     }
 
     @Test
+    void preRemoveClearsGhostLockButPreservesRealInventoryForVanillaDrop() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setItem(0, itemStack(Items.COAL, 3));
+        collector.setItem(collector.inputSlots, itemStack(Items.DIAMOND, 2));
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.EMERALD, 4));
+        collector.setItem(collector.inputSlots + 2, itemStack(Items.REDSTONE, 1));
+
+        collector.preRemoveSideEffects(BlockPos.ZERO, Blocks.FURNACE.defaultBlockState());
+
+        assertEquals(3, collector.getItem(0).getCount());
+        assertEquals(2, collector.getItem(collector.inputSlots).getCount());
+        assertEquals(4, collector.getItem(collector.inputSlots + 1).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 2).isEmpty());
+    }
+
+    @Test
     void chargesKleinStarAtCollectorTierRate() throws Exception {
         TestCollector mk1 = new TestCollector(1, 4);
         TestCollector mk2 = new TestCollector(2, 12);

@@ -82,6 +82,12 @@ public final class CollectorBlockEntity {
             return new CollectorMenu(id, inv, this);
         }
 
+        @Override
+        public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+            items.set(inputSlots + 2, ItemStack.EMPTY);
+            super.preRemoveSideEffects(pos, state);
+        }
+
         public int getTier() { return tier; }
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
