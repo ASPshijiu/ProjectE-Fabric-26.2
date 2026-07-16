@@ -51,6 +51,58 @@ class CondenserBlockEntityTest {
         assertEquals(102, restored.getContainerSize());
     }
 
+    @Test
+    void targetIsStoredAsSingleGhostCopy() {
+        TestCondenser condenser = new TestCondenser();
+        ItemStack source = new ItemStack(Items.DIAMOND);
+        source.setCount(32);
+
+        condenser.setTarget(source);
+
+        assertTrue(condenser.getTarget().is(Items.DIAMOND));
+        assertEquals(1, condenser.getTarget().getCount());
+        assertEquals(32, source.getCount());
+        assertTrue(condenser.isEmpty());
+    }
+
+    @Test
+    void saveAndLoadPreserveTarget() {
+        TestCondenser source = new TestCondenser();
+        source.setTarget(new ItemStack(Items.EMERALD));
+
+        CompoundTag saved = source.saveCustomOnly(registries);
+        TestCondenser restored = new TestCondenser();
+        restored.loadCustomOnly(TagValueInput.create(
+              ProblemReporter.DISCARDING, registries, saved));
+
+        assertTrue(restored.getTarget().is(Items.EMERALD));
+        assertEquals(1, restored.getTarget().getCount());
+    }
+
+    @Test
+    void targetRequirementTracksCurrentEmcMapping() {
+        TestCondenser condenser = new TestCondenser();
+        condenser.setTarget(new ItemStack(Items.DIAMOND));
+
+        condenser.refreshTargetEmc(ignored -> 8_192);
+        assertEquals(8_192, condenser.getRequiredEmc());
+
+        condenser.refreshTargetEmc(ignored -> 0);
+        assertEquals(0, condenser.getRequiredEmc());
+    }
+
+    @Test
+    void clearingTargetClearsRequirement() {
+        TestCondenser condenser = new TestCondenser();
+        condenser.setTarget(new ItemStack(Items.DIAMOND));
+        condenser.refreshTargetEmc(ignored -> 8_192);
+
+        condenser.setTarget(ItemStack.EMPTY);
+
+        assertTrue(condenser.getTarget().isEmpty());
+        assertEquals(0, condenser.getRequiredEmc());
+    }
+
     private static final class TestCondenser extends CondenserBlockEntity.Base {
         private TestCondenser() {
             this(BlockPos.ZERO, Blocks.FURNACE.defaultBlockState());
