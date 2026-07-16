@@ -209,6 +209,72 @@ class RelayBlockEntityTest {
     }
 
     @Test
+    void chargesKleinStarAtRelayTierRate() throws Exception {
+        TestRelay mk1 = new TestRelay(1, 64);
+        TestRelay mk2 = new TestRelay(2, 192);
+        TestRelay mk3 = new TestRelay(3, 640);
+        ItemStack mk1Star = kleinStarStack(0);
+        ItemStack mk2Star = kleinStarStack(0);
+        ItemStack mk3Star = kleinStarStack(0);
+        mk1.setStoredEmc(1_000);
+        mk2.setStoredEmc(1_000);
+        mk3.setStoredEmc(1_000);
+        mk1.setItem(mk1.getContainerSize() - 1, mk1Star);
+        mk2.setItem(mk2.getContainerSize() - 1, mk2Star);
+        mk3.setItem(mk3.getContainerSize() - 1, mk3Star);
+
+        assertTrue(chargeOutput(mk1));
+        assertTrue(chargeOutput(mk2));
+        assertTrue(chargeOutput(mk3));
+
+        assertEquals(64, KleinStarItem.getStoredEmc(mk1Star));
+        assertEquals(192, KleinStarItem.getStoredEmc(mk2Star));
+        assertEquals(640, KleinStarItem.getStoredEmc(mk3Star));
+        assertEquals(936, mk1.getStoredEmc());
+        assertEquals(808, mk2.getStoredEmc());
+        assertEquals(360, mk3.getStoredEmc());
+    }
+
+    @Test
+    void chargingDoesNotSpendMoreEmcThanKleinStarCanAccept() throws Exception {
+        TestRelay relay = new TestRelay(3, 640);
+        ItemStack starStack = kleinStarStack(KleinStarItem.MAX_EIN - 32);
+        relay.setStoredEmc(1_000);
+        relay.setItem(relay.getContainerSize() - 1, starStack);
+
+        assertTrue(chargeOutput(relay));
+
+        assertEquals(KleinStarItem.MAX_EIN, KleinStarItem.getStoredEmc(starStack));
+        assertEquals(968, relay.getStoredEmc());
+    }
+
+    @Test
+    void chargingDoesNotSpendMoreEmcThanRelayStores() throws Exception {
+        TestRelay relay = new TestRelay(3, 640);
+        ItemStack starStack = kleinStarStack(0);
+        relay.setStoredEmc(32);
+        relay.setItem(relay.getContainerSize() - 1, starStack);
+
+        assertTrue(chargeOutput(relay));
+
+        assertEquals(32, KleinStarItem.getStoredEmc(starStack));
+        assertEquals(0, relay.getStoredEmc());
+    }
+
+    @Test
+    void doesNotChargeKleinStarFromInputSlot() throws Exception {
+        TestRelay relay = new TestRelay(1, 64);
+        ItemStack starStack = kleinStarStack(0);
+        relay.setStoredEmc(1_000);
+        relay.setItem(0, starStack);
+
+        assertFalse(chargeOutput(relay));
+
+        assertEquals(0, KleinStarItem.getStoredEmc(starStack));
+        assertEquals(1_000, relay.getStoredEmc());
+    }
+
+    @Test
     void collectorBonusMatchesRelayTier() {
         TestRelay mk1 = new TestRelay(1, 64);
         TestRelay mk2 = new TestRelay(2, 192);
@@ -276,6 +342,10 @@ class RelayBlockEntityTest {
           TestRelay relay, ToLongFunction<ItemStack> emcValue
     ) {
         return relay.burnOneInput(emcValue);
+    }
+
+    private static boolean chargeOutput(TestRelay relay) {
+        return relay.chargeOutput();
     }
 
     private static KleinStarItem allocateKleinStar(String tier) throws Exception {

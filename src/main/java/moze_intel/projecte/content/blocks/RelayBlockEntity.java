@@ -142,6 +142,20 @@ public final class RelayBlockEntity {
             return false;
         }
 
+        boolean chargeOutput() {
+            ItemStack stack = items.get(inputSlots);
+            if (!(stack.getItem() instanceof KleinStarItem)) return false;
+
+            long available = Math.min(transferRate, storedEmc);
+            if (available <= 0) return false;
+
+            long transferred = available - KleinStarItem.addEmc(stack, available);
+            if (transferred <= 0) return false;
+
+            setStoredEmc(storedEmc - transferred);
+            return true;
+        }
+
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
             if (entity.stackKeys == null) {
@@ -152,6 +166,7 @@ public final class RelayBlockEntity {
                   .flatMap(snapshot::valueFor)
                   .orElse(EmcValue.ZERO)
                   .longValue());
+            entity.chargeOutput();
         }
     }
 
