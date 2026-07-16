@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
-import moze_intel.projecte.api.ProjectEAPI;
-import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
@@ -17,15 +15,10 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /** Fabric Transfer API views for collector automation. */
 public final class CollectorItemStorage {
-    private static final TagKey<Item> COLLECTOR_FUEL = TagKey.create(
-          Registries.ITEM, ProjectEAPI.id("collector_fuel"));
     private static boolean initialized;
 
     private CollectorItemStorage() {
@@ -97,10 +90,6 @@ public final class CollectorItemStorage {
         if (variant.isBlank()) {
             return false;
         }
-        ItemStack stack = variant.toStack();
-        if (stack.getItem() instanceof KleinStarItem) {
-            return true;
-        }
         if (collector.getLevel() == null) {
             return false;
         }
@@ -113,12 +102,7 @@ public final class CollectorItemStorage {
               .flatMap(snapshot::valueFor)
               .orElse(EmcValue.ZERO)
               .longValue();
-        List<Item> fuels = collector.getLevel().registryAccess().lookup(Registries.ITEM)
-              .flatMap(items -> items.get(COLLECTOR_FUEL))
-              .stream()
-              .flatMap(named -> named.stream())
-              .map(holder -> holder.value())
-              .toList();
-        return !CollectorBlockEntity.Base.nextFuel(stack, fuels, emcValue).isEmpty();
+        return CollectorBlockEntity.Base.isCollectorInput(
+              variant.toStack(), collector.getLevel().registryAccess(), emcValue);
     }
 }

@@ -7,12 +7,14 @@ import java.util.function.Function;
 import java.util.function.ToLongFunction;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.items.KleinStarItem;
+import moze_intel.projecte.content.menu.CollectorMenu;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
@@ -76,8 +78,11 @@ public final class CollectorBlockEntity {
         @Override protected NonNullList<ItemStack> getItems() { return items; }
         @Override protected void setItems(NonNullList<ItemStack> list) { this.items = list; }
         @Override public int getContainerSize() { return inputSlots + AUXILIARY_SLOTS; }
-        @Override protected net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv) { return null; }
+        @Override protected net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv) {
+            return new CollectorMenu(id, inv, this);
+        }
 
+        public int getTier() { return tier; }
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
             long clamped = Math.max(0, Math.min(emc, maximumEmc));
@@ -109,11 +114,7 @@ public final class CollectorBlockEntity {
         static void doTick(Level level, BlockPos pos, BlockState state, Base entity) {
             if (level.isClientSide()) return;
             entity.compactInputs();
-            int sunLevel = level.environmentAttributes()
-                  .getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)
-                  ? 16
-                  : level.getMaxLocalRawBrightness(pos.above()) + 1;
-            entity.generateEmc(sunLevel);
+            entity.generateEmc(sunLevel(level, pos));
             boolean handled = entity.chargeItem();
             ItemStack upgrading = entity.items.get(entity.inputSlots);
             if (!handled && !upgrading.isEmpty()
@@ -126,14 +127,8 @@ public final class CollectorBlockEntity {
                       .flatMap(snapshot::valueFor)
                       .orElse(EmcValue.ZERO)
                       .longValue();
-                List<Item> fuels = level.registryAccess().lookup(Registries.ITEM)
-                      .flatMap(items -> items.get(COLLECTOR_FUEL))
-                      .stream()
-                      .flatMap(named -> named.stream())
-                      .map(holder -> holder.value())
-                      .toList();
                 handled = entity.upgradeFuel(
-                      stack -> nextFuel(stack, fuels, emcValue), emcValue);
+                      stack -> nextFuel(stack, level.registryAccess(), emcValue), emcValue);
             }
             if (!handled && entity.storedEmc > 0) {
                 List<RelayBlockEntity.Base> relays = new ArrayList<>();
@@ -236,6 +231,44 @@ public final class CollectorBlockEntity {
                 }
             }
             return ItemStack.EMPTY;
+        }
+
+        public static ItemStack nextFuel(
+              ItemStack input,
+              RegistryAccess registryAccess,
+              ToLongFunction<ItemStack> emcValue
+        ) {
+            List<Item> fuels = registryAccess.lookup(Registries.ITEM)
+                  .flatMap(items -> items.get(COLLECTOR_FUEL))
+                  .stream()
+                  .flatMap(named -> named.stream())
+                  .map(holder -> holder.value())
+                  .toList();
+            return nextFuel(input, fuels, emcValue);
+        }
+
+        public static boolean isCollectorFuel(ItemStack stack) {
+            return !stack.isEmpty() && stack.is(COLLECTOR_FUEL);
+        }
+
+        public static boolean isCollectorInput(
+              ItemStack stack,
+              RegistryAccess registryAccess,
+              ToLongFunction<ItemStack> emcValue
+        ) {
+            return stack.getItem() instanceof KleinStarItem
+                  || !nextFuel(stack, registryAccess, emcValue).isEmpty();
+        }
+
+        public int getSunLevel() {
+            return level == null ? 0 : sunLevel(level, worldPosition);
+        }
+
+        private static int sunLevel(Level level, BlockPos pos) {
+            return level.environmentAttributes()
+                  .getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)
+                  ? 16
+                  : level.getMaxLocalRawBrightness(pos.above()) + 1;
         }
 
         void compactInputs() {

@@ -5,6 +5,8 @@ import moze_intel.projecte.content.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
@@ -18,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.BlockHitResult;
 
 public class CollectorBlock extends BaseEntityBlock {
     private final int tier;
@@ -46,6 +49,23 @@ public class CollectorBlock extends BaseEntityBlock {
     @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(
+          BlockState state,
+          Level level,
+          BlockPos pos,
+          Player player,
+          BlockHitResult hit
+    ) {
+        if (!level.isClientSide()) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof CollectorBlockEntity.Base collector) {
+                player.openMenu(collector);
+            }
+        }
+        return InteractionResult.SUCCESS;
     }
 
     @Override

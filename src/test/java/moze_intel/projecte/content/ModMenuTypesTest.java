@@ -31,6 +31,13 @@ class ModMenuTypesTest {
     }
 
     @Test
+    void collectorIdsMatchExpectedPaths() {
+        assertEquals("collector_mk1", ModMenuTypes.COLLECTOR_MK1_ID.getPath());
+        assertEquals("collector_mk2", ModMenuTypes.COLLECTOR_MK2_ID.getPath());
+        assertEquals("collector_mk3", ModMenuTypes.COLLECTOR_MK3_ID.getPath());
+    }
+
+    @Test
     void hubClassIsLoadable() {
         assertNotNull(ModMenuTypes.class);
     }
