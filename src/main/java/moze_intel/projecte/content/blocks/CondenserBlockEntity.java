@@ -76,6 +76,38 @@ public final class CondenserBlockEntity {
             }
         }
 
+        long consumeInput(ToLongFunction<ItemStack> emcValue) {
+            if (requiredEmc <= 0) return 0;
+
+            for (int slot = 0; slot < items.size(); slot++) {
+                ItemStack stack = items.get(slot);
+                if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, target)) {
+                    continue;
+                }
+
+                long unitValue = emcValue.applyAsLong(stack);
+                if (unitValue <= 0) continue;
+
+                int amount = tier == 2 ? stack.getCount() : 1;
+                long addedEmc;
+                long updatedEmc;
+                try {
+                    addedEmc = Math.multiplyExact(unitValue, amount);
+                    updatedEmc = Math.addExact(storedEmc, addedEmc);
+                } catch (ArithmeticException ignored) {
+                    return 0;
+                }
+
+                stack.shrink(amount);
+                if (stack.isEmpty()) {
+                    items.set(slot, ItemStack.EMPTY);
+                }
+                setStoredEmc(updatedEmc);
+                return addedEmc;
+            }
+            return 0;
+        }
+
         @Override
         protected void loadAdditional(ValueInput input) {
             super.loadAdditional(input);
@@ -105,10 +137,12 @@ public final class CondenserBlockEntity {
                 entity.stackKeys = new MinecraftStackKeyFactory(level.registryAccess());
             }
             var snapshot = ProjectEEmc.service().current();
-            entity.refreshTargetEmc(stack -> entity.stackKeys.optionalKey(stack)
+            ToLongFunction<ItemStack> emcValue = stack -> entity.stackKeys.optionalKey(stack)
                   .flatMap(snapshot::valueFor)
                   .orElse(EmcValue.ZERO)
-                  .longValue());
+                  .longValue();
+            entity.refreshTargetEmc(emcValue);
+            entity.consumeInput(emcValue);
         }
     }
 
