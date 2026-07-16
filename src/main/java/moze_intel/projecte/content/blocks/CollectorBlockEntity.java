@@ -2,6 +2,7 @@ package moze_intel.projecte.content.blocks;
 
 import java.util.ArrayList;
 import java.util.List;
+import moze_intel.projecte.content.items.KleinStarItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -99,6 +100,9 @@ public final class CollectorBlockEntity {
                   ? 16
                   : level.getMaxLocalRawBrightness(pos.above()) + 1;
             entity.generateEmc(sunLevel);
+            if (entity.chargeItem()) {
+                return;
+            }
             if (entity.storedEmc > 0) {
                 List<RelayBlockEntity.Base> relays = new ArrayList<>();
                 for (Direction direction : Direction.values()) {
@@ -125,6 +129,20 @@ public final class CollectorBlockEntity {
                 unprocessedEmc -= inserted;
             }
             setChanged();
+        }
+
+        boolean chargeItem() {
+            ItemStack stack = items.get(inputSlots);
+            if (!(stack.getItem() instanceof KleinStarItem)) return false;
+
+            long available = Math.min(emcPerSecond, storedEmc);
+            if (available <= 0) return false;
+
+            long transferred = available - KleinStarItem.addEmc(stack, available);
+            if (transferred <= 0) return false;
+
+            setStoredEmc(storedEmc - transferred);
+            return true;
         }
 
         static long sendEmcToRelays(

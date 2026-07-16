@@ -1,14 +1,20 @@
 package moze_intel.projecte.content.blocks;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
+import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -69,6 +75,72 @@ class CollectorBlockEntityTest {
 
         assertTrue(restored.getItem(14).is(Items.EMERALD));
         assertEquals(1, restored.getItem(14).getCount());
+    }
+
+    @Test
+    void chargesKleinStarAtCollectorTierRate() throws Exception {
+        TestCollector mk1 = new TestCollector(1, 4);
+        TestCollector mk2 = new TestCollector(2, 12);
+        TestCollector mk3 = new TestCollector(3, 40);
+        ItemStack mk1Star = kleinStarStack(0);
+        ItemStack mk2Star = kleinStarStack(0);
+        ItemStack mk3Star = kleinStarStack(0);
+        mk1.setStoredEmc(100);
+        mk2.setStoredEmc(100);
+        mk3.setStoredEmc(100);
+        mk1.setItem(mk1.inputSlots, mk1Star);
+        mk2.setItem(mk2.inputSlots, mk2Star);
+        mk3.setItem(mk3.inputSlots, mk3Star);
+
+        assertTrue(mk1.chargeItem());
+        assertTrue(mk2.chargeItem());
+        assertTrue(mk3.chargeItem());
+
+        assertEquals(4, KleinStarItem.getStoredEmc(mk1Star));
+        assertEquals(12, KleinStarItem.getStoredEmc(mk2Star));
+        assertEquals(40, KleinStarItem.getStoredEmc(mk3Star));
+        assertEquals(96, mk1.getStoredEmc());
+        assertEquals(88, mk2.getStoredEmc());
+        assertEquals(60, mk3.getStoredEmc());
+    }
+
+    @Test
+    void chargingDoesNotSpendMoreThanKleinStarCanAccept() throws Exception {
+        TestCollector collector = new TestCollector(3, 40);
+        ItemStack star = kleinStarStack(KleinStarItem.MAX_EIN - 2);
+        collector.setStoredEmc(100);
+        collector.setItem(collector.inputSlots, star);
+
+        assertTrue(collector.chargeItem());
+
+        assertEquals(KleinStarItem.MAX_EIN, KleinStarItem.getStoredEmc(star));
+        assertEquals(98, collector.getStoredEmc());
+    }
+
+    @Test
+    void chargingDoesNotSpendMoreThanCollectorStores() throws Exception {
+        TestCollector collector = new TestCollector(3, 40);
+        ItemStack star = kleinStarStack(0);
+        collector.setStoredEmc(3);
+        collector.setItem(collector.inputSlots, star);
+
+        assertTrue(collector.chargeItem());
+
+        assertEquals(3, KleinStarItem.getStoredEmc(star));
+        assertEquals(0, collector.getStoredEmc());
+    }
+
+    @Test
+    void doesNotChargeKleinStarFromMainInventory() throws Exception {
+        TestCollector collector = new TestCollector(1, 4);
+        ItemStack star = kleinStarStack(0);
+        collector.setStoredEmc(100);
+        collector.setItem(0, star);
+
+        assertFalse(collector.chargeItem());
+
+        assertEquals(0, KleinStarItem.getStoredEmc(star));
+        assertEquals(100, collector.getStoredEmc());
     }
 
     @Test
@@ -219,6 +291,26 @@ class CollectorBlockEntityTest {
           TestCollector collector, List<RelayBlockEntity.Base> relays
     ) {
         return CollectorBlockEntity.Base.sendEmcToRelays(collector, relays);
+    }
+
+    private static KleinStarItem allocateKleinStar() throws Exception {
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        unsafeField.setAccessible(true);
+        Object unsafe = unsafeField.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        KleinStarItem star = (KleinStarItem) allocateInstance.invoke(
+              unsafe, KleinStarItem.class);
+        Field tierField = KleinStarItem.class.getDeclaredField("tier");
+        tierField.setAccessible(true);
+        tierField.set(star, "ein");
+        return star;
+    }
+
+    private static ItemStack kleinStarStack(long storedEmc) throws Exception {
+        ItemStack stack = new ItemStack(Holder.direct(allocateKleinStar(), DataComponentMap.EMPTY));
+        KleinStarItem.setStoredEmc(stack, storedEmc);
+        return stack;
     }
 
     private static final class TestCollector extends CollectorBlockEntity.Base {
