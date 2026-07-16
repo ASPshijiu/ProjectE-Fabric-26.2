@@ -55,6 +55,14 @@ public final class CondenserBlockEntity {
         public ItemStack getTarget() { return target.copy(); }
         public long getRequiredEmc() { return requiredEmc; }
 
+        long insertEmc(long emc) {
+            if (requiredEmc <= 0 || emc <= 0 || storedEmc == Long.MAX_VALUE) return 0;
+
+            long inserted = Math.min(emc, Long.MAX_VALUE - storedEmc);
+            setStoredEmc(storedEmc + inserted);
+            return inserted;
+        }
+
         public void setTarget(ItemStack stack) {
             ItemStack normalized = stack.isEmpty()
                   ? ItemStack.EMPTY

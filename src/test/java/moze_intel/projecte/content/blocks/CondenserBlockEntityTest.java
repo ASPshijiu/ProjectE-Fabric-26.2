@@ -199,6 +199,49 @@ class CondenserBlockEntityTest {
     }
 
     @Test
+    void acceptsExternalEmcWhenTargetHasEmc() {
+        TestCondenser condenser = new TestCondenser();
+        prepareTarget(condenser);
+
+        assertEquals(64, condenser.insertEmc(64));
+
+        assertEquals(64, condenser.getStoredEmc());
+    }
+
+    @Test
+    void doesNotAcceptExternalEmcWithoutValidTarget() {
+        TestCondenser condenser = new TestCondenser();
+        condenser.setTarget(new ItemStack(Items.DIAMOND));
+
+        assertEquals(0, condenser.insertEmc(64));
+
+        assertEquals(0, condenser.getStoredEmc());
+    }
+
+    @Test
+    void externalEmcIsCappedAtLongMaximum() {
+        TestCondenser condenser = new TestCondenser();
+        prepareTarget(condenser);
+        condenser.setStoredEmc(Long.MAX_VALUE - 32);
+
+        assertEquals(32, condenser.insertEmc(64));
+
+        assertEquals(Long.MAX_VALUE, condenser.getStoredEmc());
+    }
+
+    @Test
+    void doesNotAcceptNonPositiveExternalEmc() {
+        TestCondenser condenser = new TestCondenser();
+        prepareTarget(condenser);
+        condenser.setStoredEmc(128);
+
+        assertEquals(0, condenser.insertEmc(0));
+        assertEquals(0, condenser.insertEmc(-64));
+
+        assertEquals(128, condenser.getStoredEmc());
+    }
+
+    @Test
     void mk2DoesNotConsumeStackWhenEmcMultiplicationOverflows() {
         TestCondenser condenser = new TestCondenser(2);
         prepareTarget(condenser);
