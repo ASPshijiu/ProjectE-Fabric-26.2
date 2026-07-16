@@ -9,6 +9,7 @@ import moze_intel.projecte.content.ModItems;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.ModRecipeSerializers;
 import moze_intel.projecte.content.ModBlocks;
+import moze_intel.projecte.content.blocks.CondenserItemStorage;
 import moze_intel.projecte.command.ProjectECommands;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.ProjectEEmc;
@@ -51,6 +52,7 @@ public final class ProjectE implements ModInitializer {
         PhilosophersStoneInteractionHandler.register();
         ModCreativeTab.init();
         ModBlocks.init();
+        CondenserItemStorage.init();
         ModFuels.init();
         ModMenuTypes.init();
         ProjectENetworking.init();
