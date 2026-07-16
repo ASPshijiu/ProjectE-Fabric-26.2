@@ -5,6 +5,7 @@ import moze_intel.projecte.client.render.MobRandomizerRenderer;
 import moze_intel.projecte.client.screen.AlchemicalBagScreen;
 import moze_intel.projecte.client.screen.CollectorScreen;
 import moze_intel.projecte.client.screen.CondenserScreen;
+import moze_intel.projecte.client.screen.RelayScreen;
 import moze_intel.projecte.client.screen.TransmutationTableScreen;
 import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModMenuTypes;
@@ -64,6 +65,9 @@ public final class ProjectEClient implements ClientModInitializer {
         MenuScreens.register(ModMenuTypes.COLLECTOR_MK1, CollectorScreen::new);
         MenuScreens.register(ModMenuTypes.COLLECTOR_MK2, CollectorScreen::new);
         MenuScreens.register(ModMenuTypes.COLLECTOR_MK3, CollectorScreen::new);
+        MenuScreens.register(ModMenuTypes.RELAY_MK1, RelayScreen::new);
+        MenuScreens.register(ModMenuTypes.RELAY_MK2, RelayScreen::new);
+        MenuScreens.register(ModMenuTypes.RELAY_MK3, RelayScreen::new);
 
         // Receive the authoritative EMC mapping from the server and publish it into the client's
         // display cache. Must run on the client thread; the Fabric handler already dispatches there.

@@ -4,6 +4,7 @@ import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.menu.AlchemicalBagMenu;
 import moze_intel.projecte.content.menu.CollectorMenu;
 import moze_intel.projecte.content.menu.CondenserMenu;
+import moze_intel.projecte.content.menu.RelayMenu;
 import moze_intel.projecte.content.menu.TransmutationTableMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,9 @@ public final class ModMenuTypes {
     public static final Identifier COLLECTOR_MK1_ID = ProjectEAPI.id("collector_mk1");
     public static final Identifier COLLECTOR_MK2_ID = ProjectEAPI.id("collector_mk2");
     public static final Identifier COLLECTOR_MK3_ID = ProjectEAPI.id("collector_mk3");
+    public static final Identifier RELAY_MK1_ID = ProjectEAPI.id("relay_mk1");
+    public static final Identifier RELAY_MK2_ID = ProjectEAPI.id("relay_mk2");
+    public static final Identifier RELAY_MK3_ID = ProjectEAPI.id("relay_mk3");
 
     public static MenuType<TransmutationTableMenu> TRANSMUTATION_TABLE;
     public static MenuType<AlchemicalBagMenu> ALCHEMICAL_BAG;
@@ -30,6 +34,9 @@ public final class ModMenuTypes {
     public static MenuType<CollectorMenu> COLLECTOR_MK1;
     public static MenuType<CollectorMenu> COLLECTOR_MK2;
     public static MenuType<CollectorMenu> COLLECTOR_MK3;
+    public static MenuType<RelayMenu> RELAY_MK1;
+    public static MenuType<RelayMenu> RELAY_MK2;
+    public static MenuType<RelayMenu> RELAY_MK3;
 
     private ModMenuTypes() {
     }
@@ -70,6 +77,21 @@ public final class ModMenuTypes {
         if (COLLECTOR_MK3 == null) {
             COLLECTOR_MK3 = register(COLLECTOR_MK3_ID,
                   new MenuType<>(CollectorMenu::clientMk3,
+                        net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
+        }
+        if (RELAY_MK1 == null) {
+            RELAY_MK1 = register(RELAY_MK1_ID,
+                  new MenuType<>(RelayMenu::clientMk1,
+                        net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
+        }
+        if (RELAY_MK2 == null) {
+            RELAY_MK2 = register(RELAY_MK2_ID,
+                  new MenuType<>(RelayMenu::clientMk2,
+                        net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
+        }
+        if (RELAY_MK3 == null) {
+            RELAY_MK3 = register(RELAY_MK3_ID,
+                  new MenuType<>(RelayMenu::clientMk3,
                         net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
         }
     }

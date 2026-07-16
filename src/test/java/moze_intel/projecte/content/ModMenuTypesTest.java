@@ -38,6 +38,13 @@ class ModMenuTypesTest {
     }
 
     @Test
+    void relayIdsMatchExpectedPaths() {
+        assertEquals("relay_mk1", ModMenuTypes.RELAY_MK1_ID.getPath());
+        assertEquals("relay_mk2", ModMenuTypes.RELAY_MK2_ID.getPath());
+        assertEquals("relay_mk3", ModMenuTypes.RELAY_MK3_ID.getPath());
+    }
+
+    @Test
     void hubClassIsLoadable() {
         assertNotNull(ModMenuTypes.class);
     }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToLongFunction;
 import moze_intel.projecte.content.items.KleinStarItem;
+import moze_intel.projecte.content.menu.RelayMenu;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
@@ -31,7 +32,7 @@ public final class RelayBlockEntity {
     public static BlockEntityType<MK2> MK2_TYPE;
     public static BlockEntityType<MK3> MK3_TYPE;
 
-    abstract static class Base extends BaseContainerBlockEntity {
+    public abstract static class Base extends BaseContainerBlockEntity {
         final int tier;
         final int transferRate;
         final long maximumEmc;
@@ -70,8 +71,12 @@ public final class RelayBlockEntity {
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.relay_mk" + tier); }
         @Override protected NonNullList<ItemStack> getItems() { return items; }
         @Override protected void setItems(NonNullList<ItemStack> l) { this.items = l; }
-        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) { return null; } @Override public int getContainerSize() { return inputSlots + 1; }
+        @Override protected AbstractContainerMenu createMenu(int id, Inventory inv) {
+            return new RelayMenu(id, inv, this);
+        }
+        @Override public int getContainerSize() { return inputSlots + 1; }
 
+        public int getTier() { return tier; }
         public long getStoredEmc() { return storedEmc; }
         public void setStoredEmc(long emc) {
             long clamped = Math.max(0, Math.min(emc, maximumEmc));
@@ -82,6 +87,16 @@ public final class RelayBlockEntity {
         }
         public long getMaximumEmc() { return maximumEmc; }
         long getNeededEmc() { return maximumEmc - storedEmc; }
+
+        public static boolean isChargeable(ItemStack stack) {
+            return !stack.isEmpty() && stack.getItem() instanceof KleinStarItem;
+        }
+
+        public static boolean isRelayInput(
+              ItemStack stack, ToLongFunction<ItemStack> emcValue
+        ) {
+            return isChargeable(stack) || emcValue.applyAsLong(stack) > 0;
+        }
 
         long insertEmc(long emc) {
             if (emc <= 0) return 0;

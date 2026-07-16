@@ -117,7 +117,8 @@ public final class RelayItemStorage {
     }
 
     private static boolean isChargeable(ItemVariant variant) {
-        return !variant.isBlank() && variant.getItem() instanceof KleinStarItem;
+        return !variant.isBlank()
+              && RelayBlockEntity.Base.isChargeable(variant.toStack());
     }
 
     private static boolean isFullyCharged(ItemVariant variant) {
