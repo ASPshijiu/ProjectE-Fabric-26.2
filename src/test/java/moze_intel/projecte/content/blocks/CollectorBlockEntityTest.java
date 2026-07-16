@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.ToLongFunction;
 import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.core.BlockPos;
@@ -15,6 +17,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -141,6 +144,105 @@ class CollectorBlockEntityTest {
 
         assertEquals(0, KleinStarItem.getStoredEmc(star));
         assertEquals(100, collector.getStoredEmc());
+    }
+
+    @Test
+    void nextFuelFollowsAscendingPositiveEmcValues() {
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.DIRT, 1L,
+              Items.COAL, 128L,
+              Items.DIAMOND, 8_192L));
+        List<net.minecraft.world.item.Item> fuels = List.of(
+              Items.DIAMOND, Items.DIRT, Items.COAL, Items.EMERALD);
+
+        assertTrue(CollectorBlockEntity.Base.nextFuel(
+              itemStack(Items.DIRT, 1), fuels, emcValue).is(Items.COAL));
+        assertTrue(CollectorBlockEntity.Base.nextFuel(
+              itemStack(Items.COAL, 1), fuels, emcValue).is(Items.DIAMOND));
+        assertTrue(CollectorBlockEntity.Base.nextFuel(
+              itemStack(Items.DIAMOND, 1), fuels, emcValue).isEmpty());
+        assertTrue(CollectorBlockEntity.Base.nextFuel(
+              itemStack(Items.EMERALD, 1), fuels, emcValue).isEmpty());
+    }
+
+    @Test
+    void upgradesOneFuelForItsEmcDifference() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(384);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 2));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L, Items.DIAMOND, 512L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.DIAMOND, 1), emcValue));
+
+        assertEquals(0, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).is(Items.DIAMOND));
+        assertEquals(1, collector.getItem(collector.inputSlots + 1).getCount());
+    }
+
+    @Test
+    void fuelUpgradeStacksIntoMatchingOutput() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(384);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 1));
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.DIAMOND, 63));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L, Items.DIAMOND, 512L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.DIAMOND, 1), emcValue));
+
+        assertEquals(0, collector.getStoredEmc());
+        assertTrue(collector.getItem(collector.inputSlots).isEmpty());
+        assertEquals(64, collector.getItem(collector.inputSlots + 1).getCount());
+    }
+
+    @Test
+    void validFuelWaitsForEnoughEmc() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(383);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 1));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L, Items.DIAMOND, 512L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.DIAMOND, 1), emcValue));
+
+        assertEquals(383, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).isEmpty());
+    }
+
+    @Test
+    void validFuelWaitsForOutputSpace() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(384);
+        collector.setItem(collector.inputSlots, itemStack(Items.COAL, 1));
+        collector.setItem(collector.inputSlots + 1, itemStack(Items.EMERALD, 1));
+        ToLongFunction<ItemStack> emcValue = emcValues(Map.of(
+              Items.COAL, 128L, Items.DIAMOND, 512L));
+
+        assertTrue(collector.upgradeFuel(
+              ignored -> itemStack(Items.DIAMOND, 1), emcValue));
+
+        assertEquals(384, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
+        assertTrue(collector.getItem(collector.inputSlots + 1).is(Items.EMERALD));
+    }
+
+    @Test
+    void highestFuelIsNotHandledAsAnUpgrade() {
+        TestCollector collector = new TestCollector(1, 4);
+        collector.setStoredEmc(100);
+        collector.setItem(collector.inputSlots, itemStack(Items.DIAMOND, 1));
+
+        assertFalse(collector.upgradeFuel(
+              ignored -> ItemStack.EMPTY, ignored -> 8_192));
+
+        assertEquals(100, collector.getStoredEmc());
+        assertEquals(1, collector.getItem(collector.inputSlots).getCount());
     }
 
     @Test
@@ -310,6 +412,19 @@ class CollectorBlockEntityTest {
     private static ItemStack kleinStarStack(long storedEmc) throws Exception {
         ItemStack stack = new ItemStack(Holder.direct(allocateKleinStar(), DataComponentMap.EMPTY));
         KleinStarItem.setStoredEmc(stack, storedEmc);
+        return stack;
+    }
+
+    private static ToLongFunction<ItemStack> emcValues(
+          Map<net.minecraft.world.item.Item, Long> values
+    ) {
+        return stack -> values.getOrDefault(stack.getItem(), 0L);
+    }
+
+    private static ItemStack itemStack(net.minecraft.world.item.Item item, int count) {
+        ItemStack stack = new ItemStack(item);
+        stack.set(DataComponents.MAX_STACK_SIZE, 64);
+        stack.setCount(count);
         return stack;
     }
 

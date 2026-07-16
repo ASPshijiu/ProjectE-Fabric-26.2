@@ -1,14 +1,24 @@
 package moze_intel.projecte.content.blocks;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
+import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.items.KleinStarItem;
+import moze_intel.projecte.emc.EmcValue;
+import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -31,6 +41,8 @@ public final class CollectorBlockEntity {
 
     public static abstract class Base extends net.minecraft.world.level.block.entity.BaseContainerBlockEntity {
         private static final int AUXILIARY_SLOTS = 3;
+        private static final TagKey<Item> COLLECTOR_FUEL = TagKey.create(
+              Registries.ITEM, ProjectEAPI.id("collector_fuel"));
 
         final int tier;
         final int emcPerSecond;
@@ -39,6 +51,7 @@ public final class CollectorBlockEntity {
         long storedEmc;
         double unprocessedEmc;
         NonNullList<ItemStack> items;
+        MinecraftStackKeyFactory stackKeys;
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int emcPerSecond) {
             super(type, pos, state);
@@ -103,6 +116,27 @@ public final class CollectorBlockEntity {
             if (entity.chargeItem()) {
                 return;
             }
+            ItemStack upgrading = entity.items.get(entity.inputSlots);
+            if (!upgrading.isEmpty() && !(upgrading.getItem() instanceof KleinStarItem)) {
+                if (entity.stackKeys == null) {
+                    entity.stackKeys = new MinecraftStackKeyFactory(level.registryAccess());
+                }
+                var snapshot = ProjectEEmc.service().current();
+                ToLongFunction<ItemStack> emcValue = stack -> entity.stackKeys.optionalKey(stack)
+                      .flatMap(snapshot::valueFor)
+                      .orElse(EmcValue.ZERO)
+                      .longValue();
+                List<Item> fuels = level.registryAccess().lookup(Registries.ITEM)
+                      .flatMap(items -> items.get(COLLECTOR_FUEL))
+                      .stream()
+                      .flatMap(named -> named.stream())
+                      .map(holder -> holder.value())
+                      .toList();
+                if (entity.upgradeFuel(
+                      stack -> nextFuel(stack, fuels, emcValue), emcValue)) {
+                    return;
+                }
+            }
             if (entity.storedEmc > 0) {
                 List<RelayBlockEntity.Base> relays = new ArrayList<>();
                 for (Direction direction : Direction.values()) {
@@ -143,6 +177,61 @@ public final class CollectorBlockEntity {
 
             setStoredEmc(storedEmc - transferred);
             return true;
+        }
+
+        boolean upgradeFuel(
+              Function<ItemStack, ItemStack> nextFuel,
+              ToLongFunction<ItemStack> emcValue
+        ) {
+            ItemStack upgrading = items.get(inputSlots);
+            if (upgrading.isEmpty()) return false;
+
+            ItemStack result = nextFuel.apply(upgrading);
+            if (result.isEmpty()) return false;
+
+            long inputEmc = emcValue.applyAsLong(upgrading);
+            long outputEmc = emcValue.applyAsLong(result);
+            if (inputEmc <= 0 || outputEmc < inputEmc) return true;
+
+            long cost = outputEmc - inputEmc;
+            if (storedEmc < cost) return true;
+
+            int outputSlot = inputSlots + 1;
+            ItemStack output = items.get(outputSlot);
+            if (output.isEmpty()) {
+                items.set(outputSlot, result.copyWithCount(1));
+            } else if (ItemStack.isSameItemSameComponents(output, result)
+                  && output.getCount() < output.getMaxStackSize()) {
+                output.grow(1);
+            } else {
+                return true;
+            }
+
+            upgrading.shrink(1);
+            if (upgrading.isEmpty()) {
+                items.set(inputSlots, ItemStack.EMPTY);
+            }
+            setStoredEmc(storedEmc - cost);
+            setChanged();
+            return true;
+        }
+
+        static ItemStack nextFuel(
+              ItemStack input, List<Item> fuels, ToLongFunction<ItemStack> emcValue
+        ) {
+            List<Item> sorted = fuels.stream()
+                  .filter(item -> emcValue.applyAsLong(new ItemStack(item)) > 0)
+                  .sorted(Comparator.comparingLong(
+                        item -> emcValue.applyAsLong(new ItemStack(item))))
+                  .toList();
+            for (int index = 0; index < sorted.size(); index++) {
+                if (input.is(sorted.get(index))) {
+                    return index + 1 < sorted.size()
+                          ? new ItemStack(sorted.get(index + 1))
+                          : ItemStack.EMPTY;
+                }
+            }
+            return ItemStack.EMPTY;
         }
 
         static long sendEmcToRelays(
