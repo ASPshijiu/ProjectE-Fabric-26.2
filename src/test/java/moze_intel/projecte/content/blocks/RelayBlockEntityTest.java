@@ -160,6 +160,55 @@ class RelayBlockEntityTest {
     }
 
     @Test
+    void dischargesKleinStarAtRelayTierRate() throws Exception {
+        TestRelay mk1 = new TestRelay(1, 64);
+        TestRelay mk2 = new TestRelay(2, 192);
+        TestRelay mk3 = new TestRelay(3, 640);
+        ItemStack mk1Star = kleinStarStack(1_000);
+        ItemStack mk2Star = kleinStarStack(1_000);
+        ItemStack mk3Star = kleinStarStack(1_000);
+        mk1.setItem(0, mk1Star);
+        mk2.setItem(0, mk2Star);
+        mk3.setItem(0, mk3Star);
+
+        assertTrue(burnOneInput(mk1, ignored -> 139_264));
+        assertTrue(burnOneInput(mk2, ignored -> 139_264));
+        assertTrue(burnOneInput(mk3, ignored -> 139_264));
+
+        assertEquals(64, mk1.getStoredEmc());
+        assertEquals(192, mk2.getStoredEmc());
+        assertEquals(640, mk3.getStoredEmc());
+        assertEquals(936, KleinStarItem.getStoredEmc(mk1Star));
+        assertEquals(808, KleinStarItem.getStoredEmc(mk2Star));
+        assertEquals(360, KleinStarItem.getStoredEmc(mk3Star));
+    }
+
+    @Test
+    void kleinStarDischargeDoesNotExceedRelayCapacity() throws Exception {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setStoredEmc(relay.getMaximumEmc() - 32);
+        ItemStack starStack = kleinStarStack(1_000);
+        relay.setItem(0, starStack);
+
+        assertTrue(burnOneInput(relay, ignored -> 139_264));
+
+        assertEquals(relay.getMaximumEmc(), relay.getStoredEmc());
+        assertEquals(968, KleinStarItem.getStoredEmc(starStack));
+    }
+
+    @Test
+    void kleinStarDischargeDoesNotExceedStoredEmc() throws Exception {
+        TestRelay relay = new TestRelay(3, 640);
+        ItemStack starStack = kleinStarStack(32);
+        relay.setItem(0, starStack);
+
+        assertTrue(burnOneInput(relay, ignored -> 139_264));
+
+        assertEquals(32, relay.getStoredEmc());
+        assertEquals(0, KleinStarItem.getStoredEmc(starStack));
+    }
+
+    @Test
     void collectorBonusMatchesRelayTier() {
         TestRelay mk1 = new TestRelay(1, 64);
         TestRelay mk2 = new TestRelay(2, 192);
@@ -241,6 +290,13 @@ class RelayBlockEntityTest {
         tierField.setAccessible(true);
         tierField.set(star, tier);
         return star;
+    }
+
+    private static ItemStack kleinStarStack(long storedEmc) throws Exception {
+        KleinStarItem star = allocateKleinStar("ein");
+        ItemStack stack = new ItemStack(Holder.direct(star, DataComponentMap.EMPTY));
+        KleinStarItem.setStoredEmc(stack, storedEmc);
+        return stack;
     }
 
     private static ItemStack stack(net.minecraft.world.item.Item item, int count) {

@@ -117,7 +117,15 @@ public final class RelayBlockEntity {
             for (int slot = 0; slot < inputSlots; slot++) {
                 ItemStack stack = items.get(slot);
                 if (stack.isEmpty()) continue;
-                if (stack.getItem() instanceof KleinStarItem) return false;
+                if (stack.getItem() instanceof KleinStarItem) {
+                    long transferred = KleinStarItem.removeEmc(
+                          stack, Math.min(transferRate, getNeededEmc()));
+                    if (transferred > 0) {
+                        insertEmc(transferred);
+                        return true;
+                    }
+                    return false;
+                }
 
                 long value = emcValue.applyAsLong(stack);
                 if (value <= 0) continue;
