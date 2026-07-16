@@ -77,7 +77,7 @@ public final class CondenserBlockEntity {
         }
 
         long consumeInput(ToLongFunction<ItemStack> emcValue) {
-            if (requiredEmc <= 0) return 0;
+            if (requiredEmc <= 0 || tier == 2 && !hasOutputSpace()) return 0;
 
             for (int slot = 0; slot < items.size(); slot++) {
                 ItemStack stack = items.get(slot);
@@ -106,6 +106,47 @@ public final class CondenserBlockEntity {
                 return addedEmc;
             }
             return 0;
+        }
+
+        boolean hasOutputSpace() {
+            if (requiredEmc <= 0 || target.isEmpty()) return false;
+
+            for (ItemStack stack : items) {
+                if (stack.isEmpty() || ItemStack.isSameItemSameComponents(stack, target)
+                      && stack.getCount() < stack.getMaxStackSize()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        int produceOutput() {
+            if (requiredEmc <= 0 || target.isEmpty()) return 0;
+
+            int limit = tier == 2 ? Integer.MAX_VALUE : 1;
+            int produced = 0;
+            while (produced < limit && storedEmc >= requiredEmc && insertTarget()) {
+                setStoredEmc(storedEmc - requiredEmc);
+                produced++;
+            }
+            return produced;
+        }
+
+        private boolean insertTarget() {
+            for (ItemStack stack : items) {
+                if (ItemStack.isSameItemSameComponents(stack, target)
+                      && stack.getCount() < stack.getMaxStackSize()) {
+                    stack.grow(1);
+                    return true;
+                }
+            }
+            for (int slot = 0; slot < items.size(); slot++) {
+                if (items.get(slot).isEmpty()) {
+                    items.set(slot, target.copyWithCount(1));
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
@@ -142,7 +183,13 @@ public final class CondenserBlockEntity {
                   .orElse(EmcValue.ZERO)
                   .longValue();
             entity.refreshTargetEmc(emcValue);
-            entity.consumeInput(emcValue);
+            if (entity.tier == 2) {
+                entity.produceOutput();
+                entity.consumeInput(emcValue);
+            } else {
+                entity.consumeInput(emcValue);
+                entity.produceOutput();
+            }
         }
     }
 

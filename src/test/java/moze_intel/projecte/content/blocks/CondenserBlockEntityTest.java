@@ -131,6 +131,20 @@ class CondenserBlockEntityTest {
     }
 
     @Test
+    void mk2DoesNotConsumeInputWhenOutputInventoryIsFull() {
+        TestCondenser condenser = new TestCondenser(2);
+        prepareTarget(condenser);
+        for (int slot = 0; slot < condenser.getContainerSize(); slot++) {
+            condenser.items.set(slot, new ItemStack(Items.REDSTONE));
+        }
+
+        assertEquals(0, consumeInput(condenser, ignored -> 64));
+
+        assertEquals(0, condenser.getStoredEmc());
+        assertEquals(1, condenser.getItem(0).getCount());
+    }
+
+    @Test
     void doesNotConsumeStackMatchingTarget() {
         TestCondenser condenser = new TestCondenser();
         prepareTarget(condenser);
@@ -197,6 +211,57 @@ class CondenserBlockEntityTest {
         assertEquals(2, input.getCount());
     }
 
+    @Test
+    void mk1ProducesAtMostOneTargetItemPerTick() {
+        TestCondenser condenser = new TestCondenser(1);
+        prepareTarget(condenser);
+        condenser.setStoredEmc(3L * 8_192);
+
+        assertEquals(1, produceOutput(condenser));
+
+        assertEquals(2L * 8_192, condenser.getStoredEmc());
+        assertEquals(1, countItem(condenser, Items.DIAMOND));
+    }
+
+    @Test
+    void mk2ProducesAsManyTargetItemsAsStoredEmcAllows() {
+        TestCondenser condenser = new TestCondenser(2);
+        prepareTarget(condenser);
+        condenser.setStoredEmc(3L * 8_192);
+
+        assertEquals(3, produceOutput(condenser));
+
+        assertEquals(0, condenser.getStoredEmc());
+        assertEquals(3, countItem(condenser, Items.DIAMOND));
+    }
+
+    @Test
+    void doesNotProduceTargetWithoutEnoughEmc() {
+        TestCondenser condenser = new TestCondenser();
+        prepareTarget(condenser);
+        condenser.setStoredEmc(8_191);
+
+        assertEquals(0, produceOutput(condenser));
+
+        assertEquals(8_191, condenser.getStoredEmc());
+        assertEquals(0, countItem(condenser, Items.DIAMOND));
+    }
+
+    @Test
+    void doesNotSpendEmcWhenOutputInventoryIsFull() {
+        TestCondenser condenser = new TestCondenser();
+        prepareTarget(condenser);
+        condenser.setStoredEmc(8_192);
+        for (int slot = 0; slot < condenser.getContainerSize(); slot++) {
+            condenser.items.set(slot, new ItemStack(Items.REDSTONE));
+        }
+
+        assertEquals(0, produceOutput(condenser));
+
+        assertEquals(8_192, condenser.getStoredEmc());
+        assertEquals(0, countItem(condenser, Items.DIAMOND));
+    }
+
     private static void prepareTarget(TestCondenser condenser) {
         condenser.setTarget(new ItemStack(Items.DIAMOND));
         condenser.refreshTargetEmc(ignored -> 8_192);
@@ -206,6 +271,20 @@ class CondenserBlockEntityTest {
           TestCondenser condenser, ToLongFunction<ItemStack> emcValue
     ) {
         return condenser.consumeInput(emcValue);
+    }
+
+    private static int produceOutput(TestCondenser condenser) {
+        return condenser.produceOutput();
+    }
+
+    private static int countItem(
+          TestCondenser condenser, net.minecraft.world.item.Item item
+    ) {
+        int count = 0;
+        for (ItemStack stack : condenser.items) {
+            if (stack.is(item)) count += stack.getCount();
+        }
+        return count;
     }
 
     private static ItemStack stack(net.minecraft.world.item.Item item, int count) {
