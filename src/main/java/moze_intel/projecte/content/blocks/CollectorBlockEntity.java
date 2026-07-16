@@ -29,29 +29,39 @@ public final class CollectorBlockEntity {
     public static BlockEntityType<MK3> MK3_TYPE;
 
     public static abstract class Base extends net.minecraft.world.level.block.entity.BaseContainerBlockEntity {
+        private static final int AUXILIARY_SLOTS = 3;
+
         final int tier;
         final int emcPerSecond;
         final long maximumEmc;
+        final int inputSlots;
         long storedEmc;
         double unprocessedEmc;
-        NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
+        NonNullList<ItemStack> items;
 
         Base(BlockEntityType<?> type, BlockPos pos, BlockState state, int tier, int emcPerSecond) {
             super(type, pos, state);
             this.tier = tier;
             this.emcPerSecond = emcPerSecond;
+            this.inputSlots = switch (tier) {
+                case 1 -> 8;
+                case 2 -> 12;
+                case 3 -> 16;
+                default -> throw new IllegalArgumentException("Unknown collector tier: " + tier);
+            };
             this.maximumEmc = switch (tier) {
                 case 1 -> 10_000;
                 case 2 -> 30_000;
                 case 3 -> 60_000;
                 default -> throw new IllegalArgumentException("Unknown collector tier: " + tier);
             };
+            this.items = NonNullList.withSize(inputSlots + AUXILIARY_SLOTS, ItemStack.EMPTY);
         }
 
         @Override protected Component getDefaultName() { return Component.translatable("container.projecte.collector_mk" + tier); }
         @Override protected NonNullList<ItemStack> getItems() { return items; }
         @Override protected void setItems(NonNullList<ItemStack> list) { this.items = list; }
-        @Override public int getContainerSize() { return 1; }
+        @Override public int getContainerSize() { return inputSlots + AUXILIARY_SLOTS; }
         @Override protected net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv) { return null; }
 
         public long getStoredEmc() { return storedEmc; }

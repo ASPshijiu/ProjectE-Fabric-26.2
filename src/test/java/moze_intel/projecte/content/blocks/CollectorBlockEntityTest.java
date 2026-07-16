@@ -51,6 +51,27 @@ class CollectorBlockEntityTest {
     }
 
     @Test
+    void inventorySizeMatchesCollectorTier() {
+        assertEquals(11, new TestCollector(1, 4).getContainerSize());
+        assertEquals(15, new TestCollector(2, 12).getContainerSize());
+        assertEquals(19, new TestCollector(3, 40).getContainerSize());
+    }
+
+    @Test
+    void saveAndLoadPreserveLastAuxiliarySlot() {
+        TestCollector source = new TestCollector(2, 12);
+        source.setItem(14, new ItemStack(Items.EMERALD));
+
+        CompoundTag saved = source.saveCustomOnly(registries);
+        TestCollector restored = new TestCollector(2, 12);
+        restored.loadCustomOnly(TagValueInput.create(
+              ProblemReporter.DISCARDING, registries, saved));
+
+        assertTrue(restored.getItem(14).is(Items.EMERALD));
+        assertEquals(1, restored.getItem(14).getCount());
+    }
+
+    @Test
     void storedEmcIsCappedByCollectorTier() {
         TestCollector mk1 = new TestCollector(1, 4);
         TestCollector mk2 = new TestCollector(2, 12);
