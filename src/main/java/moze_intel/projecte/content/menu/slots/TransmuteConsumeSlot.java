@@ -1,6 +1,9 @@
 package moze_intel.projecte.content.menu.slots;
 
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import moze_intel.projecte.content.items.TomeOfKnowledgeItem;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
@@ -16,32 +19,46 @@ import net.minecraft.world.item.ItemStack;
  * The slot is then cleared. The item never returns.
  */
 public class TransmuteConsumeSlot extends Slot {
-    private final Player player;
+    private final BooleanSupplier serverSide;
     private final PlayerDataService service;
-    private final MinecraftStackKeyFactory keyFactory;
+    private final Function<ItemStack, Optional<StackEmcResolver.Resolved>> resolver;
 
     public TransmuteConsumeSlot(Container container, int index, int x, int y,
           Player player, PlayerDataService service, MinecraftStackKeyFactory keyFactory) {
         super(container, index, x, y);
-        this.player = player;
+        this.serverSide = () -> !player.level().isClientSide();
         this.service = service;
-        this.keyFactory = keyFactory;
+        this.resolver = stack -> keyFactory.optionalKey(stack)
+              .flatMap(key -> StackEmcResolver.resolve(
+                    stack, key, ProjectEEmc.service().current()));
+    }
+
+    TransmuteConsumeSlot(Container container, int index, int x, int y,
+          BooleanSupplier serverSide, PlayerDataService service,
+          Function<ItemStack, Optional<StackEmcResolver.Resolved>> resolver) {
+        super(container, index, x, y);
+        this.serverSide = serverSide;
+        this.service = service;
+        this.resolver = resolver;
     }
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return !stack.isEmpty() && resolve(stack)
-              .filter(resolved -> resolved.value().longValue() > 0)
-              .isPresent();
+        return !stack.isEmpty()
+              && (TomeOfKnowledgeItem.isTome(stack) || sellable(stack).isPresent());
     }
 
     @Override
     public void set(ItemStack stack) {
-        if (!player.level().isClientSide() && !stack.isEmpty()) {
-            var resolved = resolve(stack).filter(entry -> entry.value().longValue() > 0);
-            if (resolved.isPresent()) {
-                service.learn(resolved.get().key());
-                service.addEmc(resolved.get().value().multiply(stack.getCount()));
+        if (serverSide.getAsBoolean() && !stack.isEmpty()) {
+            var resolved = sellable(stack);
+            if (TomeOfKnowledgeItem.isTome(stack) || resolved.isPresent()) {
+                if (TomeOfKnowledgeItem.isTome(stack)) {
+                    TomeOfKnowledgeItem.learnAll(service);
+                } else {
+                    service.learn(resolved.orElseThrow().key());
+                }
+                resolved.ifPresent(entry -> service.addEmc(entry.value().multiply(stack.getCount())));
                 super.set(ItemStack.EMPTY);
                 return;
             }
@@ -55,9 +72,10 @@ public class TransmuteConsumeSlot extends Slot {
     }
 
     private Optional<StackEmcResolver.Resolved> resolve(ItemStack stack) {
-        return keyFactory.optionalKey(stack)
-              .flatMap(key -> StackEmcResolver.resolve(
-                    stack, key,
-                    ProjectEEmc.service().current()));
+        return resolver.apply(stack);
+    }
+
+    private Optional<StackEmcResolver.Resolved> sellable(ItemStack stack) {
+        return resolve(stack).filter(entry -> entry.value().longValue() > 0);
     }
 }

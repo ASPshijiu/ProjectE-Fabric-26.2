@@ -86,7 +86,6 @@
     "item.projecte.tome": "炼金术秘卷",
     "item.projecte.manual": "ProjectE 手册",
     "item.projecte.transmutation_tablet": "便携式转化桌",
-    "item.projecte.manual.used": "当前移植版本暂未实现 ProjectE 手册功能。",
 
     "block.projecte.alchemical_chest": "炼金术箱子",
     "block.projecte.interdiction_torch": "禁止火把",
@@ -276,7 +275,7 @@
     "pedestal.projecte.time_watch.1": "以%d倍加快附近方块的刷新及运作速度",
     "pedestal.projecte.time_watch.2": "以%.3f倍降低附近生物的活动速度",
 
-    "tooltip.projecte.tome": "放入转化桌可习得全部转化知识.(创造专属)",
+    "tooltip.projecte.tome": "卖入转化桌后可永久习得全部转化知识。",
 
     "transmutation.projecte.transmute": "转化桌",
 

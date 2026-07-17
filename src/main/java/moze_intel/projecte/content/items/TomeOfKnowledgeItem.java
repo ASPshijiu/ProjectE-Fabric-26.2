@@ -1,31 +1,35 @@
 package moze_intel.projecte.content.items;
 
-import moze_intel.projecte.player.PlayerAttachmentKeys;
+import java.util.function.Consumer;
 import moze_intel.projecte.player.PlayerDataService;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 /**
- * Tome of Knowledge — grants full transmutation knowledge while in the player's
- * inventory. EMC-based item creation is handled by the transmutation table.
+ * Tome of Knowledge — permanently grants full transmutation knowledge when sold to a
+ * transmutation table. EMC-based item creation is handled by the table.
  */
 public class TomeOfKnowledgeItem extends Item {
     public TomeOfKnowledgeItem(Properties properties) {
         super(properties);
     }
 
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
+          Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
+        tooltip.accept(Component.translatable("tooltip.projecte.tome"));
+    }
+
     /**
-     * Call this from a server-side inventory tick handler to sync full-knowledge
-     * flag based on whether the player has a Tome in their inventory.
+     * Grants the owning player full transmutation knowledge.
      */
-    public static void applyFullKnowledge(Player player, boolean hasTome) {
-        var access = PlayerAttachmentKeys.fabricAdapter(player);
-        if (access == null) return;
-        var service = new PlayerDataService(access);
-        // Only modify if the state actually changed to avoid unnecessary sync
-        if (service.knowledge().fullKnowledge() != hasTome) {
-            service.setFullKnowledge(hasTome);
+    public static void learnAll(PlayerDataService service) {
+        if (!service.knowledge().fullKnowledge()) {
+            service.setFullKnowledge(true);
         }
     }
 
