@@ -1,15 +1,19 @@
 package moze_intel.projecte.content.items;
 
+import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.content.items.tools.RedMatterSwordItem.KatarMode;
+import moze_intel.projecte.content.items.tools.ToolHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Red Matter Katar — a fast melee weapon that applies bonus damage scaled by charge and attacks in
- * an area around slain targets. {@link #hurtEnemy} deals the charge-scaled bonus to nearby hostiles
- * within a small radius.
+ * Red Matter Katar — a chargeable melee weapon with a key-triggered attack aura and configurable
+ * hostile-only/all-target modes.
  */
-public class RedMatterKatarItem extends ChargeableItem {
+public class RedMatterKatarItem extends ChargeableItem implements IItemMode, IExtraFunction {
     private static final int MAX_CHARGE = 4;
 
     public RedMatterKatarItem(Properties properties) {
@@ -23,16 +27,30 @@ public class RedMatterKatarItem extends ChargeableItem {
 
     @Override
     public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        super.hurtEnemy(stack, target, attacker);
-        if (!target.level().isClientSide() && attacker instanceof Player player) {
-            int charge = getCharge(stack);
-            float radius = 2.0F + charge;
-            for (LivingEntity nearby : target.level().getEntitiesOfClass(
-                  LivingEntity.class, target.getBoundingBox().inflate(radius),
-                  e -> e != target && e != player && e.isAlive() && !e.isAlliedTo(player))) {
-                nearby.invulnerableTime = 0;
-                nearby.hurt(target.damageSources().playerAttack(player), 4.0F + charge * 2.0F);
-            }
+        ToolHelper.attackWithCharge(stack, target, attacker);
+    }
+
+    public KatarMode getMode(ItemStack stack) {
+        return KatarMode.byId(stack.getOrDefault(ModDataComponents.TOOL_MODE, 0));
+    }
+
+    @Override
+    public void cycleMode(Player player, ItemStack stack) {
+        var next = getMode(stack).next();
+        stack.set(ModDataComponents.TOOL_MODE, next.ordinal());
+        player.sendOverlayMessage(Component.translatable(
+              "mode.projecte.switch",
+              Component.translatable(next.translationKey())));
+    }
+
+    @Override
+    public void doExtraFunction(Player player, ItemStack stack, InteractionHand hand) {
+        if (player.getAttackStrengthScale(0.0F) < 1.0F) {
+            return;
         }
+        ToolHelper.attackAOE(
+              stack, player, getMode(stack) == KatarMode.SLAY_ALL,
+              1000.0F);
+        player.resetAttackStrengthTicker();
     }
 }

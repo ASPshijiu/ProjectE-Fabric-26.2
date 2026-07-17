@@ -26,9 +26,11 @@ import moze_intel.projecte.content.items.LifeStoneItem;
 import moze_intel.projecte.content.items.WatchOfFlowingTimeItem;
 import moze_intel.projecte.content.items.tools.MatterAxeItem;
 import moze_intel.projecte.content.items.tools.MatterHoeItem;
+import moze_intel.projecte.content.items.tools.MatterPickaxeItem;
 import moze_intel.projecte.content.items.tools.MatterShearsItem;
 import moze_intel.projecte.content.items.tools.MatterShovelItem;
-import moze_intel.projecte.content.items.tools.MatterToolItem;
+import moze_intel.projecte.content.items.tools.MatterSwordItem;
+import moze_intel.projecte.content.items.tools.RedMatterSwordItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -349,7 +351,7 @@ public final class ModItems {
     }
 
     private static Item dmPickaxe(Identifier id) {
-        return new MatterToolItem(
+        return new MatterPickaxeItem(
               dmToolProps(id).pickaxe(ModToolMaterials.DARK_MATTER, 1.0F, -2.8F), 2, 12.0F);
     }
 
@@ -364,7 +366,7 @@ public final class ModItems {
     }
 
     private static Item dmSword(Identifier id) {
-        return new MatterToolItem(
+        return new MatterSwordItem(
               dmToolProps(id).sword(ModToolMaterials.DARK_MATTER, 3.0F, -2.4F), 2, 12.0F);
     }
 
@@ -389,7 +391,7 @@ public final class ModItems {
     }
 
     private static Item rmPickaxe(Identifier id) {
-        return new MatterToolItem(
+        return new MatterPickaxeItem(
               rmToolProps(id).pickaxe(ModToolMaterials.RED_MATTER, 1.0F, -2.8F), 3, 14.0F);
     }
 
@@ -404,7 +406,7 @@ public final class ModItems {
     }
 
     private static Item rmSword(Identifier id) {
-        return new MatterToolItem(
+        return new RedMatterSwordItem(
               rmToolProps(id).sword(ModToolMaterials.RED_MATTER, 3.0F, -2.4F), 3, 14.0F);
     }
 

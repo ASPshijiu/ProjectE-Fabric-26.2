@@ -13,6 +13,7 @@ public final class StackEmcResolver {
           "minecraft:damage",
           "projecte:charge",
           "projecte:philosophers_stone_mode",
+          "projecte:tool_mode",
           STORED_EMC_COMPONENT
     );
 

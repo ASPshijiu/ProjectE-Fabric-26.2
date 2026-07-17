@@ -1,10 +1,14 @@
 package moze_intel.projecte.content.items.tools;
 
+import moze_intel.projecte.content.items.IItemCharge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -87,5 +91,69 @@ public final class ToolHelper {
             return blockHit.getBlockPos();
         }
         return null;
+    }
+
+    public static void digBasedOnMode(Level level, LivingEntity miner, ItemStack stack,
+          BlockPos target, MatterPickaxeItem.PickaxeMode mode) {
+        if (level.isClientSide() || mode == MatterPickaxeItem.PickaxeMode.STANDARD
+              || !(miner instanceof ServerPlayer player)) {
+            return;
+        }
+        HitResult hit = player.pick(5.0, 0.0F, false);
+        if (!(hit instanceof BlockHitResult blockHit) || !target.equals(blockHit.getBlockPos())) {
+            return;
+        }
+        Direction face = blockHit.getDirection();
+        switch (mode) {
+            case TALLSHOT -> {
+                breakBlock(level, player, stack, target.below());
+                breakBlock(level, player, stack, target.above());
+            }
+            case WIDESHOT -> {
+                Direction.Axis axis = face.getAxis() == Direction.Axis.Y
+                      ? player.getDirection().getAxis() : face.getAxis();
+                if (axis == Direction.Axis.X) {
+                    breakBlock(level, player, stack, target.north());
+                    breakBlock(level, player, stack, target.south());
+                } else if (axis == Direction.Axis.Z) {
+                    breakBlock(level, player, stack, target.west());
+                    breakBlock(level, player, stack, target.east());
+                }
+            }
+            case LONGSHOT -> {
+                breakBlock(level, player, stack, target.relative(face.getOpposite()));
+                breakBlock(level, player, stack, target.relative(face.getOpposite(), 2));
+            }
+            case STANDARD -> { }
+        }
+    }
+
+    public static void attackWithCharge(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (!(attacker instanceof Player player) || !(target.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        int charge = stack.getItem() instanceof IItemCharge item
+              ? item.getCharge(stack) : 0;
+        target.invulnerableTime = 0;
+        target.hurtServer(serverLevel, target.damageSources().playerAttack(player), 1.0F + charge);
+    }
+
+    public static void attackAOE(ItemStack stack, Player player, boolean slayAll, float damage) {
+        if (!(player.level() instanceof ServerLevel serverLevel)
+              || !(stack.getItem() instanceof IItemCharge item)) {
+            return;
+        }
+        int charge = item.getCharge(stack);
+        if (charge == 0) {
+            return;
+        }
+        for (LivingEntity target : serverLevel.getEntitiesOfClass(
+              LivingEntity.class,
+              player.getBoundingBox().inflate(2.5F * charge),
+              entity -> entity != player && entity.isAlive() && !entity.isAlliedTo(player)
+                    && (slayAll || entity instanceof Enemy))) {
+            target.invulnerableTime = 0;
+            target.hurtServer(serverLevel, target.damageSources().playerAttack(player), damage);
+        }
     }
 }

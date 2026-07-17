@@ -1,8 +1,11 @@
 package moze_intel.projecte.content.items;
 
+import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.content.items.tools.MatterPickaxeItem.PickaxeMode;
 import moze_intel.projecte.content.items.tools.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,10 +17,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
 /**
- * Red Matter Morning Star — combines the hammer's block AoE with the katar's combat AoE. Right-
- * click breaks a cube around the targeted block; attacking a foe damages nearby hostiles.
+ * Red Matter Morning Star — combines charged block AoE with pickaxe mining modes and charged
+ * single-target damage.
  */
-public class RedMatterMorningStarItem extends ChargeableItem {
+public class RedMatterMorningStarItem extends ChargeableItem implements IItemMode {
     private static final int MAX_CHARGE = 4;
 
     public RedMatterMorningStarItem(Properties properties) {
@@ -27,6 +30,26 @@ public class RedMatterMorningStarItem extends ChargeableItem {
     @Override
     public int getMaxCharge(ItemStack stack) {
         return MAX_CHARGE;
+    }
+
+    public PickaxeMode getMode(ItemStack stack) {
+        return PickaxeMode.byId(stack.getOrDefault(ModDataComponents.TOOL_MODE, 0));
+    }
+
+    @Override
+    public void cycleMode(Player player, ItemStack stack) {
+        var next = getMode(stack).next();
+        stack.set(ModDataComponents.TOOL_MODE, next.ordinal());
+        player.sendOverlayMessage(Component.translatable(
+              "mode.projecte.switch",
+              Component.translatable(next.translationKey())));
+    }
+
+    @Override
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos,
+          LivingEntity miner) {
+        ToolHelper.digBasedOnMode(level, miner, stack, pos, getMode(stack));
+        return true;
     }
 
     @Override
@@ -52,16 +75,6 @@ public class RedMatterMorningStarItem extends ChargeableItem {
 
     @Override
     public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        super.hurtEnemy(stack, target, attacker);
-        if (!target.level().isClientSide() && attacker instanceof Player player) {
-            int charge = getCharge(stack);
-            float radius = 3.0F + charge;
-            for (LivingEntity nearby : target.level().getEntitiesOfClass(
-                  LivingEntity.class, target.getBoundingBox().inflate(radius),
-                  e -> e != target && e != player && e.isAlive() && !e.isAlliedTo(player))) {
-                nearby.invulnerableTime = 0;
-                nearby.hurt(target.damageSources().playerAttack(player), 6.0F + charge * 2.0F);
-            }
-        }
+        ToolHelper.attackWithCharge(stack, target, attacker);
     }
 }

@@ -31,6 +31,10 @@ public final class ModDataComponents {
     public static final Identifier PHILOSOPHERS_STONE_MODE_ID = ProjectEAPI.id("philosophers_stone_mode");
     public static DataComponentType<Integer> PHILOSOPHERS_STONE_MODE;
 
+    /** Stores the active mode for matter pickaxes, swords, the katar and the morning star. */
+    public static final Identifier TOOL_MODE_ID = ProjectEAPI.id("tool_mode");
+    public static DataComponentType<Integer> TOOL_MODE;
+
     private static volatile boolean initialized;
 
     public static void init() {
@@ -58,6 +62,15 @@ public final class ModDataComponents {
         PHILOSOPHERS_STONE_MODE = Registry.register(
               BuiltInRegistries.DATA_COMPONENT_TYPE,
               PHILOSOPHERS_STONE_MODE_ID,
+              DataComponentType.<Integer>builder()
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build()
+        );
+
+        TOOL_MODE = Registry.register(
+              BuiltInRegistries.DATA_COMPONENT_TYPE,
+              TOOL_MODE_ID,
               DataComponentType.<Integer>builder()
                     .persistent(Codec.INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT)

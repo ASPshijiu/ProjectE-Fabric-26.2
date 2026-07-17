@@ -11,6 +11,8 @@ import moze_intel.projecte.client.screen.TransmutationTableScreen;
 import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.items.IItemCharge;
+import moze_intel.projecte.content.items.IItemMode;
+import moze_intel.projecte.content.items.IExtraFunction;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.network.payloads.ChargeItemPayload;
@@ -96,11 +98,11 @@ public final class ProjectEClient implements ClientModInitializer {
                 chargeable.changeCharge(client.player, stack, negative ? -1 : 1);
                 ClientPlayNetworking.send(new ChargeItemPayload(hand, negative));
             }
-            sendStoneAction(client, MODE_KEY, PhilosophersStoneActionPayload.Action.MODE);
-            sendStoneAction(
+            sendItemAction(client, MODE_KEY, PhilosophersStoneActionPayload.Action.MODE);
+            sendItemAction(
                   client, EXTRA_FUNCTION_KEY,
                   PhilosophersStoneActionPayload.Action.EXTRA_FUNCTION);
-            sendStoneAction(
+            sendItemAction(
                   client, FIRE_PROJECTILE_KEY,
                   PhilosophersStoneActionPayload.Action.PROJECTILE);
         });
@@ -108,23 +110,31 @@ public final class ProjectEClient implements ClientModInitializer {
         LOGGER.info("Initializing ProjectE client for Fabric 26.2");
     }
 
-    private static void sendStoneAction(
+    private static void sendItemAction(
           Minecraft client,
           KeyMapping key,
           PhilosophersStoneActionPayload.Action action
     ) {
         while (key.consumeClick()) {
-            InteractionHand hand = findPhilosophersStoneHand(client);
+            InteractionHand hand = findActionHand(client, action);
             if (hand != null) {
                 ClientPlayNetworking.send(new PhilosophersStoneActionPayload(hand, action));
             }
         }
     }
 
-    private static InteractionHand findPhilosophersStoneHand(Minecraft client) {
+    private static InteractionHand findActionHand(
+          Minecraft client, PhilosophersStoneActionPayload.Action action) {
         if (client.player == null) return null;
         for (InteractionHand hand : InteractionHand.values()) {
-            if (client.player.getItemInHand(hand).getItem() instanceof PhilosophersStoneItem) {
+            var item = client.player.getItemInHand(hand).getItem();
+            boolean supported = switch (action) {
+                case MODE -> item instanceof PhilosophersStoneItem || item instanceof IItemMode;
+                case EXTRA_FUNCTION -> item instanceof PhilosophersStoneItem
+                      || item instanceof IExtraFunction;
+                case PROJECTILE -> item instanceof PhilosophersStoneItem;
+            };
+            if (supported) {
                 return hand;
             }
         }

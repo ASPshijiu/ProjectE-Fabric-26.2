@@ -2,6 +2,8 @@ package moze_intel.projecte.network;
 
 import java.util.Map;
 import moze_intel.projecte.content.items.IItemCharge;
+import moze_intel.projecte.content.items.IItemMode;
+import moze_intel.projecte.content.items.IExtraFunction;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.NormalizedStackKey;
@@ -66,13 +68,26 @@ public final class ProjectENetworking {
                 return;
             }
             ItemStack stack = player.getItemInHand(payload.hand());
-            if (!(stack.getItem() instanceof PhilosophersStoneItem stone)) {
-                return;
-            }
             switch (payload.action()) {
-                case MODE -> stone.cycleMode(player, stack);
-                case EXTRA_FUNCTION -> stone.openPortableCrafting(player, stack);
-                case PROJECTILE -> stone.shootMobRandomizer(player, stack);
+                case MODE -> {
+                    if (stack.getItem() instanceof PhilosophersStoneItem stone) {
+                        stone.cycleMode(player, stack);
+                    } else if (stack.getItem() instanceof IItemMode modeItem) {
+                        modeItem.cycleMode(player, stack);
+                    }
+                }
+                case EXTRA_FUNCTION -> {
+                    if (stack.getItem() instanceof PhilosophersStoneItem stone) {
+                        stone.openPortableCrafting(player, stack);
+                    } else if (stack.getItem() instanceof IExtraFunction extraItem) {
+                        extraItem.doExtraFunction(player, stack, payload.hand());
+                    }
+                }
+                case PROJECTILE -> {
+                    if (stack.getItem() instanceof PhilosophersStoneItem stone) {
+                        stone.shootMobRandomizer(player, stack);
+                    }
+                }
             }
         });
     }

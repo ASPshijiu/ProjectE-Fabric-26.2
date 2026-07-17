@@ -8,7 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 
-/** Requests one of the Philosopher's Stone's key-bound actions. */
+/** Requests a server-authoritative ProjectE item key action. */
 public record PhilosophersStoneActionPayload(InteractionHand hand, Action action)
       implements CustomPacketPayload {
     public static final Identifier ID = ProjectEAPI.id("philosophers_stone_action");

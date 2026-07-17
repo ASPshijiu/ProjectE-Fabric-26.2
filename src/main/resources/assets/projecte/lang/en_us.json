@@ -147,6 +147,12 @@
   "mode.projecte.philosopher.1": "Cube",
   "mode.projecte.philosopher.2": "Panel",
   "mode.projecte.philosopher.3": "Line",
+  "mode.projecte.pick.1": "Standard",
+  "mode.projecte.pick.2": "3x tall shot",
+  "mode.projecte.pick.3": "3x wide shot",
+  "mode.projecte.pick.4": "3x long shot",
+  "mode.projecte.katar.1": "Slay hostile mobs",
+  "mode.projecte.katar.2": "Slay all mobs",
   "tooltip.projecte.philostone": "Press %s to open a crafting grid",
 
   "command.projecte.emc": "ProjectE EMC",

@@ -9,9 +9,12 @@ import java.lang.reflect.Method;
 import java.util.List;
 import moze_intel.projecte.content.items.tools.MatterAxeItem;
 import moze_intel.projecte.content.items.tools.MatterHoeItem;
+import moze_intel.projecte.content.items.tools.MatterPickaxeItem;
 import moze_intel.projecte.content.items.tools.MatterShearsItem;
 import moze_intel.projecte.content.items.tools.MatterShovelItem;
 import moze_intel.projecte.content.items.tools.MatterToolItem;
+import moze_intel.projecte.content.items.tools.MatterSwordItem;
+import moze_intel.projecte.content.items.tools.RedMatterSwordItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +32,9 @@ class ChargeableItemTest {
         for (Class<?> itemClass : List.of(
               PhilosophersStoneItem.class,
               MatterToolItem.class,
+              MatterPickaxeItem.class,
+              MatterSwordItem.class,
+              RedMatterSwordItem.class,
               MatterAxeItem.class,
               MatterShovelItem.class,
               MatterHoeItem.class,
@@ -47,6 +53,18 @@ class ChargeableItemTest {
         assertEquals(3, allocate(RedMatterHammerItem.class).getMaxCharge(null));
         assertEquals(4, allocate(RedMatterKatarItem.class).getMaxCharge(null));
         assertEquals(4, allocate(RedMatterMorningStarItem.class).getMaxCharge(null));
+    }
+
+    @Test
+    void matterToolModesWrapInOfficialOrder() {
+        assertEquals(MatterPickaxeItem.PickaxeMode.TALLSHOT,
+              MatterPickaxeItem.PickaxeMode.STANDARD.next());
+        assertEquals(MatterPickaxeItem.PickaxeMode.STANDARD,
+              MatterPickaxeItem.PickaxeMode.LONGSHOT.next());
+        assertEquals(RedMatterSwordItem.KatarMode.SLAY_ALL,
+              RedMatterSwordItem.KatarMode.SLAY_HOSTILE.next());
+        assertEquals(RedMatterSwordItem.KatarMode.SLAY_HOSTILE,
+              RedMatterSwordItem.KatarMode.SLAY_ALL.next());
     }
 
     @Test
