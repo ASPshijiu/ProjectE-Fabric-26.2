@@ -301,6 +301,10 @@
     "item.projecte.active_on": "已激活",
     "item.projecte.active_off": "未激活",
     "item.projecte.emc_value": "EMC：%s",
+    "gui.projecte.transmutation.emc": "EMC：",
+    "emc.projecte.postfix.0": "%s 万亿",
+    "emc.projecte.postfix.1": "%s 千万亿",
+    "emc.projecte.postfix.2": "%s 百京",
 
     "container.projecte.transmutation_table": "转化桌",
     "container.projecte.transmutation_tablet": "便携式转化桌",

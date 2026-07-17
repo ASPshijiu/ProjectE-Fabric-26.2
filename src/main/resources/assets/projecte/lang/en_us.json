@@ -132,6 +132,10 @@
   "item.projecte.active_on": "Active",
   "item.projecte.active_off": "Inactive",
   "item.projecte.emc_value": "EMC: %s",
+  "gui.projecte.transmutation.emc": "EMC:",
+  "emc.projecte.postfix.0": "%s trillion",
+  "emc.projecte.postfix.1": "%s quadrillion",
+  "emc.projecte.postfix.2": "%s quintillion",
 
   "key.projecte.charge": "Charge",
   "key.projecte.mode": "Mode Switch",

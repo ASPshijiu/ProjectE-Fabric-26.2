@@ -6,10 +6,12 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
+import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.player.PlayerKnowledge;
 import net.minecraft.resources.Identifier;
@@ -17,7 +19,8 @@ import org.junit.jupiter.api.Test;
 
 class TransmutationOutputResolverTest {
     private static NormalizedStackKey key(String path) {
-        return new FakeStackKey(Identifier.fromNamespaceAndPath("projecte", path));
+        return new ItemStackKey(
+              Identifier.fromNamespaceAndPath("projecte", path), Map.of());
     }
 
     private EmcMappingSnapshot<NormalizedStackKey> snapshot(Map<NormalizedStackKey, EmcValue> values) {
@@ -25,7 +28,7 @@ class TransmutationOutputResolverTest {
     }
 
     @Test
-    void returnsKnownItemsAscendingByEmc() {
+    void returnsKnownItemsDescendingByEmcLikeUpstream() {
         NormalizedStackKey dirt = key("dirt");
         NormalizedStackKey iron = key("iron");
         NormalizedStackKey diamond = key("diamond");
@@ -36,7 +39,7 @@ class TransmutationOutputResolverTest {
         List<NormalizedStackKey> outputs = TransmutationOutputResolver.resolve(
               snap, knowledge, EmcValue.of(Long.MAX_VALUE));
 
-        assertEquals(List.of(dirt, iron, diamond), outputs);
+        assertEquals(List.of(diamond, iron, dirt), outputs);
     }
 
     @Test
@@ -51,7 +54,7 @@ class TransmutationOutputResolverTest {
         List<NormalizedStackKey> outputs = TransmutationOutputResolver.resolve(
               snap, knowledge, EmcValue.of(300));
 
-        assertEquals(List.of(dirt, iron), outputs);
+        assertEquals(List.of(iron, dirt), outputs);
     }
 
     @Test
@@ -98,9 +101,62 @@ class TransmutationOutputResolverTest {
               snap, full, EmcValue.of(Long.MAX_VALUE));
 
         assertEquals(TransmutationOutputResolver.OUTPUT_SLOT_COUNT, outputs.size());
-        // lowest EMC items selected (item0..item15)
-        assertTrue(outputs.contains(key("item0")));
-        assertTrue(outputs.contains(key("item15")));
+        // Highest EMC items are shown first, matching the upstream table.
+        assertTrue(outputs.contains(key("item10")));
+        assertTrue(outputs.contains(key("item25")));
+    }
+
+    @Test
+    void exposesEveryAffordableItemAcrossPages() {
+        Map<NormalizedStackKey, EmcValue> values = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < TransmutationOutputResolver.OUTPUT_SLOT_COUNT + 4; i++) {
+            values.put(key("item" + i), EmcValue.of(i + 1));
+        }
+        EmcMappingSnapshot<NormalizedStackKey> snap = snapshot(values);
+        PlayerKnowledge full = PlayerKnowledge.empty().withFullKnowledge(true);
+
+        TransmutationOutputResolver.Page first = TransmutationOutputResolver.resolvePage(
+              snap, full, EmcValue.of(Long.MAX_VALUE), 0);
+        TransmutationOutputResolver.Page second = TransmutationOutputResolver.resolvePage(
+              snap, full, EmcValue.of(Long.MAX_VALUE), 1);
+
+        assertEquals(2, first.pageCount());
+        assertEquals(0, first.pageIndex());
+        assertEquals(TransmutationOutputResolver.OUTPUT_SLOT_COUNT, first.outputs().size());
+        assertEquals(key("item19"), first.outputs().getFirst());
+        assertEquals(2, second.pageCount());
+        assertEquals(1, second.pageIndex());
+        assertEquals(List.of(key("item3"), key("item2"), key("item1"), key("item0")),
+              second.outputs());
+    }
+
+    @Test
+    void clampsAStalePageAfterTheAffordableSetShrinks() {
+        NormalizedStackKey dirt = key("dirt");
+        EmcMappingSnapshot<NormalizedStackKey> snap = snapshot(Map.of(dirt, EmcValue.of(1)));
+        PlayerKnowledge knowledge = PlayerKnowledge.empty().learn(dirt);
+
+        TransmutationOutputResolver.Page page = TransmutationOutputResolver.resolvePage(
+              snap, knowledge, EmcValue.of(1), 99);
+
+        assertEquals(0, page.pageIndex());
+        assertEquals(1, page.pageCount());
+        assertEquals(List.of(dirt), page.outputs());
+    }
+
+    @Test
+    void lockValueCapsOutputsWithoutHidingCheaperKnowledge() {
+        NormalizedStackKey dirt = key("dirt");
+        NormalizedStackKey iron = key("iron");
+        NormalizedStackKey diamond = key("diamond");
+        EmcMappingSnapshot<NormalizedStackKey> snap = snapshot(Map.of(
+              dirt, EmcValue.of(1), iron, EmcValue.of(256), diamond, EmcValue.of(8192)));
+        PlayerKnowledge knowledge = PlayerKnowledge.empty().learn(dirt).learn(iron).learn(diamond);
+
+        TransmutationOutputResolver.Page page = TransmutationOutputResolver.resolvePage(
+              snap, knowledge, EmcValue.of(10_000), Optional.of(EmcValue.of(256)), 0);
+
+        assertEquals(List.of(iron, dirt), page.outputs());
     }
 
     @Test
@@ -113,6 +169,21 @@ class TransmutationOutputResolverTest {
 
         List<NormalizedStackKey> outputs = TransmutationOutputResolver.resolve(
               snap, knowledge, EmcValue.of(Long.MAX_VALUE));
+
+        assertEquals(List.of(dirt), outputs);
+    }
+
+    @Test
+    void excludesInternalMappingKeysThatCannotMaterializeAnItem() {
+        NormalizedStackKey dirt = key("dirt");
+        NormalizedStackKey internal = new FakeStackKey(
+              Identifier.fromNamespaceAndPath("projecte", "internal"));
+        EmcMappingSnapshot<NormalizedStackKey> snap = snapshot(Map.of(
+              dirt, EmcValue.of(1), internal, EmcValue.of(2)));
+        PlayerKnowledge full = PlayerKnowledge.empty().withFullKnowledge(true);
+
+        List<NormalizedStackKey> outputs = TransmutationOutputResolver.resolve(
+              snap, full, EmcValue.of(Long.MAX_VALUE));
 
         assertEquals(List.of(dirt), outputs);
     }

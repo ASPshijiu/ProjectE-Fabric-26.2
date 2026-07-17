@@ -1,7 +1,7 @@
 package moze_intel.projecte.content.menu;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.menu.slots.TransmuteConsumeSlot;
 import moze_intel.projecte.content.menu.slots.TransmuteInputSlot;
@@ -23,6 +23,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -45,6 +46,8 @@ import net.minecraft.world.item.ItemStack;
 public final class TransmutationTableMenu extends AbstractContainerMenu {
     public static final int INPUT_SLOTS = 8;
     public static final int OUTPUT_SLOTS = TransmutationOutputResolver.OUTPUT_SLOT_COUNT;
+    public static final int PREVIOUS_PAGE_BUTTON = 0;
+    public static final int NEXT_PAGE_BUTTON = 1;
 
     // Slot x/y coordinates relative to the panel top-left (matches the original ProjectE layout).
     private static final int[][] INPUT_SLOT_POS = {
@@ -74,6 +77,8 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     private final SimpleContainer outputContainer;
     private final MinecraftStackKeyFactory keyFactory;
     private final SyncedLong syncedEmc;
+    private final DataSlot currentPage;
+    private final DataSlot pageCount;
     private boolean loadingInputLocks;
 
     public TransmutationTableMenu(int containerId, Inventory playerInventory) {
@@ -83,6 +88,11 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         this.keyFactory = new MinecraftStackKeyFactory(player.level().registryAccess());
         this.syncedEmc = new SyncedLong(() -> service.emc().longValue());
         syncedEmc.slots().forEach(this::addDataSlot);
+        this.currentPage = DataSlot.standalone();
+        this.pageCount = DataSlot.standalone();
+        this.pageCount.set(1);
+        addDataSlot(currentPage);
+        addDataSlot(pageCount);
 
         this.inputLocksContainer = new SimpleContainer(INPUT_SLOTS + 1) {
             @Override
@@ -105,8 +115,10 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         loadInputLocks();
         addTableSlots();
         addPlayerInventory(playerInventory);
-        // Populate outputs from the resolver initially (server side; client gets them via slot sync).
-        refreshOutputs();
+        // Populate outputs server-side; the client receives page metadata and slots through sync.
+        if (!player.level().isClientSide()) {
+            refreshOutputs();
+        }
     }
 
     public static TransmutationTableMenu fromNetwork(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buf) {
@@ -151,8 +163,13 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     public void refreshOutputs() {
         EmcMappingSnapshot<NormalizedStackKey> snapshot = ProjectEEmc.service().current();
         EmcValue available = service.emc();
-        List<NormalizedStackKey> candidates = TransmutationOutputResolver.resolve(
-              snapshot, service.knowledge(), available);
+        Optional<EmcValue> lockLimit = keyFactory.optionalKey(inputLocksContainer.getItem(INPUT_SLOTS))
+              .flatMap(snapshot::valueFor);
+        TransmutationOutputResolver.Page page = TransmutationOutputResolver.resolvePage(
+              snapshot, service.knowledge(), available, lockLimit, currentPage.get());
+        currentPage.set(page.pageIndex());
+        pageCount.set(page.pageCount());
+        List<NormalizedStackKey> candidates = page.outputs();
         for (int i = 0; i < OUTPUT_SLOTS; i++) {
             ItemStack display = ItemStack.EMPTY;
             if (i < candidates.size()) {
@@ -178,6 +195,41 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
      */
     public EmcValue playerEmc() {
         return player.level().isClientSide() ? EmcValue.of(syncedEmc.value()) : service.emc();
+    }
+
+    public int currentPage() {
+        return currentPage.get();
+    }
+
+    public int pageCount() {
+        return Math.max(1, pageCount.get());
+    }
+
+    public boolean hasPreviousPage() {
+        return currentPage() > 0;
+    }
+
+    public boolean hasNextPage() {
+        return currentPage() + 1 < pageCount();
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (!this.player.equals(player)) {
+            return false;
+        }
+        if (id == PREVIOUS_PAGE_BUTTON && hasPreviousPage()) {
+            currentPage.set(currentPage() - 1);
+        } else if (id == NEXT_PAGE_BUTTON && hasNextPage()) {
+            currentPage.set(currentPage() + 1);
+        } else {
+            return false;
+        }
+        if (!player.level().isClientSide()) {
+            refreshOutputs();
+            broadcastChanges();
+        }
+        return true;
     }
 
     private void loadInputLocks() {
