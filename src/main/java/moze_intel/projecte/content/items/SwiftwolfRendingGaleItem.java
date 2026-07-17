@@ -54,6 +54,11 @@ public class SwiftwolfRendingGaleItem extends ActiveEmcItem {
     public InteractionResult use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         boolean wasActive = isActive(stack);
+        if (!level.isClientSide() && wasActive && !player.isCreative() && !player.isSpectator()) {
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+        }
         setActive(stack, !wasActive);
         if (!level.isClientSide()) {
             player.sendSystemMessage(
