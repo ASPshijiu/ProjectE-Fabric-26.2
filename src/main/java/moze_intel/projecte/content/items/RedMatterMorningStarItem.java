@@ -7,7 +7,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,7 +17,7 @@ import net.minecraft.world.phys.HitResult;
  * Red Matter Morning Star — combines the hammer's block AoE with the katar's combat AoE. Right-
  * click breaks a cube around the targeted block; attacking a foe damages nearby hostiles.
  */
-public class RedMatterMorningStarItem extends Item implements IItemCharge {
+public class RedMatterMorningStarItem extends ChargeableItem {
     private static final int MAX_CHARGE = 4;
 
     public RedMatterMorningStarItem(Properties properties) {

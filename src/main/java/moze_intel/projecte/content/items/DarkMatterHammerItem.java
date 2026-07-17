@@ -6,7 +6,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,7 +18,7 @@ import net.minecraft.world.phys.HitResult;
  * perpendicular to the hit face. The hammer is also a serviceable pickaxe via its tier (configured
  * at registration).
  */
-public class DarkMatterHammerItem extends Item implements IItemCharge {
+public class DarkMatterHammerItem extends ChargeableItem {
     private static final int MAX_CHARGE = 3;
 
     public DarkMatterHammerItem(Properties properties) {

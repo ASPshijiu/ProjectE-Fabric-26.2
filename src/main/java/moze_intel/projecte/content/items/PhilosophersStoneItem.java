@@ -39,7 +39,7 @@ import net.minecraft.world.phys.HitResult;
  * shift-right-clicking performs the alternate result. The conversion is fully server-authoritative
  * through {@link WorldTransmutationAction}.
  */
-public class PhilosophersStoneItem extends Item implements IItemCharge, FabricItem {
+public class PhilosophersStoneItem extends ChargeableItem implements FabricItem {
     public static final long MOB_RANDOMIZER_EMC_COST = 384;
 
     public PhilosophersStoneItem(Item.Properties properties) {

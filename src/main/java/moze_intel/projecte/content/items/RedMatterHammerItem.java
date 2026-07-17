@@ -6,7 +6,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,7 +16,7 @@ import net.minecraft.world.phys.HitResult;
  * Red Matter Hammer — a chargeable tool that breaks a cube of blocks on right-click, larger than
  * the Dark Matter variant. Charge 0 = single block, charge n = a (2n+1)³ cube around the target.
  */
-public class RedMatterHammerItem extends Item implements IItemCharge {
+public class RedMatterHammerItem extends ChargeableItem {
     private static final int MAX_CHARGE = 4;
 
     public RedMatterHammerItem(Properties properties) {

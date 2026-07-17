@@ -2,7 +2,6 @@ package moze_intel.projecte.content.items;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -10,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
  * an area around slain targets. {@link #hurtEnemy} deals the charge-scaled bonus to nearby hostiles
  * within a small radius.
  */
-public class RedMatterKatarItem extends Item implements IItemCharge {
+public class RedMatterKatarItem extends ChargeableItem {
     private static final int MAX_CHARGE = 2;
 
     public RedMatterKatarItem(Properties properties) {
