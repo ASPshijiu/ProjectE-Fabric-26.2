@@ -1,6 +1,8 @@
 package moze_intel.projecte.content.items.armor;
 
 import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.content.ModArmorMaterials;
+import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.core.BlockPos;
@@ -14,13 +16,27 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class GemArmorItem extends MatterArmorItem {
+    private static final AttributeModifier STEP_ASSIST_MODIFIER = new AttributeModifier(
+          ProjectEAPI.id("gem_step_assist"), 0.4D, AttributeModifier.Operation.ADD_VALUE);
+    private static final ItemAttributeModifiers BOOT_MODIFIERS =
+          ModArmorMaterials.GEM.createAttributes(ArmorType.BOOTS).withModifierAdded(
+                Attributes.MOVEMENT_SPEED,
+                new AttributeModifier(ProjectEAPI.id("armor"), 1.0D,
+                      AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                EquipmentSlotGroup.FEET);
+
     private final ArmorType armorType;
 
     public GemArmorItem(Properties properties, ArmorType armorType) {
@@ -61,12 +77,9 @@ public class GemArmorItem extends MatterArmorItem {
         ItemStack boots = player.getItemBySlot(EquipmentSlot.FEET);
         if (isPiece(boots, ArmorType.BOOTS)) {
             player.resetFallDistance();
-            addHiddenEffect(player, MobEffects.SPEED, 10, 4);
-            addHiddenEffect(player, MobEffects.SLOW_FALLING, 10, 0);
-            if (boots.getOrDefault(ModDataComponents.STEP_ASSIST, false)) {
-                addHiddenEffect(player, MobEffects.JUMP_BOOST, 10, 1);
-            }
         }
+        updateStepAssist(player, isPiece(boots, ArmorType.BOOTS)
+              && boots.getOrDefault(ModDataComponents.STEP_ASSIST, false));
     }
 
     public static void toggleHelmet(ServerPlayer player) {
@@ -140,6 +153,22 @@ public class GemArmorItem extends MatterArmorItem {
 
     private static PlayerDataService playerData(ServerPlayer player) {
         return new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player));
+    }
+
+    public static ItemAttributeModifiers bootModifiers() {
+        return BOOT_MODIFIERS;
+    }
+
+    private static void updateStepAssist(ServerPlayer player, boolean enabled) {
+        AttributeInstance stepHeight = player.getAttribute(Attributes.STEP_HEIGHT);
+        if (stepHeight == null) {
+            return;
+        }
+        if (enabled) {
+            stepHeight.addOrUpdateTransientModifier(STEP_ASSIST_MODIFIER);
+        } else {
+            stepHeight.removeModifier(STEP_ASSIST_MODIFIER.id());
+        }
     }
 
     private static boolean isPiece(ServerPlayer player, EquipmentSlot slot, ArmorType type) {

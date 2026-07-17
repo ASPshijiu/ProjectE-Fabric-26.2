@@ -447,8 +447,11 @@ public final class ModItems {
 
     // ── Gem armor helpers ─────────────────────────────────────────────────
     private static Item.Properties gemArmorProps(Identifier id, ArmorType type) {
-        return properties(id).fireResistant()
+        Item.Properties properties = properties(id).fireResistant()
               .humanoidArmor(ModArmorMaterials.GEM, type);
+        return type == ArmorType.BOOTS
+              ? properties.attributes(GemArmorItem.bootModifiers())
+              : properties;
     }
 
     // ── Registration ──────────────────────────────────────────────────────

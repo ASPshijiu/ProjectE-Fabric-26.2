@@ -10,6 +10,7 @@ import moze_intel.projecte.client.screen.RelayScreen;
 import moze_intel.projecte.client.screen.TransmutationTableScreen;
 import moze_intel.projecte.content.ModEntityTypes;
 import moze_intel.projecte.content.ModMenuTypes;
+import moze_intel.projecte.content.ModItems;
 import moze_intel.projecte.content.items.IItemCharge;
 import moze_intel.projecte.content.items.IItemMode;
 import moze_intel.projecte.content.items.IExtraFunction;
@@ -28,7 +29,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -36,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public final class ProjectEClient implements ClientModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectEAPI.MOD_ID + "/client");
+    private static final Vec3 GEM_BOOT_VERTICAL_MOVEMENT = new Vec3(0.0D, 0.1D, 0.0D);
 
     public static final KeyMapping.Category PROJECTE_CATEGORY =
           KeyMapping.Category.register(ProjectEAPI.id("category"));
@@ -128,6 +132,7 @@ public final class ProjectEClient implements ClientModInitializer {
             while (BOOTS_TOGGLE_KEY.consumeClick()) {
                 ClientPlayNetworking.send(new ArmorTogglePayload(ArmorTogglePayload.Action.BOOTS));
             }
+            tickGemBoots(client);
         });
 
         LOGGER.info("Initializing ProjectE client for Fabric 26.2");
@@ -187,5 +192,29 @@ public final class ProjectEClient implements ClientModInitializer {
             }
         }
         return null;
+    }
+
+    private static void tickGemBoots(Minecraft client) {
+        if (client.player == null
+              || client.player.getItemBySlot(EquipmentSlot.FEET).getItem() != ModItems.GEM_BOOTS) {
+            return;
+        }
+        boolean flying = client.player.getAbilities().flying;
+        if (!flying && client.player.input.keyPresses.jump()) {
+            client.player.addDeltaMovement(GEM_BOOT_VERTICAL_MOVEMENT);
+        }
+        if (client.player.onGround()) {
+            return;
+        }
+        Vec3 movement = client.player.getDeltaMovement();
+        if (movement.y() <= 0.0D) {
+            movement = movement.multiply(1.0D, 0.9D, 1.0D);
+            client.player.setDeltaMovement(movement);
+        }
+        if (!flying && client.player.zza < 0.0F) {
+            client.player.setDeltaMovement(movement.multiply(0.9D, 1.0D, 0.9D));
+        } else if (!flying && client.player.zza > 0.0F && movement.lengthSqr() < 3.0D) {
+            client.player.setDeltaMovement(movement.multiply(1.1D, 1.0D, 1.1D));
+        }
     }
 }
