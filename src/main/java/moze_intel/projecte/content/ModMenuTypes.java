@@ -2,6 +2,7 @@ package moze_intel.projecte.content;
 
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.content.menu.AlchemicalBagMenu;
+import moze_intel.projecte.content.menu.AlchemicalChestMenu;
 import moze_intel.projecte.content.menu.CollectorMenu;
 import moze_intel.projecte.content.menu.CondenserMenu;
 import moze_intel.projecte.content.menu.RelayMenu;
@@ -18,6 +19,7 @@ import net.minecraft.world.inventory.MenuType;
 public final class ModMenuTypes {
     public static final Identifier TRANSMUTATION_TABLE_ID = ProjectEAPI.id("transmutation_table");
     public static final Identifier ALCHEMICAL_BAG_ID = ProjectEAPI.id("alchemical_bag");
+    public static final Identifier ALCHEMICAL_CHEST_ID = ProjectEAPI.id("alchemical_chest");
     public static final Identifier CONDENSER_MK1_ID = ProjectEAPI.id("condenser_mk1");
     public static final Identifier CONDENSER_MK2_ID = ProjectEAPI.id("condenser_mk2");
     public static final Identifier COLLECTOR_MK1_ID = ProjectEAPI.id("collector_mk1");
@@ -29,6 +31,7 @@ public final class ModMenuTypes {
 
     public static MenuType<TransmutationTableMenu> TRANSMUTATION_TABLE;
     public static MenuType<AlchemicalBagMenu> ALCHEMICAL_BAG;
+    public static MenuType<AlchemicalChestMenu> ALCHEMICAL_CHEST;
     public static MenuType<CondenserMenu> CONDENSER_MK1;
     public static MenuType<CondenserMenu> CONDENSER_MK2;
     public static MenuType<CollectorMenu> COLLECTOR_MK1;
@@ -52,6 +55,11 @@ public final class ModMenuTypes {
             ALCHEMICAL_BAG = register(ALCHEMICAL_BAG_ID,
                   new MenuType<>((containerId, inventory) ->
                         new AlchemicalBagMenu(containerId, inventory),
+                        net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
+        }
+        if (ALCHEMICAL_CHEST == null) {
+            ALCHEMICAL_CHEST = register(ALCHEMICAL_CHEST_ID,
+                  new MenuType<>(AlchemicalChestMenu::fromNetwork,
                         net.minecraft.world.flag.FeatureFlags.VANILLA_SET));
         }
         if (CONDENSER_MK1 == null) {

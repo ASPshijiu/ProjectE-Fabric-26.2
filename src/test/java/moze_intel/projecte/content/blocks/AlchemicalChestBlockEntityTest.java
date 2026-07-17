@@ -46,6 +46,11 @@ class AlchemicalChestBlockEntityTest {
         assertEquals(7, chest.getItem(0).getDamageValue());
     }
 
+    @Test
+    void usesUpstreamChestCapacity() {
+        assertEquals(104, AlchemicalChestBlockEntity.SLOTS);
+    }
+
     private static ItemStack damagedPickaxe(int damage) {
         ItemStack stack = new ItemStack(Items.IRON_PICKAXE);
         stack.set(DataComponents.MAX_DAMAGE, 250);

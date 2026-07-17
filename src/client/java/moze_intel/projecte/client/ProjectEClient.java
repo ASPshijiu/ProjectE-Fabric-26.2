@@ -3,6 +3,7 @@ package moze_intel.projecte.client;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.client.render.MobRandomizerRenderer;
 import moze_intel.projecte.client.screen.AlchemicalBagScreen;
+import moze_intel.projecte.client.screen.AlchemicalChestScreen;
 import moze_intel.projecte.client.screen.CollectorScreen;
 import moze_intel.projecte.client.screen.CondenserScreen;
 import moze_intel.projecte.client.screen.RelayScreen;
@@ -60,6 +61,7 @@ public final class ProjectEClient implements ClientModInitializer {
 
         MenuScreens.register(ModMenuTypes.TRANSMUTATION_TABLE, TransmutationTableScreen::new);
         MenuScreens.register(ModMenuTypes.ALCHEMICAL_BAG, AlchemicalBagScreen::new);
+        MenuScreens.register(ModMenuTypes.ALCHEMICAL_CHEST, AlchemicalChestScreen::new);
         MenuScreens.register(ModMenuTypes.CONDENSER_MK1, CondenserScreen::new);
         MenuScreens.register(ModMenuTypes.CONDENSER_MK2, CondenserScreen::new);
         MenuScreens.register(ModMenuTypes.COLLECTOR_MK1, CollectorScreen::new);
