@@ -19,6 +19,7 @@ import moze_intel.projecte.content.items.IgnitionRingItem;
 import moze_intel.projecte.content.items.ZeroRingItem;
 import moze_intel.projecte.content.items.VoidRingItem;
 import moze_intel.projecte.content.items.BlackHoleBandItem;
+import moze_intel.projecte.content.items.ManualItem;
 import moze_intel.projecte.content.items.BodyStoneItem;
 import moze_intel.projecte.content.items.SoulStoneItem;
 import moze_intel.projecte.content.items.MindStoneItem;
@@ -348,7 +349,8 @@ public final class ModItems {
                     .fireResistant().stacksTo(1)));
 
         // ── Manual ──
-        MANUAL = register(ProjectEAPI.id("manual"), simple(ProjectEAPI.id("manual")));
+        MANUAL = register(ProjectEAPI.id("manual"),
+              new ManualItem(properties(ProjectEAPI.id("manual")).stacksTo(1)));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

@@ -87,7 +87,9 @@
   "item.projecte.hyperkinetic_lens": "Hyperkinetic Lens",
   "item.projecte.catalytic_lens": "Catalytic Lens",
   "item.projecte.tome": "Tome of Knowledge",
+  "item.projecte.manual": "ProjectE Manual",
   "item.projecte.transmutation_tablet": "Transmutation Tablet",
+  "item.projecte.manual.used": "The ProjectE Manual is not implemented in this port yet.",
 
   "block.projecte.transmutation_table": "Transmutation Table",
   "block.projecte.alchemical_coal_block": "Alchemical Coal Block",
