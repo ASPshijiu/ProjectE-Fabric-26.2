@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -37,18 +38,35 @@ public class DarkMatterHammerItem extends ChargeableItem {
         if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
             return InteractionResult.PASS;
         }
-        BlockPos target = blockHit.getBlockPos();
-        Direction face = blockHit.getDirection();
-        if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
+        return mineAt(level, player, stack,
+              blockHit.getBlockPos(), blockHit.getDirection());
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        if (player == null) {
+            return InteractionResult.PASS;
         }
-        int radius = getCharge(stack);
-        // Break the targeted block first, then the surrounding plane (flat AoE).
-        BlockState state = level.getBlockState(target);
-        if (!state.isAir() && stack.isCorrectToolForDrops(state)) {
-            level.destroyBlock(target, true, player);
-        }
-        ToolHelper.digAOE(level, player, stack, hand, target, face, radius, true);
-        return InteractionResult.CONSUME;
+        return mineAt(context.getLevel(), player, context.getItemInHand(),
+              context.getClickedPos(), context.getClickedFace());
+    }
+
+    @Override
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
+        float speed = super.getDestroySpeed(stack, state);
+        return speed <= 1.0F ? speed : speed + 12.0F * getCharge(stack);
+    }
+
+    @Override
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos,
+          net.minecraft.world.entity.LivingEntity miner) {
+        return true;
+    }
+
+    private InteractionResult mineAt(Level level, Player player, ItemStack stack,
+          BlockPos target, Direction face) {
+        return ToolHelper.digAOE(
+              level, player, stack, target, face, getCharge(stack), true);
     }
 }

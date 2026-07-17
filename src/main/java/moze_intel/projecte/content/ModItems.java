@@ -30,6 +30,7 @@ import moze_intel.projecte.content.items.tools.MatterPickaxeItem;
 import moze_intel.projecte.content.items.tools.MatterShearsItem;
 import moze_intel.projecte.content.items.tools.MatterShovelItem;
 import moze_intel.projecte.content.items.tools.MatterSwordItem;
+import moze_intel.projecte.content.items.tools.MatterToolTags;
 import moze_intel.projecte.content.items.tools.RedMatterSwordItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -226,7 +227,8 @@ public final class ModItems {
         DARK_MATTER_HOE = register(ProjectEAPI.id("dm_hoe"), dmHoe(ProjectEAPI.id("dm_hoe")));
         DARK_MATTER_SHEARS = register(ProjectEAPI.id("dm_shears"), dmShears(ProjectEAPI.id("dm_shears")));
         DARK_MATTER_HAMMER = register(ProjectEAPI.id("dm_hammer"),
-              new DarkMatterHammerItem(dmToolProps(ProjectEAPI.id("dm_hammer"))));
+              new DarkMatterHammerItem(dmToolProps(ProjectEAPI.id("dm_hammer")).tool(
+                    ModToolMaterials.DARK_MATTER, MatterToolTags.HAMMER, 10.0F, -3.0F, 0.0F)));
 
         // ── Red Matter Tools ──
         RED_MATTER_PICKAXE = register(ProjectEAPI.id("rm_pick"), rmPickaxe(ProjectEAPI.id("rm_pick")));
@@ -236,11 +238,15 @@ public final class ModItems {
         RED_MATTER_HOE = register(ProjectEAPI.id("rm_hoe"), rmHoe(ProjectEAPI.id("rm_hoe")));
         RED_MATTER_SHEARS = register(ProjectEAPI.id("rm_shears"), rmShears(ProjectEAPI.id("rm_shears")));
         RED_MATTER_HAMMER = register(ProjectEAPI.id("rm_hammer"),
-              new RedMatterHammerItem(rmToolProps(ProjectEAPI.id("rm_hammer"))));
+              new RedMatterHammerItem(rmToolProps(ProjectEAPI.id("rm_hammer")).tool(
+                    ModToolMaterials.RED_MATTER, MatterToolTags.HAMMER, 10.0F, -3.0F, 0.0F)));
         RED_MATTER_KATAR = register(ProjectEAPI.id("rm_katar"),
-              new RedMatterKatarItem(rmToolProps(ProjectEAPI.id("rm_katar"))));
+              new RedMatterKatarItem(rmToolProps(ProjectEAPI.id("rm_katar")).tool(
+                    ModToolMaterials.RED_MATTER, MatterToolTags.KATAR, 19.0F, -2.4F, 0.0F)));
         RED_MATTER_MORNING_STAR = register(ProjectEAPI.id("rm_morning_star"),
-              new RedMatterMorningStarItem(rmToolProps(ProjectEAPI.id("rm_morning_star"))));
+              new RedMatterMorningStarItem(rmToolProps(ProjectEAPI.id("rm_morning_star")).tool(
+                    ModToolMaterials.RED_MATTER, MatterToolTags.MORNING_STAR,
+                    16.0F, -3.0F, 0.0F)));
 
         // ── Dark Matter Armor ──
         DARK_MATTER_HELMET = register(ProjectEAPI.id("dm_helmet"),

@@ -13,11 +13,13 @@ import moze_intel.projecte.content.items.tools.MatterPickaxeItem;
 import moze_intel.projecte.content.items.tools.MatterShearsItem;
 import moze_intel.projecte.content.items.tools.MatterShovelItem;
 import moze_intel.projecte.content.items.tools.MatterToolItem;
+import moze_intel.projecte.content.items.tools.MatterToolTags;
 import moze_intel.projecte.content.items.tools.MatterSwordItem;
 import moze_intel.projecte.content.items.tools.RedMatterSwordItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +67,27 @@ class ChargeableItemTest {
               RedMatterSwordItem.KatarMode.SLAY_HOSTILE.next());
         assertEquals(RedMatterSwordItem.KatarMode.SLAY_HOSTILE,
               RedMatterSwordItem.KatarMode.SLAY_ALL.next());
+    }
+
+    @Test
+    void everyMatterToolFamilyHasItsBlockInteractionEntryPoint() throws Exception {
+        for (Class<?> itemClass : List.of(
+              MatterPickaxeItem.class,
+              MatterAxeItem.class,
+              MatterShovelItem.class,
+              MatterHoeItem.class,
+              MatterShearsItem.class,
+              DarkMatterHammerItem.class,
+              RedMatterHammerItem.class,
+              RedMatterKatarItem.class,
+              RedMatterMorningStarItem.class)) {
+            assertEquals(itemClass,
+                  itemClass.getDeclaredMethod("useOn", UseOnContext.class).getDeclaringClass());
+        }
+        assertEquals("projecte:mineable/hammer", MatterToolTags.HAMMER.location().toString());
+        assertEquals("projecte:mineable/katar", MatterToolTags.KATAR.location().toString());
+        assertEquals("projecte:mineable/morning_star",
+              MatterToolTags.MORNING_STAR.location().toString());
     }
 
     @Test

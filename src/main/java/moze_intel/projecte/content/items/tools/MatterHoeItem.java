@@ -4,7 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -27,6 +30,11 @@ public class MatterHoeItem extends HoeItem implements MatterTool {
     @Override public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos,
           LivingEntity miner) { return true; }
     @Override public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) { }
+    @Override public InteractionResult useOn(UseOnContext context) {
+        if (context.getPlayer() == null) return InteractionResult.PASS;
+        return ToolHelper.useAOE(
+              context, Items.NETHERITE_HOE, getCharge(context.getItemInHand()), true);
+    }
     @Override public boolean isBarVisible(ItemStack stack) { return chargeBarVisible(stack); }
     @Override public int getBarWidth(ItemStack stack) { return chargeBarWidth(stack); }
     @Override public int getBarColor(ItemStack stack) { return chargeBarColor(stack); }

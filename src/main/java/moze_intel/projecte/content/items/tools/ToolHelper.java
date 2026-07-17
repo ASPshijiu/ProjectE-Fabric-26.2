@@ -1,19 +1,28 @@
 package moze_intel.projecte.content.items.tools;
 
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Set;
 import moze_intel.projecte.content.items.IItemCharge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Shearable;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Static helpers implementing ProjectE's tool area-of-effect behaviors. These port the original
@@ -37,10 +46,16 @@ public final class ToolHelper {
      * @param radius   the cube half-size (0 = single block, 1 = 3×3×3, etc.).
      * @param flat     if true, mine a flat plane perpendicular to {@code faceHit} instead of a cube.
      */
-    public static void digAOE(Level level, Player player, ItemStack stack, InteractionHand hand,
+    public static InteractionResult digAOE(Level level, Player player, ItemStack stack,
           BlockPos target, Direction faceHit, int radius, boolean flat) {
-        if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer) || radius < 0) {
-            return;
+        if (radius <= 0) {
+            return InteractionResult.PASS;
+        }
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
         }
         int minX = target.getX() - radius, maxX = target.getX() + radius;
         int minY = target.getY() - radius, maxY = target.getY() + radius;
@@ -53,33 +68,33 @@ public final class ToolHelper {
                 case Z -> { minZ = maxZ = target.getZ(); }
             }
         }
+        boolean changed = false;
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (pos.equals(target)) continue; // the targeted block is broken by the caller
-                    breakBlock(level, serverPlayer, stack, pos);
+                    changed |= breakBlock(level, serverPlayer, stack, pos);
                 }
             }
         }
+        return changed ? InteractionResult.CONSUME : InteractionResult.PASS;
     }
 
     /**
      * Breaks a single block as if the player mined it, respecting tool requirements and gamemode.
      * Drops are produced at the block's position. Matter tools are intentionally not damaged.
      */
-    private static void breakBlock(Level level, ServerPlayer player, ItemStack stack, BlockPos pos) {
+    private static boolean breakBlock(
+          Level level, ServerPlayer player, ItemStack stack, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0) {
-            return; // unbreakable (bedrock, etc.)
+            return false; // unbreakable (bedrock, etc.)
         }
         // Respect tool-tier gating: only break blocks the tool can actually harvest.
         if (!stack.isCorrectToolForDrops(state)) {
-            return;
+            return false;
         }
-        if (!player.gameMode.destroyBlock(pos)) {
-            return;
-        }
+        return player.gameMode.destroyBlock(pos);
     }
 
     /**
@@ -91,6 +106,139 @@ public final class ToolHelper {
             return blockHit.getBlockPos();
         }
         return null;
+    }
+
+    public static InteractionResult veinMine(
+          Level level, Player player, ItemStack stack, BlockPos origin, int radius) {
+        BlockState target = level.getBlockState(origin);
+        if (radius < 0 || target.isAir() || !stack.isCorrectToolForDrops(target)) {
+            return InteractionResult.PASS;
+        }
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
+        }
+        int limit = Math.min(512, 32 * (radius + 1));
+        ArrayDeque<BlockPos> pending = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        pending.add(origin.immutable());
+        boolean changed = false;
+        while (!pending.isEmpty() && visited.size() < limit) {
+            BlockPos pos = pending.removeFirst();
+            if (!visited.add(pos) || Math.abs(pos.getX() - origin.getX()) > radius
+                  || Math.abs(pos.getY() - origin.getY()) > radius
+                  || Math.abs(pos.getZ() - origin.getZ()) > radius) {
+                continue;
+            }
+            BlockState state = level.getBlockState(pos);
+            if (!state.is(target.getBlock())) {
+                continue;
+            }
+            changed |= breakBlock(level, serverPlayer, stack, pos);
+            for (int x = -1; x <= 1; x++) {
+                for (int y = -1; y <= 1; y++) {
+                    for (int z = -1; z <= 1; z++) {
+                        if (x != 0 || y != 0 || z != 0) {
+                            pending.add(pos.offset(x, y, z).immutable());
+                        }
+                    }
+                }
+            }
+        }
+        return changed ? InteractionResult.CONSUME : InteractionResult.PASS;
+    }
+
+    public static InteractionResult clearConnected(
+          Level level, Player player, ItemStack stack, BlockPos origin,
+          net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> tag, int radius) {
+        if (radius <= 0 || !level.getBlockState(origin).is(tag)) {
+            return InteractionResult.PASS;
+        }
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
+        }
+        ArrayDeque<BlockPos> pending = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        pending.add(origin.immutable());
+        boolean changed = false;
+        int limit = Math.min(1_024, 64 * (radius + 1));
+        while (!pending.isEmpty() && visited.size() < limit) {
+            BlockPos pos = pending.removeFirst();
+            if (!visited.add(pos) || Math.abs(pos.getX() - origin.getX()) > radius
+                  || Math.abs(pos.getY() - origin.getY()) > radius * 2
+                  || Math.abs(pos.getZ() - origin.getZ()) > radius) {
+                continue;
+            }
+            if (!level.getBlockState(pos).is(tag)) {
+                continue;
+            }
+            changed |= breakBlock(level, serverPlayer, stack, pos);
+            for (Direction direction : Direction.values()) {
+                pending.add(pos.relative(direction).immutable());
+            }
+        }
+        return changed ? InteractionResult.CONSUME : InteractionResult.PASS;
+    }
+
+    public static InteractionResult shearAOE(Player player, ItemStack stack) {
+        int charge = charge(stack);
+        if (charge <= 0) {
+            return InteractionResult.PASS;
+        }
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return InteractionResult.SUCCESS;
+        }
+        double radius = Math.pow(2, 2 + charge);
+        boolean changed = false;
+        for (Entity entity : serverLevel.getEntitiesOfClass(
+              Entity.class, player.getBoundingBox().inflate(radius, radius / 2.0, radius),
+              candidate -> candidate instanceof Shearable shearable
+                    && shearable.readyForShearing())) {
+            ((Shearable) entity).shear(serverLevel, SoundSource.PLAYERS, stack);
+            changed = true;
+        }
+        return changed ? InteractionResult.CONSUME : InteractionResult.PASS;
+    }
+
+    public static InteractionResult useAOE(
+          UseOnContext context, Item vanillaBehavior, int radius, boolean flat) {
+        ItemStack stack = context.getItemInHand();
+        int damage = stack.getDamageValue();
+        InteractionResult result = vanillaBehavior.useOn(context);
+        if (!result.consumesAction() || radius <= 0 || context.getLevel().isClientSide()) {
+            stack.setDamageValue(damage);
+            return result;
+        }
+        BlockPos origin = context.getClickedPos();
+        int minY = flat ? origin.getY() : origin.getY() - radius;
+        int maxY = flat ? origin.getY() : origin.getY() + radius;
+        for (int x = origin.getX() - radius; x <= origin.getX() + radius; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = origin.getZ() - radius; z <= origin.getZ() + radius; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!pos.equals(origin)) {
+                        vanillaBehavior.useOn(adjustedContext(context, pos));
+                    }
+                }
+            }
+        }
+        stack.setDamageValue(damage);
+        return result;
+    }
+
+    private static UseOnContext adjustedContext(UseOnContext source, BlockPos pos) {
+        BlockPos origin = source.getClickedPos();
+        Vec3 location = source.getClickLocation().add(
+              pos.getX() - origin.getX(),
+              pos.getY() - origin.getY(),
+              pos.getZ() - origin.getZ());
+        return new UseOnContext(source.getPlayer(), source.getHand(), new BlockHitResult(
+              location, source.getClickedFace(), pos, source.isInside()));
     }
 
     public static void digBasedOnMode(Level level, LivingEntity miner, ItemStack stack,
@@ -132,8 +280,7 @@ public final class ToolHelper {
         if (!(attacker instanceof Player player) || !(target.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        int charge = stack.getItem() instanceof IItemCharge item
-              ? item.getCharge(stack) : 0;
+        int charge = charge(stack);
         target.invulnerableTime = 0;
         target.hurtServer(serverLevel, target.damageSources().playerAttack(player), 1.0F + charge);
     }
@@ -155,5 +302,9 @@ public final class ToolHelper {
             target.invulnerableTime = 0;
             target.hurtServer(serverLevel, target.damageSources().playerAttack(player), damage);
         }
+    }
+
+    public static int charge(ItemStack stack) {
+        return stack.getItem() instanceof IItemCharge item ? item.getCharge(stack) : 0;
     }
 }

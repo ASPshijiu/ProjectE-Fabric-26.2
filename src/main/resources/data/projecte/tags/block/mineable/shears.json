@@ -1,5 +1,9 @@
 {
   "values": [
-    "minecraft:cobweb"
+    "minecraft:cobweb",
+    "#minecraft:leaves",
+    "#minecraft:wool",
+    "minecraft:vine",
+    "minecraft:glow_lichen"
   ]
 }

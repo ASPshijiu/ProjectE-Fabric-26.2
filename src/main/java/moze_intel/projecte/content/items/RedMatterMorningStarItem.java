@@ -11,6 +11,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -59,22 +61,40 @@ public class RedMatterMorningStarItem extends ChargeableItem implements IItemMod
         if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
             return InteractionResult.PASS;
         }
-        BlockPos target = blockHit.getBlockPos();
-        Direction face = blockHit.getDirection();
-        if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
+        return mineAt(level, player, stack,
+              blockHit.getBlockPos(), blockHit.getDirection());
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        if (player == null) {
+            return InteractionResult.PASS;
         }
-        int radius = getCharge(stack);
-        BlockState state = level.getBlockState(target);
-        if (!state.isAir() && stack.isCorrectToolForDrops(state)) {
-            level.destroyBlock(target, true, player);
+        int charge = getCharge(context.getItemInHand());
+        InteractionResult result = ToolHelper.useAOE(
+              context, Items.NETHERITE_SHOVEL, charge, true);
+        if (result.consumesAction()) {
+            return result;
         }
-        ToolHelper.digAOE(level, player, stack, hand, target, face, radius, false);
-        return InteractionResult.CONSUME;
+        return mineAt(context.getLevel(), player, context.getItemInHand(),
+              context.getClickedPos(), context.getClickedFace());
     }
 
     @Override
     public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         ToolHelper.attackWithCharge(stack, target, attacker);
+    }
+
+    @Override
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
+        float speed = super.getDestroySpeed(stack, state);
+        return speed <= 1.0F ? speed : speed + 14.0F * getCharge(stack);
+    }
+
+    private InteractionResult mineAt(Level level, Player player, ItemStack stack,
+          BlockPos target, Direction face) {
+        return ToolHelper.digAOE(
+              level, player, stack, target, face, getCharge(stack), false);
     }
 }

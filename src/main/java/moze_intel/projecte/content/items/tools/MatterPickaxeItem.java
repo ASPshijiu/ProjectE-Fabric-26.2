@@ -7,6 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -32,6 +34,19 @@ public class MatterPickaxeItem extends MatterToolItem implements IItemMode {
           LivingEntity miner) {
         ToolHelper.digBasedOnMode(level, miner, stack, pos, getMode(stack));
         return true;
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        if (context.getPlayer() == null) {
+            return InteractionResult.PASS;
+        }
+        if (!context.getLevel().getBlockState(context.getClickedPos()).is(MatterToolTags.ORES)) {
+            return InteractionResult.PASS;
+        }
+        return ToolHelper.veinMine(
+              context.getLevel(), context.getPlayer(), context.getItemInHand(),
+              context.getClickedPos(), getCharge(context.getItemInHand()));
     }
 
     public enum PickaxeMode {
