@@ -96,6 +96,12 @@ public final class ProjectEClient implements ClientModInitializer {
         // apply locally for snappy feedback.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (CHARGE_KEY.consumeClick()) {
+                if (client.player == null) continue;
+                if (client.player.getMainHandItem().isEmpty()) {
+                    ClientPlayNetworking.send(
+                          new ArmorTogglePayload(ArmorTogglePayload.Action.ACTIVE));
+                    continue;
+                }
                 InteractionHand hand = findChargeableHand(client);
                 if (hand == null) continue;
                 ItemStack stack = client.player.getItemInHand(hand);
@@ -110,10 +116,12 @@ public final class ProjectEClient implements ClientModInitializer {
             sendItemAction(client, MODE_KEY, PhilosophersStoneActionPayload.Action.MODE);
             sendItemAction(
                   client, EXTRA_FUNCTION_KEY,
-                  PhilosophersStoneActionPayload.Action.EXTRA_FUNCTION);
+                  PhilosophersStoneActionPayload.Action.EXTRA_FUNCTION,
+                  ArmorTogglePayload.Action.EXPLODE);
             sendItemAction(
                   client, FIRE_PROJECTILE_KEY,
-                  PhilosophersStoneActionPayload.Action.PROJECTILE);
+                  PhilosophersStoneActionPayload.Action.PROJECTILE,
+                  ArmorTogglePayload.Action.ZAP);
             while (HELMET_TOGGLE_KEY.consumeClick()) {
                 ClientPlayNetworking.send(new ArmorTogglePayload(ArmorTogglePayload.Action.HELMET));
             }
@@ -130,7 +138,21 @@ public final class ProjectEClient implements ClientModInitializer {
           KeyMapping key,
           PhilosophersStoneActionPayload.Action action
     ) {
+        sendItemAction(client, key, action, null);
+    }
+
+    private static void sendItemAction(
+          Minecraft client,
+          KeyMapping key,
+          PhilosophersStoneActionPayload.Action action,
+          ArmorTogglePayload.Action armorFallback
+    ) {
         while (key.consumeClick()) {
+            if (armorFallback != null && client.player != null
+                  && client.player.getMainHandItem().isEmpty()) {
+                ClientPlayNetworking.send(new ArmorTogglePayload(armorFallback));
+                continue;
+            }
             InteractionHand hand = findActionHand(client, action);
             if (hand != null) {
                 ClientPlayNetworking.send(new PhilosophersStoneActionPayload(hand, action));

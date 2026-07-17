@@ -23,7 +23,10 @@ public record ArmorTogglePayload(Action action) implements CustomPacketPayload {
 
     public enum Action {
         HELMET,
-        BOOTS;
+        BOOTS,
+        ACTIVE,
+        EXPLODE,
+        ZAP;
 
         private static Action byId(int id) {
             return values()[Math.floorMod(id, values().length)];

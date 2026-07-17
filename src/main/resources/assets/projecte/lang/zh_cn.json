@@ -193,6 +193,8 @@
 
     "gem.projecte.disabled": "关闭",
     "gem.projecte.enabled": "启用",
+    "gem.projecte.activate": "宝石盔甲主动能力已启用",
+    "gem.projecte.deactivate": "宝石盔甲主动能力已关闭",
 
     "gem.projecte.night_vision": "夜视模式: %s",
     "gem.projecte.night_vision.prompt": "按 [%s] 键切换夜视模式",

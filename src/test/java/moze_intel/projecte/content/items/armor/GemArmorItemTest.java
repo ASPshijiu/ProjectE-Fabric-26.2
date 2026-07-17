@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 class GemArmorItemTest {
     @Test
-    void gemArmorHasTwoServerValidatedToggleActions() {
-        assertEquals(2, ArmorTogglePayload.Action.values().length);
+    void gemArmorHasFiveServerValidatedActions() {
+        assertEquals(5, ArmorTogglePayload.Action.values().length);
     }
 }

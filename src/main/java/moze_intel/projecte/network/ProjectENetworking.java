@@ -61,6 +61,9 @@ public final class ProjectENetworking {
                   switch (payload.action()) {
                       case HELMET -> GemArmorItem.toggleHelmet(ctx.player());
                       case BOOTS -> GemArmorItem.toggleBoots(ctx.player());
+                      case ACTIVE -> GemArmorItem.toggleActive(ctx.player());
+                      case EXPLODE -> GemArmorItem.explode(ctx.player());
+                      case ZAP -> GemArmorItem.zap(ctx.player());
                   }
               }));
 

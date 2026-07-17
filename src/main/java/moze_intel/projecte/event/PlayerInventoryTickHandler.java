@@ -77,10 +77,6 @@ public final class PlayerInventoryTickHandler {
                     }
                 }
 
-                boolean fullGemSet = GemArmorItem.hasFullSet(player);
-                if (service.gemArmorEnabled() != fullGemSet) {
-                    service.setGemArmor(fullGemSet);
-                }
                 GemArmorItem.tickPlayer(player, doSecondTick);
             }
         });

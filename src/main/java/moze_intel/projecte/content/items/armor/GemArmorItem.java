@@ -1,15 +1,23 @@
 package moze_intel.projecte.content.items.armor;
 
 import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.player.PlayerAttachmentKeys;
+import moze_intel.projecte.player.PlayerDataService;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.ArmorType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class GemArmorItem extends MatterArmorItem {
@@ -20,11 +28,11 @@ public class GemArmorItem extends MatterArmorItem {
         this.armorType = armorType;
     }
 
-    public static boolean hasFullSet(ServerPlayer player) {
+    private static boolean hasAnyPiece(ServerPlayer player) {
         return isPiece(player, EquipmentSlot.HEAD, ArmorType.HELMET)
-              && isPiece(player, EquipmentSlot.CHEST, ArmorType.CHESTPLATE)
-              && isPiece(player, EquipmentSlot.LEGS, ArmorType.LEGGINGS)
-              && isPiece(player, EquipmentSlot.FEET, ArmorType.BOOTS);
+              || isPiece(player, EquipmentSlot.CHEST, ArmorType.CHESTPLATE)
+              || isPiece(player, EquipmentSlot.LEGS, ArmorType.LEGGINGS)
+              || isPiece(player, EquipmentSlot.FEET, ArmorType.BOOTS);
     }
 
     public static void tickPlayer(ServerPlayer player, boolean secondTick) {
@@ -82,6 +90,56 @@ public class GemArmorItem extends MatterArmorItem {
         player.sendOverlayMessage(Component.translatable(
               "gem.projecte.step_assist",
               Component.translatable(enabled ? "gem.projecte.enabled" : "gem.projecte.disabled")));
+    }
+
+    public static void toggleActive(ServerPlayer player) {
+        if (!player.getMainHandItem().isEmpty() || !hasAnyPiece(player)) {
+            return;
+        }
+        PlayerDataService service = playerData(player);
+        boolean enabled = !service.gemArmorEnabled();
+        service.setGemArmor(enabled);
+        player.sendOverlayMessage(Component.translatable(
+              enabled ? "gem.projecte.activate" : "gem.projecte.deactivate"));
+    }
+
+    public static void explode(ServerPlayer player) {
+        if (!canUseActiveAbility(player)
+              || !isPiece(player, EquipmentSlot.CHEST, ArmorType.CHESTPLATE)) {
+            return;
+        }
+        player.level().explode(
+              player, player.getX(), player.getY(), player.getZ(), 9.0F,
+              Level.ExplosionInteraction.BLOCK);
+    }
+
+    public static void zap(ServerPlayer player) {
+        if (!canUseActiveAbility(player)
+              || !isPiece(player, EquipmentSlot.HEAD, ArmorType.HELMET)) {
+            return;
+        }
+        HitResult target = player.pick(120.0D, 1.0F, false);
+        if (target.getType() == HitResult.Type.MISS) {
+            return;
+        }
+        ServerLevel level = (ServerLevel) player.level();
+        LightningBolt lightning = EntityTypes.LIGHTNING_BOLT.create(
+              level, EntitySpawnReason.TRIGGERED);
+        if (lightning != null) {
+            BlockPos strikePos = BlockPos.containing(target.getLocation());
+            lightning.setPos(Vec3.atCenterOf(strikePos));
+            lightning.setCause(player);
+            level.addFreshEntity(lightning);
+        }
+    }
+
+    private static boolean canUseActiveAbility(ServerPlayer player) {
+        return player.getMainHandItem().isEmpty()
+              && playerData(player).gemArmorEnabled();
+    }
+
+    private static PlayerDataService playerData(ServerPlayer player) {
+        return new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player));
     }
 
     private static boolean isPiece(ServerPlayer player, EquipmentSlot slot, ArmorType type) {
