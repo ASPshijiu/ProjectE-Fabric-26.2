@@ -1,6 +1,7 @@
 package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
@@ -28,7 +29,10 @@ public class BlackHoleBandItem extends ActiveEmcItem {
     @Override
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         if (!isActive(stack)) return;
-        super.onTick(player, stack, service);
+        if (!service.tryRemoveEmc(EmcValue.of(getEmcPerTick()))) {
+            setActive(stack, false);
+            return;
+        }
         Level level = player.level();
         if (level.isClientSide()) return;
         AABB box = player.getBoundingBox().inflate(RADIUS);
