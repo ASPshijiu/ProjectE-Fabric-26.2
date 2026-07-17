@@ -30,6 +30,9 @@ import net.minecraft.world.phys.Vec3;
  * component-based charge system ({@link moze_intel.projecte.content.items.IItemCharge}).
  */
 public final class ToolHelper {
+    private static final ThreadLocal<Boolean> DIGGING_BY_MODE =
+          ThreadLocal.withInitial(() -> false);
+
     private ToolHelper() {
     }
 
@@ -244,36 +247,45 @@ public final class ToolHelper {
     public static void digBasedOnMode(Level level, LivingEntity miner, ItemStack stack,
           BlockPos target, MatterPickaxeItem.PickaxeMode mode) {
         if (level.isClientSide() || mode == MatterPickaxeItem.PickaxeMode.STANDARD
-              || !(miner instanceof ServerPlayer player)) {
+              || DIGGING_BY_MODE.get() || !(miner instanceof ServerPlayer player)) {
             return;
         }
         HitResult hit = player.pick(5.0, 0.0F, false);
-        if (!(hit instanceof BlockHitResult blockHit) || !target.equals(blockHit.getBlockPos())) {
-            return;
-        }
-        Direction face = blockHit.getDirection();
-        switch (mode) {
-            case TALLSHOT -> {
-                breakBlock(level, player, stack, target.below());
-                breakBlock(level, player, stack, target.above());
-            }
-            case WIDESHOT -> {
-                Direction.Axis axis = face.getAxis() == Direction.Axis.Y
-                      ? player.getDirection().getAxis() : face.getAxis();
-                if (axis == Direction.Axis.X) {
-                    breakBlock(level, player, stack, target.north());
-                    breakBlock(level, player, stack, target.south());
-                } else if (axis == Direction.Axis.Z) {
-                    breakBlock(level, player, stack, target.west());
-                    breakBlock(level, player, stack, target.east());
+        Direction face = miningFace(hit, player.getLookAngle());
+        DIGGING_BY_MODE.set(true);
+        try {
+            switch (mode) {
+                case TALLSHOT -> {
+                    breakBlock(level, player, stack, target.below());
+                    breakBlock(level, player, stack, target.above());
                 }
+                case WIDESHOT -> {
+                    Direction.Axis axis = face.getAxis() == Direction.Axis.Y
+                          ? player.getDirection().getAxis() : face.getAxis();
+                    if (axis == Direction.Axis.X) {
+                        breakBlock(level, player, stack, target.north());
+                        breakBlock(level, player, stack, target.south());
+                    } else if (axis == Direction.Axis.Z) {
+                        breakBlock(level, player, stack, target.west());
+                        breakBlock(level, player, stack, target.east());
+                    }
+                }
+                case LONGSHOT -> {
+                    breakBlock(level, player, stack, target.relative(face.getOpposite()));
+                    breakBlock(level, player, stack, target.relative(face.getOpposite(), 2));
+                }
+                case STANDARD -> { }
             }
-            case LONGSHOT -> {
-                breakBlock(level, player, stack, target.relative(face.getOpposite()));
-                breakBlock(level, player, stack, target.relative(face.getOpposite(), 2));
-            }
-            case STANDARD -> { }
+        } finally {
+            DIGGING_BY_MODE.remove();
         }
+    }
+
+    static Direction miningFace(HitResult hit, Vec3 lookDirection) {
+        if (hit.getType() == HitResult.Type.BLOCK && hit instanceof BlockHitResult blockHit) {
+            return blockHit.getDirection();
+        }
+        return Direction.getApproximateNearest(lookDirection).getOpposite();
     }
 
     public static void attackWithCharge(ItemStack stack, LivingEntity target, LivingEntity attacker) {
