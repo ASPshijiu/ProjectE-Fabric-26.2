@@ -19,6 +19,7 @@ import moze_intel.projecte.emc.reload.EmcReloadListener;
 import moze_intel.projecte.emc.reload.RecipeConversionSource;
 import moze_intel.projecte.emc.reload.VanillaRecipeConversionSource;
 import moze_intel.projecte.event.PlayerInventoryTickHandler;
+import moze_intel.projecte.event.InterdictionTorchHandler;
 import moze_intel.projecte.event.PhilosophersStoneInteractionHandler;
 import moze_intel.projecte.network.ProjectENetworking;
 import moze_intel.projecte.player.PlayerAttachments;
@@ -97,6 +98,7 @@ public final class ProjectE implements ModInitializer {
               ProjectECommands.register(dispatcher, context));
 
         PlayerInventoryTickHandler.register();
+        InterdictionTorchHandler.register();
 
         LOGGER.info("Initializing ProjectE for Fabric 26.2");
     }
