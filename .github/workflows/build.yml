@@ -28,7 +28,9 @@ jobs:
         run: .\gradlew.bat build packageAudit verifyBaseline "-Pprojecte_upstream=.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
       - name: Build and test on Linux
         if: runner.os == 'Linux'
-        run: ./gradlew build packageAudit verifyBaseline "-Pprojecte_upstream=.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
+        run: |
+          chmod +x gradlew
+          ./gradlew build packageAudit verifyBaseline "-Pprojecte_upstream=.upstream/projecte" "-Pprojecte_upstream_commit=15d4ce65bd06eb4222709b984255fbf5080e78bc"
       - name: Upload runtime jar
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
