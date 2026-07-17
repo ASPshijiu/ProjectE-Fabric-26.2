@@ -101,10 +101,8 @@ public final class CondenserMenu extends AbstractContainerMenu {
     }
 
     private void initialize(Inventory playerInventory) {
-        addDataSlot(storedEmc.lowSlot());
-        addDataSlot(storedEmc.highSlot());
-        addDataSlot(requiredEmc.lowSlot());
-        addDataSlot(requiredEmc.highSlot());
+        storedEmc.slots().forEach(this::addDataSlot);
+        requiredEmc.slots().forEach(this::addDataSlot);
         addTargetSlot();
         addMachineSlots();
         addPlayerInventory(playerInventory);

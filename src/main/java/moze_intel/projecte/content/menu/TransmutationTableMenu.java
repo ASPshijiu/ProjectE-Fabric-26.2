@@ -82,8 +82,7 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         this.service = new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player));
         this.keyFactory = new MinecraftStackKeyFactory(player.level().registryAccess());
         this.syncedEmc = new SyncedLong(() -> service.emc().longValue());
-        addDataSlot(syncedEmc.lowSlot());
-        addDataSlot(syncedEmc.highSlot());
+        syncedEmc.slots().forEach(this::addDataSlot);
 
         this.inputLocksContainer = new SimpleContainer(INPUT_SLOTS + 1) {
             @Override

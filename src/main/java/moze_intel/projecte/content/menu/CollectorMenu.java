@@ -112,13 +112,11 @@ public final class CollectorMenu extends AbstractContainerMenu {
     }
 
     private void initialize(Inventory playerInventory) {
-        addDataSlot(storedEmc.lowSlot());
-        addDataSlot(storedEmc.highSlot());
+        storedEmc.slots().forEach(this::addDataSlot);
         addDataSlot(sunLevelSlot());
         addDataSlot(kleinProgressSlot());
         addDataSlot(fuelProgressSlot());
-        addDataSlot(kleinEmc.lowSlot());
-        addDataSlot(kleinEmc.highSlot());
+        kleinEmc.slots().forEach(this::addDataSlot);
         addMachineSlots();
         addPlayerInventory(playerInventory);
     }

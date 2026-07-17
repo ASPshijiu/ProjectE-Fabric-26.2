@@ -103,8 +103,7 @@ public final class RelayMenu extends AbstractContainerMenu {
     }
 
     private void initialize(Inventory playerInventory) {
-        addDataSlot(storedEmc.lowSlot());
-        addDataSlot(storedEmc.highSlot());
+        storedEmc.slots().forEach(this::addDataSlot);
         addDataSlot(chargeProgressSlot());
         addDataSlot(burnProgressSlot());
         addMachineSlots();
