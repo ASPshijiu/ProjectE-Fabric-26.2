@@ -76,13 +76,13 @@ public final class TransmutationTableScreen extends AbstractContainerScreen<Tran
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor extractor, int mouseX, int mouseY) {
-        extractor.text(font, title, titleLabelX, titleLabelY, 0xFF404040);
+        extractor.text(font, title, titleLabelX, titleLabelY, 0xFF404040, false);
         long emc = menu.playerEmc().longValue();
         extractor.text(font, Component.translatable("gui.projecte.transmutation.emc"),
-              6, PANEL_HEIGHT - 104, 0xFF404040);
+              6, PANEL_HEIGHT - 104, 0xFF404040, false);
         extractor.text(font, TransmutationEmcFormatter.format(emc),
-              6, PANEL_HEIGHT - 94, 0xFF404040);
+              6, PANEL_HEIGHT - 94, 0xFF404040, false);
         Component page = Component.literal((menu.currentPage() + 1) + "/" + menu.pageCount());
-        extractor.text(font, page, 166 - font.width(page) / 2, 103, 0xFF404040);
+        extractor.text(font, page, 166 - font.width(page) / 2, 103, 0xFF404040, false);
     }
 }
