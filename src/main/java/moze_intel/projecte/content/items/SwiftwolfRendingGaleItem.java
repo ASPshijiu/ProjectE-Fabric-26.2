@@ -1,6 +1,7 @@
 package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.content.ModDataComponents;
+import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -43,6 +44,11 @@ public class SwiftwolfRendingGaleItem extends ActiveEmcItem {
     @Override
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         if (!isActive(stack)) return;
+        if (service.emc().compareTo(EmcValue.of(EMC_PER_TICK)) < 0) {
+            setActive(stack, false);
+            revokeFlight(player);
+            return;
+        }
         super.onTick(player, stack, service);
         if (!player.getAbilities().mayfly) {
             player.getAbilities().mayfly = true;
@@ -55,9 +61,7 @@ public class SwiftwolfRendingGaleItem extends ActiveEmcItem {
         ItemStack stack = player.getItemInHand(hand);
         boolean wasActive = isActive(stack);
         if (!level.isClientSide() && wasActive && !player.isCreative() && !player.isSpectator()) {
-            player.getAbilities().mayfly = false;
-            player.getAbilities().flying = false;
-            player.onUpdateAbilities();
+            revokeFlight(player);
         }
         setActive(stack, !wasActive);
         if (!level.isClientSide()) {
@@ -66,6 +70,15 @@ public class SwiftwolfRendingGaleItem extends ActiveEmcItem {
                         + (wasActive ? "off" : "on")));
         }
         return InteractionResult.SUCCESS;
+    }
+
+    private static void revokeFlight(Player player) {
+        if (player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        player.getAbilities().mayfly = false;
+        player.getAbilities().flying = false;
+        player.onUpdateAbilities();
     }
 
     @Override
