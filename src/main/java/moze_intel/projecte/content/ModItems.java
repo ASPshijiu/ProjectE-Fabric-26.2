@@ -32,6 +32,7 @@ import moze_intel.projecte.content.items.tools.MatterShovelItem;
 import moze_intel.projecte.content.items.tools.MatterSwordItem;
 import moze_intel.projecte.content.items.tools.MatterToolTags;
 import moze_intel.projecte.content.items.tools.RedMatterSwordItem;
+import moze_intel.projecte.content.items.armor.MatterArmorItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -250,33 +251,45 @@ public final class ModItems {
 
         // ── Dark Matter Armor ──
         DARK_MATTER_HELMET = register(ProjectEAPI.id("dm_helmet"),
-              dmArmorProps(ProjectEAPI.id("dm_helmet"), ArmorType.HELMET));
+              new MatterArmorItem(dmArmorProps(ProjectEAPI.id("dm_helmet"), ArmorType.HELMET),
+                    ArmorType.HELMET, MatterArmorItem.Tier.DARK_MATTER));
         DARK_MATTER_CHESTPLATE = register(ProjectEAPI.id("dm_chestplate"),
-              dmArmorProps(ProjectEAPI.id("dm_chestplate"), ArmorType.CHESTPLATE));
+              new MatterArmorItem(dmArmorProps(ProjectEAPI.id("dm_chestplate"), ArmorType.CHESTPLATE),
+                    ArmorType.CHESTPLATE, MatterArmorItem.Tier.DARK_MATTER));
         DARK_MATTER_LEGGINGS = register(ProjectEAPI.id("dm_leggings"),
-              dmArmorProps(ProjectEAPI.id("dm_leggings"), ArmorType.LEGGINGS));
+              new MatterArmorItem(dmArmorProps(ProjectEAPI.id("dm_leggings"), ArmorType.LEGGINGS),
+                    ArmorType.LEGGINGS, MatterArmorItem.Tier.DARK_MATTER));
         DARK_MATTER_BOOTS = register(ProjectEAPI.id("dm_boots"),
-              dmArmorProps(ProjectEAPI.id("dm_boots"), ArmorType.BOOTS));
+              new MatterArmorItem(dmArmorProps(ProjectEAPI.id("dm_boots"), ArmorType.BOOTS),
+                    ArmorType.BOOTS, MatterArmorItem.Tier.DARK_MATTER));
 
         // ── Red Matter Armor ──
         RED_MATTER_HELMET = register(ProjectEAPI.id("rm_helmet"),
-              rmArmorProps(ProjectEAPI.id("rm_helmet"), ArmorType.HELMET));
+              new MatterArmorItem(rmArmorProps(ProjectEAPI.id("rm_helmet"), ArmorType.HELMET),
+                    ArmorType.HELMET, MatterArmorItem.Tier.RED_MATTER));
         RED_MATTER_CHESTPLATE = register(ProjectEAPI.id("rm_chestplate"),
-              rmArmorProps(ProjectEAPI.id("rm_chestplate"), ArmorType.CHESTPLATE));
+              new MatterArmorItem(rmArmorProps(ProjectEAPI.id("rm_chestplate"), ArmorType.CHESTPLATE),
+                    ArmorType.CHESTPLATE, MatterArmorItem.Tier.RED_MATTER));
         RED_MATTER_LEGGINGS = register(ProjectEAPI.id("rm_leggings"),
-              rmArmorProps(ProjectEAPI.id("rm_leggings"), ArmorType.LEGGINGS));
+              new MatterArmorItem(rmArmorProps(ProjectEAPI.id("rm_leggings"), ArmorType.LEGGINGS),
+                    ArmorType.LEGGINGS, MatterArmorItem.Tier.RED_MATTER));
         RED_MATTER_BOOTS = register(ProjectEAPI.id("rm_boots"),
-              rmArmorProps(ProjectEAPI.id("rm_boots"), ArmorType.BOOTS));
+              new MatterArmorItem(rmArmorProps(ProjectEAPI.id("rm_boots"), ArmorType.BOOTS),
+                    ArmorType.BOOTS, MatterArmorItem.Tier.RED_MATTER));
 
         // ── Gem Armor ──
         GEM_HELMET = register(ProjectEAPI.id("gem_helmet"),
-              gemArmorProps(ProjectEAPI.id("gem_helmet"), ArmorType.HELMET));
+              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_helmet"), ArmorType.HELMET),
+                    ArmorType.HELMET, MatterArmorItem.Tier.GEM));
         GEM_CHESTPLATE = register(ProjectEAPI.id("gem_chestplate"),
-              gemArmorProps(ProjectEAPI.id("gem_chestplate"), ArmorType.CHESTPLATE));
+              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_chestplate"), ArmorType.CHESTPLATE),
+                    ArmorType.CHESTPLATE, MatterArmorItem.Tier.GEM));
         GEM_LEGGINGS = register(ProjectEAPI.id("gem_leggings"),
-              gemArmorProps(ProjectEAPI.id("gem_leggings"), ArmorType.LEGGINGS));
+              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_leggings"), ArmorType.LEGGINGS),
+                    ArmorType.LEGGINGS, MatterArmorItem.Tier.GEM));
         GEM_BOOTS = register(ProjectEAPI.id("gem_boots"),
-              gemArmorProps(ProjectEAPI.id("gem_boots"), ArmorType.BOOTS));
+              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_boots"), ArmorType.BOOTS),
+                    ArmorType.BOOTS, MatterArmorItem.Tier.GEM));
 
         // ── Rings & Accessories ──
         IRON_BAND = register(ProjectEAPI.id("iron_band"), simple(ProjectEAPI.id("iron_band")));

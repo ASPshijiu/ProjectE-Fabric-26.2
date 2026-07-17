@@ -3,7 +3,8 @@
   "package": "moze_intel.projecte.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "AbstractFurnaceBlockEntityMixin"
+    "AbstractFurnaceBlockEntityMixin",
+    "LivingEntityArmorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

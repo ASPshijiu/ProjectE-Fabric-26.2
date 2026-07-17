@@ -39,7 +39,7 @@ public final class ModArmorMaterials {
                 ProjectEAPI.id("gem_repair"));
 
     // ── Defense values per slot ───────────────────────────────────────────
-    private static final Map<ArmorType, Integer> DM_DEFENSE = Map.of(
+    private static final Map<ArmorType, Integer> DEFENSE = Map.of(
           ArmorType.HELMET, 3,
           ArmorType.CHESTPLATE, 8,
           ArmorType.LEGGINGS, 6,
@@ -47,57 +47,41 @@ public final class ModArmorMaterials {
           ArmorType.BODY, 11
     );
 
-    private static final Map<ArmorType, Integer> RM_DEFENSE = Map.of(
-          ArmorType.HELMET, 4,
-          ArmorType.CHESTPLATE, 10,
-          ArmorType.LEGGINGS, 8,
-          ArmorType.BOOTS, 4,
-          ArmorType.BODY, 14
-    );
-
-    private static final Map<ArmorType, Integer> GEM_DEFENSE = Map.of(
-          ArmorType.HELMET, 5,
-          ArmorType.CHESTPLATE, 12,
-          ArmorType.LEGGINGS, 10,
-          ArmorType.BOOTS, 5,
-          ArmorType.BODY, 16
-    );
-
     // ── Material instances ────────────────────────────────────────────────
     // durability multiplier = base durability for helmet (typically 11 * multiplier)
 
-    /** Dark Matter: ~2× diamond durability, defense slightly better */
+    /** Dark Matter: diamond base defense plus ProjectE's slot-weighted special reduction. */
     public static final ArmorMaterial DARK_MATTER = new ArmorMaterial(
-          45,                          // durability multiplier (diamond=33)
-          DM_DEFENSE,
-          20,                          // enchantment value
+          45,
+          DEFENSE,
+          1,
           SoundEvents.ARMOR_EQUIP_DIAMOND,
-          3.0F,                        // toughness (diamond=2.0)
-          0.1F,                        // knockback resistance (netherite=0.1, diamond=0.0)
+          2.0F,
+          0.1F,
           DARK_MATTER_REPAIR,
           DARK_MATTER_ARMOR_ASSET
     );
 
-    /** Red Matter: ~3× diamond durability, excellent defense */
+    /** Red Matter: diamond base defense plus stronger ProjectE reduction. */
     public static final ArmorMaterial RED_MATTER = new ArmorMaterial(
           60,                          // durability multiplier
-          RM_DEFENSE,
-          30,                          // enchantment value
+          DEFENSE,
+          1,
           SoundEvents.ARMOR_EQUIP_NETHERITE,
-          4.0F,                        // toughness
-          0.15F,                       // knockback resistance
+          2.0F,
+          0.2F,
           RED_MATTER_REPAIR,
           RED_MATTER_ARMOR_ASSET
     );
 
-    /** Gem: end-game armor, best durability and defense */
+    /** Gem armor: diamond base defense, maximum ProjectE reduction and knockback resistance. */
     public static final ArmorMaterial GEM = new ArmorMaterial(
           80,                          // durability multiplier
-          GEM_DEFENSE,
-          40,                          // enchantment value
+          DEFENSE,
+          1,
           SoundEvents.ARMOR_EQUIP_NETHERITE,
-          5.0F,                        // toughness
-          0.2F,                        // knockback resistance
+          2.0F,
+          0.25F,
           GEM_REPAIR,
           GEM_ARMOR_ASSET
     );
