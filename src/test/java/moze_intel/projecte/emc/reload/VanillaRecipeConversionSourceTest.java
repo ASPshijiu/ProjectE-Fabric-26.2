@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.recipe.RecipeConversion;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
@@ -69,6 +70,13 @@ class VanillaRecipeConversionSourceTest {
               key("diamond_pickaxe"), 1,
               key("netherite_ingot"), 1
         ), byOutput.get(key("netherite_pickaxe")).ingredients());
+
+        var values = new EmcReloadProcessor().extend(Map.of(
+              key("netherite_upgrade_smithing_template"), EmcValue.of(7_497),
+              key("diamond_pickaxe"), EmcValue.of(24_584),
+              key("netherite_ingot"), EmcValue.of(57_344)
+        ), List.of(byOutput.get(key("netherite_pickaxe"))));
+        assertEquals(EmcValue.of(89_425), values.get(key("netherite_pickaxe")));
     }
 
     private static RecipeHolder<?> holder(String path, Recipe<?> recipe) {

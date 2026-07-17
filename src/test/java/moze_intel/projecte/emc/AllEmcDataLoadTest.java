@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Loads every data/projecte/emc/*.json file through ExplicitEmcLoader exactly as the live reload
- * does, confirming the entire explicit-EMC dataset parses cleanly and yields the expected count
- * across projecte.json + projecte_items.json + vanilla.json.
+ * does, confirming the explicit EMC anchors parse cleanly. Craftable vanilla items are deliberately
+ * absent here because the live recipe graph derives their values.
  */
 class AllEmcDataLoadTest {
     @Test
@@ -27,8 +27,8 @@ class AllEmcDataLoadTest {
                   Files.readString(file, StandardCharsets.UTF_8));
         }
         List<ExplicitEmcEntry> entries = new ExplicitEmcLoader().load(resources);
-        assertTrue(entries.size() >= 870,
-              "expected >= 870 explicit EMC entries across all data files, got " + entries.size());
+        assertTrue(entries.size() >= 720,
+              "expected >= 720 explicit EMC anchors across all data files, got " + entries.size());
         // Confirm at least one projecte tool and one vanilla item resolved.
         assertTrue(entries.stream().anyMatch(e -> e.key().canonicalString().equals("item|projecte:dm_pick|{}")));
         assertTrue(entries.stream().anyMatch(e -> e.key().canonicalString().equals("item|minecraft:cobblestone|{}")));

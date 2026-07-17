@@ -15,26 +15,72 @@ class Vanilla26_2EmcDataTest {
     private static final Path VANILLA_EMC =
           Path.of("src/main/resources/data/projecte/emc/vanilla.json");
 
-    private static final String NEW_SURVIVAL_ITEMS = """
+    private static final String EXPLICIT_NEW_SURVIVAL_ITEMS = """
+          blue_egg
+          brown_egg
+          bush
+          cactus_flower
+          cinnabar
+          closed_eyeblossom
+          copper_golem_statue
+          copper_horse_armor
+          copper_nautilus_armor
+          diamond_nautilus_armor
+          exposed_copper_bars
+          exposed_copper_chain
+          exposed_copper_chest
+          exposed_copper_golem_statue
+          exposed_copper_lantern
+          exposed_lightning_rod
+          firefly_bush
+          golden_nautilus_armor
+          iron_nautilus_armor
+          music_disc_bounce
+          music_disc_lava_chicken
+          music_disc_tears
+          open_eyeblossom
+          oxidized_copper_bars
+          oxidized_copper_chain
+          oxidized_copper_chest
+          oxidized_copper_golem_statue
+          oxidized_copper_lantern
+          oxidized_lightning_rod
+          pale_hanging_moss
+          pale_moss_block
+          pale_oak_leaves
+          pale_oak_log
+          pale_oak_sapling
+          resin_clump
+          short_dry_grass
+          stripped_pale_oak_log
+          sulfur
+          sulfur_cube_bucket
+          sulfur_spike
+          tall_dry_grass
+          weathered_copper_bars
+          weathered_copper_chain
+          weathered_copper_chest
+          weathered_copper_golem_statue
+          weathered_copper_lantern
+          weathered_lightning_rod
+          wildflowers
+          """;
+
+    private static final String RECIPE_DERIVED_NEW_ITEMS = """
           acacia_shelf
           bamboo_shelf
           birch_shelf
           black_bundle
           black_harness
           blue_bundle
-          blue_egg
           blue_harness
           bordure_indented_banner_pattern
           brown_bundle
-          brown_egg
           brown_harness
-          bush
-          cactus_flower
           cherry_shelf
           chiseled_cinnabar
           chiseled_resin_bricks
           chiseled_sulfur
-          cinnabar
           cinnabar_brick_slab
           cinnabar_brick_stairs
           cinnabar_brick_wall
@@ -42,20 +88,16 @@ class Vanilla26_2EmcDataTest {
           cinnabar_slab
           cinnabar_stairs
           cinnabar_wall
-          closed_eyeblossom
           copper_axe
           copper_bars
           copper_boots
           copper_chain
           copper_chest
           copper_chestplate
-          copper_golem_statue
           copper_helmet
           copper_hoe
-          copper_horse_armor
           copper_lantern
           copper_leggings
-          copper_nautilus_armor
           copper_nugget
           copper_pickaxe
           copper_shovel
@@ -67,26 +109,16 @@ class Vanilla26_2EmcDataTest {
           cyan_bundle
           cyan_harness
           dark_oak_shelf
-          diamond_nautilus_armor
           diamond_spear
           dried_ghast
-          exposed_copper_bars
-          exposed_copper_chain
-          exposed_copper_chest
-          exposed_copper_golem_statue
-          exposed_copper_lantern
-          exposed_lightning_rod
           field_masoned_banner_pattern
-          firefly_bush
           golden_dandelion
-          golden_nautilus_armor
           golden_spear
           gray_bundle
           gray_harness
           green_bundle
           green_harness
           iron_chain
-          iron_nautilus_armor
           iron_spear
           jungle_shelf
           leaf_litter
@@ -99,24 +131,12 @@ class Vanilla26_2EmcDataTest {
           magenta_bundle
           magenta_harness
           mangrove_shelf
-          music_disc_bounce
-          music_disc_lava_chicken
-          music_disc_tears
           netherite_horse_armor
           netherite_nautilus_armor
           netherite_spear
           oak_shelf
-          open_eyeblossom
           orange_bundle
           orange_harness
-          oxidized_copper_bars
-          oxidized_copper_chain
-          oxidized_copper_chest
-          oxidized_copper_golem_statue
-          oxidized_copper_lantern
-          oxidized_lightning_rod
-          pale_hanging_moss
-          pale_moss_block
           pale_moss_carpet
           pale_oak_boat
           pale_oak_button
@@ -125,11 +145,8 @@ class Vanilla26_2EmcDataTest {
           pale_oak_fence
           pale_oak_fence_gate
           pale_oak_hanging_sign
-          pale_oak_leaves
-          pale_oak_log
           pale_oak_planks
           pale_oak_pressure_plate
-          pale_oak_sapling
           pale_oak_shelf
           pale_oak_sign
           pale_oak_slab
@@ -157,23 +174,16 @@ class Vanilla26_2EmcDataTest {
           resin_brick_stairs
           resin_brick_wall
           resin_bricks
-          resin_clump
-          short_dry_grass
           spruce_shelf
           stone_spear
-          stripped_pale_oak_log
           stripped_pale_oak_wood
-          sulfur
           sulfur_brick_slab
           sulfur_brick_stairs
           sulfur_brick_wall
           sulfur_bricks
-          sulfur_cube_bucket
           sulfur_slab
-          sulfur_spike
           sulfur_stairs
           sulfur_wall
-          tall_dry_grass
           warped_shelf
           waxed_copper_bars
           waxed_copper_chain
@@ -199,24 +209,17 @@ class Vanilla26_2EmcDataTest {
           waxed_weathered_copper_golem_statue
           waxed_weathered_copper_lantern
           waxed_weathered_lightning_rod
-          weathered_copper_bars
-          weathered_copper_chain
-          weathered_copper_chest
-          weathered_copper_golem_statue
-          weathered_copper_lantern
-          weathered_lightning_rod
           white_bundle
           white_harness
-          wildflowers
           wooden_spear
           yellow_bundle
           yellow_harness
           """;
 
     @Test
-    void allNewSurvivalItemsHavePositiveExplicitEmc() throws Exception {
+    void naturalNewItemsHavePositiveExplicitEmc() throws Exception {
         JsonObject emc = readEmc();
-        for (String item : NEW_SURVIVAL_ITEMS.lines().map(String::strip)
+        for (String item : EXPLICIT_NEW_SURVIVAL_ITEMS.lines().map(String::strip)
               .filter(line -> !line.isEmpty()).toList()) {
             String key = key(item);
             assertTrue(emc.has(key), item + " is missing explicit EMC");
@@ -226,17 +229,23 @@ class Vanilla26_2EmcDataTest {
     }
 
     @Test
-    void representativeEstimatesStayStable() throws Exception {
+    void craftableNewItemsUseRecipesInsteadOfFixedOverrides() throws Exception {
+        JsonObject emc = readEmc();
+        for (String item : RECIPE_DERIVED_NEW_ITEMS.lines().map(String::strip)
+              .filter(line -> !line.isEmpty()).toList()) {
+            assertFalse(emc.has(key(item)), item + " must be derived from its recipe");
+        }
+    }
+
+    @Test
+    void representativeResourceValuesStayStable() throws Exception {
         JsonObject emc = readEmc();
         Map<String, Long> expected = Map.of(
               "sulfur", 16L,
               "cinnabar", 32L,
               "resin_clump", 8L,
-              "copper_nugget", 14L,
-              "copper_spear", 136L,
               "pale_oak_log", 32L,
-              "black_harness", 242L,
-              "netherite_spear", 65_544L
+              "music_disc_tears", 8_192L
         );
         expected.forEach((item, value) -> assertEquals(
               value.longValue(), emc.getAsJsonObject(key(item)).get("value").getAsLong(), item));
@@ -252,6 +261,19 @@ class Vanilla26_2EmcDataTest {
               "test_instance_block"
         }) {
             assertFalse(emc.has(key(item)), item + " should not receive explicit EMC");
+        }
+    }
+
+    @Test
+    void netheriteUpgradesUseSmithingRecipesInsteadOfFixedOverrides() throws Exception {
+        JsonObject emc = readEmc();
+        for (String item : new String[]{
+              "netherite_sword", "netherite_shovel", "netherite_pickaxe", "netherite_axe",
+              "netherite_hoe", "netherite_helmet", "netherite_chestplate", "netherite_leggings",
+              "netherite_boots", "netherite_spear", "netherite_horse_armor",
+              "netherite_nautilus_armor"
+        }) {
+            assertFalse(emc.has(key(item)), item + " must be derived from its smithing recipe");
         }
     }
 
