@@ -141,6 +141,8 @@
   "key.projecte.mode": "Mode Switch",
   "key.projecte.extra_function": "Extra Function",
   "key.projecte.fire_projectile": "Fire Projectile",
+  "key.projecte.helmet_toggle": "Toggle Gem Helmet Night Vision",
+  "key.projecte.boots_toggle": "Toggle Gem Boots Step Assist",
   "category.projecte": "ProjectE",
 
   "mode.projecte.switch": "Switched to %s mode",
@@ -153,6 +155,10 @@
   "mode.projecte.pick.4": "3x long shot",
   "mode.projecte.katar.1": "Slay hostile mobs",
   "mode.projecte.katar.2": "Slay all mobs",
+  "gem.projecte.disabled": "Disabled",
+  "gem.projecte.enabled": "Enabled",
+  "gem.projecte.night_vision": "Night vision: %s",
+  "gem.projecte.step_assist": "Step assist: %s",
   "tooltip.projecte.philostone": "Press %s to open a crafting grid",
 
   "command.projecte.emc": "ProjectE EMC",

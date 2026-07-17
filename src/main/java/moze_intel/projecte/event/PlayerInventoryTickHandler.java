@@ -3,6 +3,7 @@ package moze_intel.projecte.event;
 import moze_intel.projecte.content.items.ActiveEmcItem;
 import moze_intel.projecte.content.items.RepairTalismanItem;
 import moze_intel.projecte.content.items.TomeOfKnowledgeItem;
+import moze_intel.projecte.content.items.armor.GemArmorItem;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -75,6 +76,12 @@ public final class PlayerInventoryTickHandler {
                         RepairTalismanItem.tickRepair(inventory, true, activeMainHand);
                     }
                 }
+
+                boolean fullGemSet = GemArmorItem.hasFullSet(player);
+                if (service.gemArmorEnabled() != fullGemSet) {
+                    service.setGemArmor(fullGemSet);
+                }
+                GemArmorItem.tickPlayer(player, doSecondTick);
             }
         });
     }

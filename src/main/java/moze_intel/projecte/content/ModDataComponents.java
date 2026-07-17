@@ -35,6 +35,12 @@ public final class ModDataComponents {
     public static final Identifier TOOL_MODE_ID = ProjectEAPI.id("tool_mode");
     public static DataComponentType<Integer> TOOL_MODE;
 
+    public static final Identifier NIGHT_VISION_ID = ProjectEAPI.id("night_vision");
+    public static DataComponentType<Boolean> NIGHT_VISION;
+
+    public static final Identifier STEP_ASSIST_ID = ProjectEAPI.id("step_assist");
+    public static DataComponentType<Boolean> STEP_ASSIST;
+
     private static volatile boolean initialized;
 
     public static void init() {
@@ -74,6 +80,24 @@ public final class ModDataComponents {
               DataComponentType.<Integer>builder()
                     .persistent(Codec.INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build()
+        );
+
+        NIGHT_VISION = Registry.register(
+              BuiltInRegistries.DATA_COMPONENT_TYPE,
+              NIGHT_VISION_ID,
+              DataComponentType.<Boolean>builder()
+                    .persistent(Codec.BOOL)
+                    .networkSynchronized(ByteBufCodecs.BOOL)
+                    .build()
+        );
+
+        STEP_ASSIST = Registry.register(
+              BuiltInRegistries.DATA_COMPONENT_TYPE,
+              STEP_ASSIST_ID,
+              DataComponentType.<Boolean>builder()
+                    .persistent(Codec.BOOL)
+                    .networkSynchronized(ByteBufCodecs.BOOL)
                     .build()
         );
     }

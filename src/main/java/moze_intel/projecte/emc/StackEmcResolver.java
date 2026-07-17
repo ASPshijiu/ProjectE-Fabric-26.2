@@ -14,6 +14,8 @@ public final class StackEmcResolver {
           "projecte:charge",
           "projecte:philosophers_stone_mode",
           "projecte:tool_mode",
+          "projecte:night_vision",
+          "projecte:step_assist",
           STORED_EMC_COMPONENT
     );
 

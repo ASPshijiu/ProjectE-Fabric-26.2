@@ -33,6 +33,7 @@ import moze_intel.projecte.content.items.tools.MatterSwordItem;
 import moze_intel.projecte.content.items.tools.MatterToolTags;
 import moze_intel.projecte.content.items.tools.RedMatterSwordItem;
 import moze_intel.projecte.content.items.armor.MatterArmorItem;
+import moze_intel.projecte.content.items.armor.GemArmorItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -279,17 +280,17 @@ public final class ModItems {
 
         // ── Gem Armor ──
         GEM_HELMET = register(ProjectEAPI.id("gem_helmet"),
-              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_helmet"), ArmorType.HELMET),
-                    ArmorType.HELMET, MatterArmorItem.Tier.GEM));
+              new GemArmorItem(gemArmorProps(ProjectEAPI.id("gem_helmet"), ArmorType.HELMET),
+                    ArmorType.HELMET));
         GEM_CHESTPLATE = register(ProjectEAPI.id("gem_chestplate"),
-              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_chestplate"), ArmorType.CHESTPLATE),
-                    ArmorType.CHESTPLATE, MatterArmorItem.Tier.GEM));
+              new GemArmorItem(gemArmorProps(ProjectEAPI.id("gem_chestplate"), ArmorType.CHESTPLATE),
+                    ArmorType.CHESTPLATE));
         GEM_LEGGINGS = register(ProjectEAPI.id("gem_leggings"),
-              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_leggings"), ArmorType.LEGGINGS),
-                    ArmorType.LEGGINGS, MatterArmorItem.Tier.GEM));
+              new GemArmorItem(gemArmorProps(ProjectEAPI.id("gem_leggings"), ArmorType.LEGGINGS),
+                    ArmorType.LEGGINGS));
         GEM_BOOTS = register(ProjectEAPI.id("gem_boots"),
-              new MatterArmorItem(gemArmorProps(ProjectEAPI.id("gem_boots"), ArmorType.BOOTS),
-                    ArmorType.BOOTS, MatterArmorItem.Tier.GEM));
+              new GemArmorItem(gemArmorProps(ProjectEAPI.id("gem_boots"), ArmorType.BOOTS),
+                    ArmorType.BOOTS));
 
         // ── Rings & Accessories ──
         IRON_BAND = register(ProjectEAPI.id("iron_band"), simple(ProjectEAPI.id("iron_band")));

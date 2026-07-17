@@ -16,6 +16,7 @@ import moze_intel.projecte.content.items.IExtraFunction;
 import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.network.payloads.ChargeItemPayload;
+import moze_intel.projecte.network.payloads.ArmorTogglePayload;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
 import moze_intel.projecte.network.payloads.PhilosophersStoneActionPayload;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -51,12 +52,20 @@ public final class ProjectEClient implements ClientModInitializer {
     public static final KeyMapping FIRE_PROJECTILE_KEY = new KeyMapping(
           "key.projecte.fire_projectile", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, PROJECTE_CATEGORY);
 
+    public static final KeyMapping HELMET_TOGGLE_KEY = new KeyMapping(
+          "key.projecte.helmet_toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, PROJECTE_CATEGORY);
+
+    public static final KeyMapping BOOTS_TOGGLE_KEY = new KeyMapping(
+          "key.projecte.boots_toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, PROJECTE_CATEGORY);
+
     @Override
     public void onInitializeClient() {
         KeyMappingHelper.registerKeyMapping(CHARGE_KEY);
         KeyMappingHelper.registerKeyMapping(MODE_KEY);
         KeyMappingHelper.registerKeyMapping(EXTRA_FUNCTION_KEY);
         KeyMappingHelper.registerKeyMapping(FIRE_PROJECTILE_KEY);
+        KeyMappingHelper.registerKeyMapping(HELMET_TOGGLE_KEY);
+        KeyMappingHelper.registerKeyMapping(BOOTS_TOGGLE_KEY);
 
         EntityRenderers.register(
               ModEntityTypes.MOB_RANDOMIZER, MobRandomizerRenderer::new);
@@ -105,6 +114,12 @@ public final class ProjectEClient implements ClientModInitializer {
             sendItemAction(
                   client, FIRE_PROJECTILE_KEY,
                   PhilosophersStoneActionPayload.Action.PROJECTILE);
+            while (HELMET_TOGGLE_KEY.consumeClick()) {
+                ClientPlayNetworking.send(new ArmorTogglePayload(ArmorTogglePayload.Action.HELMET));
+            }
+            while (BOOTS_TOGGLE_KEY.consumeClick()) {
+                ClientPlayNetworking.send(new ArmorTogglePayload(ArmorTogglePayload.Action.BOOTS));
+            }
         });
 
         LOGGER.info("Initializing ProjectE client for Fabric 26.2");

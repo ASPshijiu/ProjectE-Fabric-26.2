@@ -8,6 +8,8 @@ import moze_intel.projecte.content.items.PhilosophersStoneItem;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.network.payloads.ChargeItemPayload;
+import moze_intel.projecte.network.payloads.ArmorTogglePayload;
+import moze_intel.projecte.content.items.armor.GemArmorItem;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
 import moze_intel.projecte.network.payloads.PhilosophersStoneActionPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -50,6 +52,17 @@ public final class ProjectENetworking {
               ChargeItemPayload.TYPE, ChargeItemPayload.STREAM_CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ChargeItemPayload.TYPE,
               ProjectENetworking::handleChargeItem);
+
+        PayloadTypeRegistry.serverboundPlay().register(
+              ArmorTogglePayload.TYPE, ArmorTogglePayload.STREAM_CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(ArmorTogglePayload.TYPE,
+              (payload, ctx) -> ctx.server().execute(() -> {
+                  if (ctx.player().isSpectator()) return;
+                  switch (payload.action()) {
+                      case HELMET -> GemArmorItem.toggleHelmet(ctx.player());
+                      case BOOTS -> GemArmorItem.toggleBoots(ctx.player());
+                  }
+              }));
 
         PayloadTypeRegistry.serverboundPlay().register(
               PhilosophersStoneActionPayload.TYPE,

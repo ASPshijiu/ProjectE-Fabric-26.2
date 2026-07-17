@@ -221,6 +221,8 @@
     "key.projecte.mode": "切换模式",
     "key.projecte.extra_function": "额外功能",
     "key.projecte.fire_projectile": "发射宝珠",
+    "key.projecte.helmet_toggle": "切换宝石头盔夜视",
+    "key.projecte.boots_toggle": "切换宝石靴辅助跨步",
     "category.projecte": "ProjectE",
 
     "mode.projecte.katar.1": "虐杀敌对生物",
