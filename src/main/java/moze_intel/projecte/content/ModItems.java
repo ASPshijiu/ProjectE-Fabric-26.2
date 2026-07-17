@@ -9,6 +9,7 @@ import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.content.items.TomeOfKnowledgeItem;
 import moze_intel.projecte.content.items.TransmutationTabletItem;
 import moze_intel.projecte.content.items.DarkMatterHammerItem;
+import moze_intel.projecte.content.items.DestructionCatalystItem;
 import moze_intel.projecte.content.items.DiviningRodItem;
 import moze_intel.projecte.content.items.RedMatterHammerItem;
 import moze_intel.projecte.content.items.RedMatterKatarItem;
@@ -335,7 +336,8 @@ public final class ModItems {
 
         // ── Catalysts & Lenses ──
         DESTRUCTION_CATALYST = register(ProjectEAPI.id("destruction_catalyst"),
-              properties(ProjectEAPI.id("destruction_catalyst")).stacksTo(1));
+              new DestructionCatalystItem(properties(ProjectEAPI.id("destruction_catalyst"))
+                    .fireResistant().stacksTo(1)));
         HYPERKINETIC_LENS = register(ProjectEAPI.id("hyperkinetic_lens"),
               fireImmune(ProjectEAPI.id("hyperkinetic_lens")));
         CATALYTIC_LENS = register(ProjectEAPI.id("catalytic_lens"),

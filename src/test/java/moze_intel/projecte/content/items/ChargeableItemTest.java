@@ -33,6 +33,7 @@ class ChargeableItemTest {
     void everyChargeableToolImplementsTheSharedChargeContract() {
         for (Class<?> itemClass : List.of(
               PhilosophersStoneItem.class,
+              DestructionCatalystItem.class,
               MatterToolItem.class,
               MatterPickaxeItem.class,
               MatterSwordItem.class,
