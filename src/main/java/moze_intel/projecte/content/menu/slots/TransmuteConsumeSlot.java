@@ -1,8 +1,8 @@
 package moze_intel.projecte.content.menu.slots;
 
-import moze_intel.projecte.emc.EmcValue;
-import moze_intel.projecte.emc.NormalizedStackKey;
+import java.util.Optional;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.world.Container;
@@ -30,23 +30,21 @@ public class TransmuteConsumeSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return !stack.isEmpty() && ProjectEEmc.service().current()
-              .valueFor(keyOf(stack)).filter(v -> v.longValue() > 0).isPresent();
+        return !stack.isEmpty() && resolve(stack)
+              .filter(resolved -> resolved.value().longValue() > 0)
+              .isPresent();
     }
 
     @Override
     public void set(ItemStack stack) {
         if (!player.level().isClientSide() && !stack.isEmpty()) {
-            NormalizedStackKey key = keyOf(stack);
-            service.learn(key);
-            EmcValue perItem = ProjectEEmc.service().current().valueFor(key).orElse(EmcValue.ZERO);
-            if (perItem.longValue() > 0) {
-                long total = Math.multiplyExact(perItem.longValue(), stack.getCount());
-                service.addEmc(EmcValue.of(total));
+            var resolved = resolve(stack).filter(entry -> entry.value().longValue() > 0);
+            if (resolved.isPresent()) {
+                service.learn(resolved.get().key());
+                service.addEmc(resolved.get().value().multiply(stack.getCount()));
+                super.set(ItemStack.EMPTY);
+                return;
             }
-            // Item is consumed; clear the slot so it never returns.
-            super.set(ItemStack.EMPTY);
-            return;
         }
         super.set(stack);
     }
@@ -56,8 +54,10 @@ public class TransmuteConsumeSlot extends Slot {
         return 64;
     }
 
-    private NormalizedStackKey keyOf(ItemStack stack) {
+    private Optional<StackEmcResolver.Resolved> resolve(ItemStack stack) {
         return keyFactory.optionalKey(stack)
-              .orElseThrow(() -> new IllegalArgumentException("unregistered item: " + stack));
+              .flatMap(key -> StackEmcResolver.resolve(
+                    stack, key,
+                    ProjectEEmc.service().current()));
     }
 }

@@ -1,13 +1,11 @@
 package moze_intel.projecte.client.mixin;
 
 import java.util.function.Consumer;
-import moze_intel.projecte.emc.EmcMappingSnapshot;
-import moze_intel.projecte.emc.EmcValue;
-import moze_intel.projecte.emc.ItemStackKey;
-import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
+import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -41,14 +39,14 @@ public abstract class ItemMixin {
                   .info("ItemMixin.appendHoverText injection fired (tooltip mixin is active)");
         }
         if (stack.isEmpty()) return;
-        EmcMappingSnapshot<NormalizedStackKey> snapshot = ProjectEEmc.service().current();
+        var snapshot = ProjectEEmc.service().current();
         if (snapshot.values().isEmpty()) return;
-
-        var itemKey = stack.typeHolder().unwrapKey();
-        if (itemKey.isEmpty()) return;
-
-        ItemStackKey key = new ItemStackKey(itemKey.get().identifier(), java.util.Map.of());
-        snapshot.valueFor(key).ifPresent(emc -> {
+        if (stack.typeHolder().unwrapKey().isEmpty()) return;
+        var level = Minecraft.getInstance().level;
+        if (level == null) return;
+        var key = new MinecraftStackKeyFactory(level.registryAccess()).key(stack);
+        StackEmcResolver.resolve(stack, key, snapshot).ifPresent(resolved -> {
+            var emc = resolved.value();
             if (emc.longValue() > 0) {
                 tooltipAdder.accept(Component.translatable("item.projecte.emc_value",
                       String.format("%,d", emc.longValue())));
