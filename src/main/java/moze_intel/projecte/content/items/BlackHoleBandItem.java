@@ -29,14 +29,11 @@ public class BlackHoleBandItem extends ActiveEmcItem {
     @Override
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         if (!isActive(stack)) return;
-        if (!service.tryRemoveEmc(EmcValue.of(getEmcPerTick()))) {
-            setActive(stack, false);
-            return;
-        }
         Level level = player.level();
         if (level.isClientSide()) return;
         AABB box = player.getBoundingBox().inflate(RADIUS);
         List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, box);
+        boolean paid = false;
         for (ItemEntity item : items) {
             if (!item.isAlive()) continue;
             double dx = player.getX() - item.getX();
@@ -44,6 +41,13 @@ public class BlackHoleBandItem extends ActiveEmcItem {
             double dz = player.getZ() - item.getZ();
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist < 1.5) continue;
+            if (!paid) {
+                if (!service.tryRemoveEmc(EmcValue.of(getEmcPerTick()))) {
+                    setActive(stack, false);
+                    return;
+                }
+                paid = true;
+            }
             double speed = 0.15;
             item.setDeltaMovement(dx / dist * speed, dy / dist * speed + 0.05, dz / dist * speed);
         }
