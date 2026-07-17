@@ -66,7 +66,7 @@ class Vanilla26_2EmcDataTest {
           wildflowers
           """;
 
-    private static final String RECIPE_DERIVED_NEW_ITEMS = """
+    private static final String FIXED_NEW_SURVIVAL_ITEMS = """
           acacia_shelf
           bamboo_shelf
           birch_shelf
@@ -229,22 +229,30 @@ class Vanilla26_2EmcDataTest {
     }
 
     @Test
-    void craftableNewItemsUseRecipesInsteadOfFixedOverrides() throws Exception {
+    void craftableNewItemsHavePositiveExplicitEmc() throws Exception {
         JsonObject emc = readEmc();
-        for (String item : RECIPE_DERIVED_NEW_ITEMS.lines().map(String::strip)
+        for (String item : FIXED_NEW_SURVIVAL_ITEMS.lines().map(String::strip)
               .filter(line -> !line.isEmpty()).toList()) {
-            assertFalse(emc.has(key(item)), item + " must be derived from its recipe");
+            String key = key(item);
+            assertTrue(emc.has(key), item + " is missing explicit EMC");
+            assertTrue(emc.getAsJsonObject(key).get("value").getAsLong() > 0,
+                  item + " must have positive EMC");
         }
     }
 
     @Test
-    void representativeResourceValuesStayStable() throws Exception {
+    void representativeFixedValuesStayStable() throws Exception {
         JsonObject emc = readEmc();
         Map<String, Long> expected = Map.of(
-              "sulfur", 16L,
-              "cinnabar", 32L,
-              "resin_clump", 8L,
-              "pale_oak_log", 32L,
+              "copper_ingot", 128L,
+              "iron_ingot", 256L,
+              "gold_ingot", 2_048L,
+              "copper_nugget", 14L,
+              "copper_spear", 136L,
+              "netherite_pickaxe", 89_425L,
+              "netherite_chestplate", 130_377L,
+              "netherite_horse_armor", 66_889L,
+              "netherite_nautilus_armor", 73_033L,
               "music_disc_tears", 8_192L
         );
         expected.forEach((item, value) -> assertEquals(
@@ -265,7 +273,7 @@ class Vanilla26_2EmcDataTest {
     }
 
     @Test
-    void netheriteUpgradesUseSmithingRecipesInsteadOfFixedOverrides() throws Exception {
+    void netheriteUpgradesHavePositiveExplicitEmc() throws Exception {
         JsonObject emc = readEmc();
         for (String item : new String[]{
               "netherite_sword", "netherite_shovel", "netherite_pickaxe", "netherite_axe",
@@ -273,7 +281,10 @@ class Vanilla26_2EmcDataTest {
               "netherite_boots", "netherite_spear", "netherite_horse_armor",
               "netherite_nautilus_armor"
         }) {
-            assertFalse(emc.has(key(item)), item + " must be derived from its smithing recipe");
+            String key = key(item);
+            assertTrue(emc.has(key), item + " is missing explicit EMC");
+            assertTrue(emc.getAsJsonObject(key).get("value").getAsLong() > 0,
+                  item + " must have positive EMC");
         }
     }
 

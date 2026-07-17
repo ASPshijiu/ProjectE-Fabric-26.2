@@ -1915,5 +1915,482 @@
   },
   "item|minecraft:music_disc_tears|{}": {
     "value": 8192
+  },
+  "item|minecraft:acacia_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:bamboo_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:birch_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:black_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:black_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:blue_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:blue_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:bordure_indented_banner_pattern|{}": {
+    "value": 40
+  },
+  "item|minecraft:brown_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:brown_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:cherry_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:chiseled_cinnabar|{}": {
+    "value": 32
+  },
+  "item|minecraft:chiseled_resin_bricks|{}": {
+    "value": 32
+  },
+  "item|minecraft:chiseled_sulfur|{}": {
+    "value": 16
+  },
+  "item|minecraft:cinnabar_brick_slab|{}": {
+    "value": 8
+  },
+  "item|minecraft:cinnabar_brick_stairs|{}": {
+    "value": 12
+  },
+  "item|minecraft:cinnabar_brick_wall|{}": {
+    "value": 32
+  },
+  "item|minecraft:cinnabar_bricks|{}": {
+    "value": 32
+  },
+  "item|minecraft:cinnabar_slab|{}": {
+    "value": 8
+  },
+  "item|minecraft:cinnabar_stairs|{}": {
+    "value": 12
+  },
+  "item|minecraft:cinnabar_wall|{}": {
+    "value": 32
+  },
+  "item|minecraft:copper_axe|{}": {
+    "value": 392
+  },
+  "item|minecraft:copper_bars|{}": {
+    "value": 48
+  },
+  "item|minecraft:copper_boots|{}": {
+    "value": 512
+  },
+  "item|minecraft:copper_chain|{}": {
+    "value": 156
+  },
+  "item|minecraft:copper_chest|{}": {
+    "value": 1088
+  },
+  "item|minecraft:copper_chestplate|{}": {
+    "value": 1024
+  },
+  "item|minecraft:copper_helmet|{}": {
+    "value": 640
+  },
+  "item|minecraft:copper_hoe|{}": {
+    "value": 264
+  },
+  "item|minecraft:copper_ingot|{}": {
+    "value": 128
+  },
+  "item|minecraft:copper_lantern|{}": {
+    "value": 148
+  },
+  "item|minecraft:copper_leggings|{}": {
+    "value": 896
+  },
+  "item|minecraft:copper_nugget|{}": {
+    "value": 14
+  },
+  "item|minecraft:copper_pickaxe|{}": {
+    "value": 392
+  },
+  "item|minecraft:copper_shovel|{}": {
+    "value": 136
+  },
+  "item|minecraft:copper_spear|{}": {
+    "value": 136
+  },
+  "item|minecraft:copper_sword|{}": {
+    "value": 260
+  },
+  "item|minecraft:copper_torch|{}": {
+    "value": 36
+  },
+  "item|minecraft:creaking_heart|{}": {
+    "value": 136
+  },
+  "item|minecraft:crimson_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:cyan_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:cyan_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:dark_oak_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:diamond_spear|{}": {
+    "value": 8200
+  },
+  "item|minecraft:dried_ghast|{}": {
+    "value": 32817
+  },
+  "item|minecraft:field_masoned_banner_pattern|{}": {
+    "value": 96
+  },
+  "item|minecraft:gold_ingot|{}": {
+    "value": 2048
+  },
+  "item|minecraft:golden_dandelion|{}": {
+    "value": 1832
+  },
+  "item|minecraft:golden_spear|{}": {
+    "value": 2056
+  },
+  "item|minecraft:gray_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:gray_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:green_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:green_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:iron_chain|{}": {
+    "value": 312
+  },
+  "item|minecraft:iron_ingot|{}": {
+    "value": 256
+  },
+  "item|minecraft:iron_spear|{}": {
+    "value": 264
+  },
+  "item|minecraft:jungle_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:leaf_litter|{}": {
+    "value": 1
+  },
+  "item|minecraft:light_blue_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:light_blue_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:light_gray_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:light_gray_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:lime_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:lime_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:magenta_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:magenta_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:mangrove_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:netherite_axe|{}": {
+    "value": 89425
+  },
+  "item|minecraft:netherite_boots|{}": {
+    "value": 97609
+  },
+  "item|minecraft:netherite_chestplate|{}": {
+    "value": 130377
+  },
+  "item|minecraft:netherite_helmet|{}": {
+    "value": 105801
+  },
+  "item|minecraft:netherite_hoe|{}": {
+    "value": 81233
+  },
+  "item|minecraft:netherite_horse_armor|{}": {
+    "value": 66889
+  },
+  "item|minecraft:netherite_leggings|{}": {
+    "value": 122185
+  },
+  "item|minecraft:netherite_nautilus_armor|{}": {
+    "value": 73033
+  },
+  "item|minecraft:netherite_pickaxe|{}": {
+    "value": 89425
+  },
+  "item|minecraft:netherite_shovel|{}": {
+    "value": 73041
+  },
+  "item|minecraft:netherite_spear|{}": {
+    "value": 73041
+  },
+  "item|minecraft:netherite_sword|{}": {
+    "value": 81229
+  },
+  "item|minecraft:oak_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:orange_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:orange_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:pale_moss_carpet|{}": {
+    "value": 8
+  },
+  "item|minecraft:pale_oak_boat|{}": {
+    "value": 40
+  },
+  "item|minecraft:pale_oak_button|{}": {
+    "value": 2
+  },
+  "item|minecraft:pale_oak_chest_boat|{}": {
+    "value": 104
+  },
+  "item|minecraft:pale_oak_door|{}": {
+    "value": 12
+  },
+  "item|minecraft:pale_oak_fence_gate|{}": {
+    "value": 32
+  },
+  "item|minecraft:pale_oak_fence|{}": {
+    "value": 32
+  },
+  "item|minecraft:pale_oak_hanging_sign|{}": {
+    "value": 136
+  },
+  "item|minecraft:pale_oak_planks|{}": {
+    "value": 8
+  },
+  "item|minecraft:pale_oak_pressure_plate|{}": {
+    "value": 16
+  },
+  "item|minecraft:pale_oak_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:pale_oak_sign|{}": {
+    "value": 17
+  },
+  "item|minecraft:pale_oak_slab|{}": {
+    "value": 8
+  },
+  "item|minecraft:pale_oak_stairs|{}": {
+    "value": 12
+  },
+  "item|minecraft:pale_oak_trapdoor|{}": {
+    "value": 24
+  },
+  "item|minecraft:pale_oak_wood|{}": {
+    "value": 32
+  },
+  "item|minecraft:pink_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:pink_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:polished_cinnabar_slab|{}": {
+    "value": 8
+  },
+  "item|minecraft:polished_cinnabar_stairs|{}": {
+    "value": 12
+  },
+  "item|minecraft:polished_cinnabar_wall|{}": {
+    "value": 32
+  },
+  "item|minecraft:polished_cinnabar|{}": {
+    "value": 32
+  },
+  "item|minecraft:polished_sulfur_slab|{}": {
+    "value": 4
+  },
+  "item|minecraft:polished_sulfur_stairs|{}": {
+    "value": 6
+  },
+  "item|minecraft:polished_sulfur_wall|{}": {
+    "value": 16
+  },
+  "item|minecraft:polished_sulfur|{}": {
+    "value": 16
+  },
+  "item|minecraft:potent_sulfur|{}": {
+    "value": 144
+  },
+  "item|minecraft:purple_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:purple_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:red_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:red_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:resin_block|{}": {
+    "value": 72
+  },
+  "item|minecraft:resin_brick_slab|{}": {
+    "value": 8
+  },
+  "item|minecraft:resin_brick_stairs|{}": {
+    "value": 12
+  },
+  "item|minecraft:resin_brick_wall|{}": {
+    "value": 32
+  },
+  "item|minecraft:resin_brick|{}": {
+    "value": 8
+  },
+  "item|minecraft:resin_bricks|{}": {
+    "value": 32
+  },
+  "item|minecraft:spruce_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:stone_spear|{}": {
+    "value": 9
+  },
+  "item|minecraft:stripped_pale_oak_wood|{}": {
+    "value": 32
+  },
+  "item|minecraft:sulfur_brick_slab|{}": {
+    "value": 4
+  },
+  "item|minecraft:sulfur_brick_stairs|{}": {
+    "value": 6
+  },
+  "item|minecraft:sulfur_brick_wall|{}": {
+    "value": 16
+  },
+  "item|minecraft:sulfur_bricks|{}": {
+    "value": 16
+  },
+  "item|minecraft:sulfur_slab|{}": {
+    "value": 4
+  },
+  "item|minecraft:sulfur_stairs|{}": {
+    "value": 6
+  },
+  "item|minecraft:sulfur_wall|{}": {
+    "value": 16
+  },
+  "item|minecraft:warped_shelf|{}": {
+    "value": 32
+  },
+  "item|minecraft:waxed_copper_bars|{}": {
+    "value": 64
+  },
+  "item|minecraft:waxed_copper_chain|{}": {
+    "value": 172
+  },
+  "item|minecraft:waxed_copper_chest|{}": {
+    "value": 1104
+  },
+  "item|minecraft:waxed_copper_golem_statue|{}": {
+    "value": 1177
+  },
+  "item|minecraft:waxed_copper_lantern|{}": {
+    "value": 164
+  },
+  "item|minecraft:waxed_exposed_copper_bars|{}": {
+    "value": 64
+  },
+  "item|minecraft:waxed_exposed_copper_chain|{}": {
+    "value": 172
+  },
+  "item|minecraft:waxed_exposed_copper_chest|{}": {
+    "value": 1104
+  },
+  "item|minecraft:waxed_exposed_copper_golem_statue|{}": {
+    "value": 1177
+  },
+  "item|minecraft:waxed_exposed_copper_lantern|{}": {
+    "value": 164
+  },
+  "item|minecraft:waxed_exposed_lightning_rod|{}": {
+    "value": 400
+  },
+  "item|minecraft:waxed_lightning_rod|{}": {
+    "value": 400
+  },
+  "item|minecraft:waxed_oxidized_copper_bars|{}": {
+    "value": 64
+  },
+  "item|minecraft:waxed_oxidized_copper_chain|{}": {
+    "value": 172
+  },
+  "item|minecraft:waxed_oxidized_copper_chest|{}": {
+    "value": 1104
+  },
+  "item|minecraft:waxed_oxidized_copper_golem_statue|{}": {
+    "value": 1177
+  },
+  "item|minecraft:waxed_oxidized_copper_lantern|{}": {
+    "value": 164
+  },
+  "item|minecraft:waxed_oxidized_lightning_rod|{}": {
+    "value": 400
+  },
+  "item|minecraft:waxed_weathered_copper_bars|{}": {
+    "value": 64
+  },
+  "item|minecraft:waxed_weathered_copper_chain|{}": {
+    "value": 172
+  },
+  "item|minecraft:waxed_weathered_copper_chest|{}": {
+    "value": 1104
+  },
+  "item|minecraft:waxed_weathered_copper_golem_statue|{}": {
+    "value": 1177
+  },
+  "item|minecraft:waxed_weathered_copper_lantern|{}": {
+    "value": 164
+  },
+  "item|minecraft:waxed_weathered_lightning_rod|{}": {
+    "value": 400
+  },
+  "item|minecraft:white_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:white_harness|{}": {
+    "value": 242
+  },
+  "item|minecraft:wooden_spear|{}": {
+    "value": 16
+  },
+  "item|minecraft:yellow_bundle|{}": {
+    "value": 48
+  },
+  "item|minecraft:yellow_harness|{}": {
+    "value": 242
   }
 }
