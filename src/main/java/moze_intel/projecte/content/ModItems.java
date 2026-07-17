@@ -24,6 +24,11 @@ import moze_intel.projecte.content.items.SoulStoneItem;
 import moze_intel.projecte.content.items.MindStoneItem;
 import moze_intel.projecte.content.items.LifeStoneItem;
 import moze_intel.projecte.content.items.WatchOfFlowingTimeItem;
+import moze_intel.projecte.content.items.tools.MatterAxeItem;
+import moze_intel.projecte.content.items.tools.MatterHoeItem;
+import moze_intel.projecte.content.items.tools.MatterShearsItem;
+import moze_intel.projecte.content.items.tools.MatterShovelItem;
+import moze_intel.projecte.content.items.tools.MatterToolItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -344,27 +349,32 @@ public final class ModItems {
     }
 
     private static Item dmPickaxe(Identifier id) {
-        return new Item(dmToolProps(id).pickaxe(ModToolMaterials.DARK_MATTER, 1.0F, -2.8F));
+        return new MatterToolItem(
+              dmToolProps(id).pickaxe(ModToolMaterials.DARK_MATTER, 1.0F, -2.8F), 2, 12.0F);
     }
 
     private static Item dmAxe(Identifier id) {
-        return new Item(dmToolProps(id).axe(ModToolMaterials.DARK_MATTER, 6.0F, -3.0F));
+        return new MatterAxeItem(
+              ModToolMaterials.DARK_MATTER, 6.0F, -3.0F, dmToolProps(id), 2, 12.0F);
     }
 
     private static Item dmShovel(Identifier id) {
-        return new Item(dmToolProps(id).shovel(ModToolMaterials.DARK_MATTER, 1.5F, -3.0F));
+        return new MatterShovelItem(
+              ModToolMaterials.DARK_MATTER, 1.5F, -3.0F, dmToolProps(id), 2, 12.0F);
     }
 
     private static Item dmSword(Identifier id) {
-        return new Item(dmToolProps(id).sword(ModToolMaterials.DARK_MATTER, 3.0F, -2.4F));
+        return new MatterToolItem(
+              dmToolProps(id).sword(ModToolMaterials.DARK_MATTER, 3.0F, -2.4F), 2, 12.0F);
     }
 
     private static Item dmHoe(Identifier id) {
-        return new Item(dmToolProps(id).hoe(ModToolMaterials.DARK_MATTER, -3.0F, 0.0F));
+        return new MatterHoeItem(
+              ModToolMaterials.DARK_MATTER, -3.0F, 0.0F, dmToolProps(id), 2, 12.0F);
     }
 
     private static Item dmShears(Identifier id) {
-        return new Item(dmToolProps(id));
+        return new MatterShearsItem(dmToolProps(id), 2, 12.0F);
     }
 
     // ── Dark Matter armor helpers ─────────────────────────────────────────
@@ -379,27 +389,32 @@ public final class ModItems {
     }
 
     private static Item rmPickaxe(Identifier id) {
-        return new Item(rmToolProps(id).pickaxe(ModToolMaterials.RED_MATTER, 1.0F, -2.8F));
+        return new MatterToolItem(
+              rmToolProps(id).pickaxe(ModToolMaterials.RED_MATTER, 1.0F, -2.8F), 3, 14.0F);
     }
 
     private static Item rmAxe(Identifier id) {
-        return new Item(rmToolProps(id).axe(ModToolMaterials.RED_MATTER, 7.0F, -3.0F));
+        return new MatterAxeItem(
+              ModToolMaterials.RED_MATTER, 7.0F, -3.0F, rmToolProps(id), 3, 14.0F);
     }
 
     private static Item rmShovel(Identifier id) {
-        return new Item(rmToolProps(id).shovel(ModToolMaterials.RED_MATTER, 1.5F, -3.0F));
+        return new MatterShovelItem(
+              ModToolMaterials.RED_MATTER, 1.5F, -3.0F, rmToolProps(id), 3, 14.0F);
     }
 
     private static Item rmSword(Identifier id) {
-        return new Item(rmToolProps(id).sword(ModToolMaterials.RED_MATTER, 3.0F, -2.4F));
+        return new MatterToolItem(
+              rmToolProps(id).sword(ModToolMaterials.RED_MATTER, 3.0F, -2.4F), 3, 14.0F);
     }
 
     private static Item rmHoe(Identifier id) {
-        return new Item(rmToolProps(id).hoe(ModToolMaterials.RED_MATTER, -3.0F, 0.0F));
+        return new MatterHoeItem(
+              ModToolMaterials.RED_MATTER, -3.0F, 0.0F, rmToolProps(id), 3, 14.0F);
     }
 
     private static Item rmShears(Identifier id) {
-        return new Item(rmToolProps(id));
+        return new MatterShearsItem(rmToolProps(id), 3, 14.0F);
     }
 
     // ── Red Matter armor helpers ──────────────────────────────────────────

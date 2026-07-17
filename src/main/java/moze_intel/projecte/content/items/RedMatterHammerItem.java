@@ -17,7 +17,7 @@ import net.minecraft.world.phys.HitResult;
  * the Dark Matter variant. Charge 0 = single block, charge n = a (2n+1)³ cube around the target.
  */
 public class RedMatterHammerItem extends ChargeableItem {
-    private static final int MAX_CHARGE = 4;
+    private static final int MAX_CHARGE = 3;
 
     public RedMatterHammerItem(Properties properties) {
         super(properties);
@@ -47,9 +47,6 @@ public class RedMatterHammerItem extends ChargeableItem {
         }
         // Red Matter hammer mines a cube (not a flat plane).
         ToolHelper.digAOE(level, player, stack, hand, target, face, radius, false);
-        if (stack.isDamageableItem()) {
-            stack.hurtAndBreak(1, player, hand);
-        }
         return InteractionResult.CONSUME;
     }
 }

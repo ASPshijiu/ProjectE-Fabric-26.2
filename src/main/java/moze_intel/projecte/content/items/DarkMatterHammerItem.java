@@ -19,7 +19,7 @@ import net.minecraft.world.phys.HitResult;
  * at registration).
  */
 public class DarkMatterHammerItem extends ChargeableItem {
-    private static final int MAX_CHARGE = 3;
+    private static final int MAX_CHARGE = 2;
 
     public DarkMatterHammerItem(Properties properties) {
         super(properties);
@@ -49,9 +49,6 @@ public class DarkMatterHammerItem extends ChargeableItem {
             level.destroyBlock(target, true, player);
         }
         ToolHelper.digAOE(level, player, stack, hand, target, face, radius, true);
-        if (stack.isDamageableItem()) {
-            stack.hurtAndBreak(1, player, hand);
-        }
         return InteractionResult.CONSUME;
     }
 }

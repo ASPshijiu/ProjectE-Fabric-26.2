@@ -47,9 +47,6 @@ public class RedMatterMorningStarItem extends ChargeableItem {
             level.destroyBlock(target, true, player);
         }
         ToolHelper.digAOE(level, player, stack, hand, target, face, radius, false);
-        if (stack.isDamageableItem()) {
-            stack.hurtAndBreak(1, player, hand);
-        }
         return InteractionResult.CONSUME;
     }
 

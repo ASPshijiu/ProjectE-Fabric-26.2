@@ -54,7 +54,7 @@ public final class ToolHelper {
                 for (int z = minZ; z <= maxZ; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (pos.equals(target)) continue; // the targeted block is broken by the caller
-                    breakBlock(level, serverPlayer, stack, hand, pos);
+                    breakBlock(level, serverPlayer, stack, pos);
                 }
             }
         }
@@ -62,11 +62,9 @@ public final class ToolHelper {
 
     /**
      * Breaks a single block as if the player mined it, respecting tool requirements and gamemode.
-     * Drops are produced at the block's position. The tool is damaged by 1 if it actually broke a
-     * non-air, non-fluid block.
+     * Drops are produced at the block's position. Matter tools are intentionally not damaged.
      */
-    private static void breakBlock(Level level, ServerPlayer player, ItemStack stack,
-          InteractionHand hand, BlockPos pos) {
+    private static void breakBlock(Level level, ServerPlayer player, ItemStack stack, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0) {
             return; // unbreakable (bedrock, etc.)
@@ -77,10 +75,6 @@ public final class ToolHelper {
         }
         if (!player.gameMode.destroyBlock(pos)) {
             return;
-        }
-        // Damage the tool per extra block; stop if it breaks.
-        if (stack.isDamageableItem()) {
-            stack.hurtAndBreak(1, player, hand);
         }
     }
 

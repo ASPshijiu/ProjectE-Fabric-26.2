@@ -7,6 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import moze_intel.projecte.content.items.tools.MatterAxeItem;
+import moze_intel.projecte.content.items.tools.MatterHoeItem;
+import moze_intel.projecte.content.items.tools.MatterShearsItem;
+import moze_intel.projecte.content.items.tools.MatterShovelItem;
+import moze_intel.projecte.content.items.tools.MatterToolItem;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -20,15 +25,28 @@ class ChargeableItemTest {
     }
 
     @Test
-    void everyChargeableToolUsesTheSharedChargeBar() {
+    void everyChargeableToolImplementsTheSharedChargeContract() {
         for (Class<?> itemClass : List.of(
               PhilosophersStoneItem.class,
+              MatterToolItem.class,
+              MatterAxeItem.class,
+              MatterShovelItem.class,
+              MatterHoeItem.class,
+              MatterShearsItem.class,
               DarkMatterHammerItem.class,
               RedMatterHammerItem.class,
               RedMatterKatarItem.class,
               RedMatterMorningStarItem.class)) {
-            assertTrue(ChargeableItem.class.isAssignableFrom(itemClass));
+            assertTrue(IItemCharge.class.isAssignableFrom(itemClass));
         }
+    }
+
+    @Test
+    void officialMatterToolChargeTiersArePreserved() {
+        assertEquals(2, allocate(DarkMatterHammerItem.class).getMaxCharge(null));
+        assertEquals(3, allocate(RedMatterHammerItem.class).getMaxCharge(null));
+        assertEquals(4, allocate(RedMatterKatarItem.class).getMaxCharge(null));
+        assertEquals(4, allocate(RedMatterMorningStarItem.class).getMaxCharge(null));
     }
 
     @Test
@@ -45,12 +63,20 @@ class ChargeableItemTest {
     }
 
     private static TestChargeableItem allocateWithoutRegistering() throws Exception {
-        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-        Field field = unsafeClass.getDeclaredField("theUnsafe");
-        field.setAccessible(true);
-        Object unsafe = field.get(null);
-        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
-        return (TestChargeableItem) allocateInstance.invoke(unsafe, TestChargeableItem.class);
+        return allocate(TestChargeableItem.class);
+    }
+
+    private static <T> T allocate(Class<T> type) {
+        try {
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            Field field = unsafeClass.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            Object unsafe = field.get(null);
+            Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+            return type.cast(allocateInstance.invoke(unsafe, type));
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     private static final class TestChargeableItem extends ChargeableItem {

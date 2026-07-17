@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
  * within a small radius.
  */
 public class RedMatterKatarItem extends ChargeableItem {
-    private static final int MAX_CHARGE = 2;
+    private static final int MAX_CHARGE = 4;
 
     public RedMatterKatarItem(Properties properties) {
         super(properties);
