@@ -3,13 +3,16 @@ package moze_intel.projecte.emc.reload;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import moze_intel.projecte.emc.EmcMappingService;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
 import moze_intel.projecte.emc.ItemStackKey;
+import moze_intel.projecte.emc.TagStackKey;
 import moze_intel.projecte.emc.recipe.RecipeConversion;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
@@ -69,6 +72,36 @@ class EmcReloadProcessorTest {
         assertFalse(result.success());
         assertSame(previous, service.current());
         assertEquals(EmcValue.of(9), service.current().valueFor(A).orElseThrow());
+    }
+
+    @Test
+    void boundsCombinedOutputAndIngredientTagExpansion() {
+        TagStackKey inputs = new TagStackKey(id("inputs"));
+        TagStackKey outputs = new TagStackKey(id("outputs"));
+        List<ItemStackKey> inputChoices = itemChoices("input", 317);
+        List<ItemStackKey> outputChoices = itemChoices("output", 317);
+        Map<Identifier, String> custom = Map.of(
+              id("pe_custom_conversions/tag_values.json"), """
+                    {"values":{"before":[
+                      {"type":"projecte:item","tag":"projecte:inputs","emc_value":1}
+                    ]}}
+                    """);
+
+        Map<?, EmcValue> values = processor.rebuild(
+              Map.of(), custom,
+              List.of(new RecipeConversion(id("tag_recipe"), 1, outputs, Map.of(inputs, 1))),
+              tag -> tag.equals(inputs) ? inputChoices
+                    : tag.equals(outputs) ? outputChoices : List.of());
+
+        assertTrue(inputChoices.stream().allMatch(values::containsKey));
+        assertTrue(outputChoices.stream().noneMatch(values::containsKey));
+    }
+
+    private static List<ItemStackKey> itemChoices(String prefix, int count) {
+        return IntStream.range(0, count)
+              .mapToObj(index -> new ItemStackKey(
+                    Identifier.fromNamespaceAndPath("example", prefix + "_" + index), Map.of()))
+              .toList();
     }
 
     private static FakeStackKey key(String path) {

@@ -69,4 +69,15 @@ class EmcMappingSyncPayloadCodecTest {
         assertEquals(700, decoded.values().size(),
               "large mapping must round-trip without truncation");
     }
+
+    @Test
+    void payloadRoundTripsEmptyMappingToClearClientState() {
+        EmcMappingSyncPayload payload = new EmcMappingSyncPayload(Map.of());
+        RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(
+              Unpooled.buffer(), RegistryAccess.EMPTY);
+
+        EmcMappingSyncPayload.STREAM_CODEC.encode(buf, payload);
+
+        assertTrue(EmcMappingSyncPayload.STREAM_CODEC.decode(buf).values().isEmpty());
+    }
 }

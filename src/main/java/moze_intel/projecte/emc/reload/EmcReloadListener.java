@@ -55,6 +55,7 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
     private final List<RecipeConversionSource> recipeSources;
     private final java.util.function.Supplier<List<RecipeConversionSource>> serverRecipeSources;
     private final List<java.util.function.Consumer<EmcMappingSnapshot<NormalizedStackKey>>> reloadCallbacks;
+    private volatile PreparedEmc lastPrepared;
 
     public EmcReloadListener(Collection<? extends RecipeConversionSource> recipeSources) {
         this(ProjectEEmc.service(), new EmcReloadProcessor(),
@@ -120,21 +121,9 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         ResourceManager manager = state.resourceManager();
         Map<Identifier, String> explicit = readExplicitResources(manager, EXPLICIT_FOLDER);
         Map<Identifier, String> custom = readExplicitResources(manager, CUSTOM_CONVERSIONS_FOLDER);
-        HolderLookup.Provider registries = registriesOrEmpty(state);
+        HolderLookup.Provider registries = state.get(ResourceLoader.REGISTRY_LOOKUP_KEY);
         List<RecipeConversion> conversions = collectConversions();
         return new PreparedEmc(explicit, custom, conversions, createTagResolver(registries));
-    }
-
-    /**
-     * Returns the registry lookup published by the reload pipeline, or an empty provider when no
-     * recipe source needs one (for example in unit tests that only exercise explicit values).
-     */
-    private HolderLookup.Provider registriesOrEmpty(PreparableReloadListener.SharedState state) {
-        boolean needsRegistries = !recipeSources.isEmpty() || !resolveServerRecipeSources().isEmpty();
-        if (!needsRegistries) {
-            return HolderLookup.Provider.create(java.util.stream.Stream.empty());
-        }
-        return state.get(ResourceLoader.REGISTRY_LOOKUP_KEY);
     }
 
     private List<RecipeConversionSource> resolveServerRecipeSources() {
@@ -153,6 +142,9 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
               () -> processor.rebuild(prepared.explicitResources(), prepared.customConversionResources(),
                     prepared.recipeConversions(), prepared.tagResolver())
         );
+        if (result.success()) {
+            lastPrepared = prepared;
+        }
         publishResult("reload", result);
     }
 
@@ -168,8 +160,12 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
                   service.current().values().size());
             return;
         }
-        EmcMappingService.RebuildResult<NormalizedStackKey> result = service.rebuild(
-              () -> processor.extend(service.current().values(), conversions));
+        PreparedEmc prepared = lastPrepared;
+        EmcMappingService.RebuildResult<NormalizedStackKey> result = prepared == null
+              ? service.rebuild(() -> processor.extend(service.current().values(), conversions))
+              : service.rebuild(() -> processor.rebuild(
+                    prepared.explicitResources(), prepared.customConversionResources(),
+                    conversions, prepared.tagResolver()));
         publishResult("recipe refresh", result);
     }
 
@@ -214,7 +210,7 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
         return tag -> registries.lookup(Registries.ITEM)
               .flatMap(items -> items.get(TagKey.create(Registries.ITEM, tag.identifier())))
               .stream()
-              .flatMap(named -> named.stream())
+              .flatMap(named -> named.isBound() ? named.stream() : java.util.stream.Stream.empty())
               .flatMap(holder -> holder.unwrapKey().stream())
               .map(key -> new ItemStackKey(key.identifier(), Map.of()))
               .sorted()

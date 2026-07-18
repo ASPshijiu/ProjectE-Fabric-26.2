@@ -132,9 +132,6 @@ public final class ProjectENetworking {
         Map<NormalizedStackKey, moze_intel.projecte.emc.EmcValue> values = snapshot.values();
         moze_intel.projecte.ProjectE.LOGGER.info(
               "Sending EMC mapping to {} ({} values)", player.getName().getString(), values.size());
-        if (values.isEmpty()) {
-            return;
-        }
         ServerPlayNetworking.send(player, new EmcMappingSyncPayload(values));
     }
 
@@ -144,7 +141,7 @@ public final class ProjectENetworking {
      */
     public static void sendEmcMappingToAll(MinecraftServer server, EmcMappingSnapshot<NormalizedStackKey> snapshot) {
         Map<NormalizedStackKey, moze_intel.projecte.emc.EmcValue> values = snapshot.values();
-        if (values.isEmpty() || server == null) {
+        if (server == null) {
             return;
         }
         EmcMappingSyncPayload payload = new EmcMappingSyncPayload(values);

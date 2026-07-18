@@ -7,12 +7,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import moze_intel.projecte.ProjectE;
 import moze_intel.projecte.emc.FakeStackKey;
 import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.TagStackKey;
 import moze_intel.projecte.emc.recipe.RecipeConversion;
-import moze_intel.projecte.emc.recipe.RecipeConversionCollector;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -35,16 +36,13 @@ import net.minecraft.resources.Identifier;
  * </ul>
  *
  * <p>This loader is deterministic (it sorts by source identifier then by group name) and never
- * throws on an unrecognized entry: it omits it with a debug log, matching the contract of the
+ * throws on an unrecognized entry: it omits malformed files with a warning, matching the contract of the
  * recipe conversion sources.
  */
 public final class CustomConversionLoader {
-    private static final int MAX_COMBINATIONS = 100_000;
     private static final String ITEM_TYPE = "projecte:item";
     private static final String FLUID_TYPE = "projecte:fluid";
     private static final String FAKE_TYPE = "projecte:fake";
-
-    private final RecipeConversionCollector collector = new RecipeConversionCollector();
 
     /**
      * @return the parsed explicit values, free keys and recipe conversions from every resource,
@@ -59,12 +57,19 @@ public final class CustomConversionLoader {
         sources.sort((a, b) -> a.toString().compareTo(b.toString()));
         for (Identifier source : sources) {
             String json = resources.get(source);
+            List<ExplicitEmcEntry> sourceExplicit = new ArrayList<>();
+            List<NormalizedStackKey> sourceFreeKeys = new ArrayList<>();
+            List<RecipeConversion> sourceConversions = new ArrayList<>();
             try {
                 JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-                parseValues(source, root, explicit, freeKeys, conversions);
-                parseGroups(source, root, conversions);
-            } catch (Exception ignored) {
-                // Skip malformed files deterministically; never break the EMC reload.
+                parseValues(source, root, sourceExplicit, sourceFreeKeys, sourceConversions);
+                parseGroups(source, root, sourceConversions);
+                explicit.addAll(sourceExplicit);
+                freeKeys.addAll(sourceFreeKeys);
+                conversions.addAll(sourceConversions);
+            } catch (Exception exception) {
+                ProjectE.LOGGER.warn("Skipping malformed custom EMC conversion {}: {}",
+                      source, exception.getMessage());
             }
         }
         return new Result(List.copyOf(explicit), List.copyOf(freeKeys), List.copyOf(conversions));
@@ -163,21 +168,18 @@ public final class CustomConversionLoader {
         JsonElement rawIngredients = conversion.get("ingredients");
         if (rawIngredients == null || !rawIngredients.isJsonArray()) return;
 
-        List<List<NormalizedStackKey>> ingredientChoices = new ArrayList<>();
+        Map<NormalizedStackKey, Integer> ingredients = new TreeMap<>();
         for (JsonElement ingredientElement : rawIngredients.getAsJsonArray()) {
             if (!ingredientElement.isJsonObject()) return;
             NormalizedStackKey ingredient = parseTarget(ingredientElement.getAsJsonObject());
             if (ingredient == null) return;
             int amount = ingredientElement.getAsJsonObject().has("amount")
-                  ? Math.max(1, ingredientElement.getAsJsonObject().get("amount").getAsInt())
+                  ? ingredientElement.getAsJsonObject().get("amount").getAsInt()
                   : 1;
-            List<NormalizedStackKey> choice = new ArrayList<>();
-            for (int i = 0; i < amount; i++) {
-                choice.add(ingredient);
-            }
-            ingredientChoices.add(choice);
+            ingredients.merge(ingredient, amount, Math::addExact);
         }
-        if (ingredientChoices.isEmpty()) return;
+        ingredients.entrySet().removeIf(entry -> entry.getValue() == 0);
+        if (ingredients.isEmpty()) return;
 
         int outputCount = conversion.has("count")
               ? Math.max(1, conversion.get("count").getAsInt())
@@ -185,8 +187,7 @@ public final class CustomConversionLoader {
 
         Identifier recipeId = Identifier.fromNamespaceAndPath(
               source.getNamespace(), source.getPath() + "/" + groupName);
-        conversions.addAll(collector.collect(
-              recipeId, outputCount, output, ingredientChoices, Map.of(), MAX_COMBINATIONS));
+        conversions.add(new RecipeConversion(recipeId, outputCount, output, ingredients));
     }
 
     /**
@@ -212,7 +213,14 @@ public final class CustomConversionLoader {
             if (rawId != null && rawId.isJsonPrimitive()) {
                 Identifier id = parseIdentifier(rawId.getAsString());
                 if (id != null) {
-                    return new ItemStackKey(id, new HashMap<>());
+                    Map<String, JsonElement> components = new HashMap<>();
+                    JsonElement rawData = descriptor.get("data");
+                    if (rawData != null) {
+                        if (!rawData.isJsonObject()) return null;
+                        rawData.getAsJsonObject().entrySet().forEach(entry ->
+                              components.put(entry.getKey(), entry.getValue().deepCopy()));
+                    }
+                    return new ItemStackKey(id, components);
                 }
             }
             JsonElement rawTag = descriptor.get("tag");
@@ -230,7 +238,7 @@ public final class CustomConversionLoader {
                 Identifier id = parseIdentifier(rawTag.getAsString());
                 if (id != null) {
                     return new FakeStackKey(Identifier.fromNamespaceAndPath(
-                          "projecte", "fluid/" + id));
+                          "projecte", "fluid/" + id.getNamespace() + "/" + id.getPath()));
                 }
             }
             return null;

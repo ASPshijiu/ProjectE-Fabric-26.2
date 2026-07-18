@@ -13,10 +13,11 @@ import moze_intel.projecte.content.blocks.CollectorItemStorage;
 import moze_intel.projecte.content.blocks.CondenserItemStorage;
 import moze_intel.projecte.content.blocks.RelayItemStorage;
 import moze_intel.projecte.command.ProjectECommands;
-import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.reload.EmcReloadListener;
 import moze_intel.projecte.emc.reload.RecipeConversionSource;
+import moze_intel.projecte.emc.reload.BrewingConversionSource;
+import moze_intel.projecte.emc.reload.VanillaBlockConversionSource;
 import moze_intel.projecte.emc.reload.VanillaRecipeConversionSource;
 import moze_intel.projecte.event.PlayerInventoryTickHandler;
 import moze_intel.projecte.event.InterdictionTorchHandler;
@@ -113,8 +114,10 @@ public final class ProjectE implements ModInitializer {
         if (current == null) {
             return List.of();
         }
-        return List.of(new VanillaRecipeConversionSource(
-              current.getRecipeManager(), current.registryAccess()));
+        return List.of(
+              new VanillaRecipeConversionSource(current.getRecipeManager(), current.registryAccess()),
+              new VanillaBlockConversionSource(current.registryAccess()),
+              new BrewingConversionSource(current.potionBrewing(), current.registryAccess()));
     }
 
     /** Returns the active logical server when one is running. */

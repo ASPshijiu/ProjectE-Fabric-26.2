@@ -6,10 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.EmcMappingService;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
+import moze_intel.projecte.emc.ItemStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.recipe.RecipeConversion;
 import net.minecraft.network.chat.Component;
@@ -111,6 +113,38 @@ class EmcReloadListenerTest {
         assertEquals(List.of(service.current()), fired);
     }
 
+    @Test
+    void lateRecipeRefreshReappliesPreviouslyUnresolvedCustomConversions() throws Exception {
+        ItemStackKey iron = item("iron_ingot");
+        ItemStackKey anvil = item("anvil");
+        ItemStackKey chippedAnvil = item("chipped_anvil");
+        writeEmcResource("projecte", "values", """
+              {"item|minecraft:iron_ingot|{}":{"value":3}}
+              """);
+        writeCustomConversionResource("projecte", "late", """
+              {"groups":{"late":{"conversions":[{
+                "ingredients":[{"type":"projecte:item","amount":2,"id":"minecraft:anvil"}],
+                "output":{"type":"projecte:item","id":"minecraft:chipped_anvil"}
+              }]}}}
+              """);
+        RecipeConversion lateRecipe = new RecipeConversion(
+              Identifier.fromNamespaceAndPath("minecraft", "anvil"), 1, anvil, Map.of(iron, 2));
+        AtomicBoolean recipesAvailable = new AtomicBoolean();
+        EmcMappingService<NormalizedStackKey> service = new EmcMappingService<>();
+        EmcReloadListener listener = new EmcReloadListener(
+              service, new EmcReloadProcessor(), List.of(),
+              () -> recipesAvailable.get() ? List.of(() -> List.of(lateRecipe)) : List.of(), List.of());
+
+        PreparedReload.run(listener, resourceManager());
+        assertTrue(service.current().valueFor(chippedAnvil).isEmpty());
+
+        recipesAvailable.set(true);
+        listener.refreshRecipeMappings();
+
+        assertEquals(EmcValue.of(6), service.current().valueFor(anvil).orElseThrow());
+        assertEquals(EmcValue.of(12), service.current().valueFor(chippedAnvil).orElseThrow());
+    }
+
     private EmcReloadListener newListener(
           EmcMappingService<NormalizedStackKey> service, List<RecipeConversionSource> sources
     ) {
@@ -125,10 +159,21 @@ class EmcReloadListenerTest {
     }
 
     private void writeEmcResource(String namespace, String name, String json) throws Exception {
-        // PathPackResources resolves data-pack files under <root>/data/<namespace>/...
-        Path folder = temp.resolve("data").resolve(namespace).resolve(EmcReloadListener.EXPLICIT_FOLDER);
+        writeResource(namespace, EmcReloadListener.EXPLICIT_FOLDER, name, json);
+    }
+
+    private void writeCustomConversionResource(String namespace, String name, String json) throws Exception {
+        writeResource(namespace, EmcReloadListener.CUSTOM_CONVERSIONS_FOLDER, name, json);
+    }
+
+    private void writeResource(String namespace, String type, String name, String json) throws Exception {
+        Path folder = temp.resolve("data").resolve(namespace).resolve(type);
         Files.createDirectories(folder);
         Files.writeString(folder.resolve(name + ".json"), json);
+    }
+
+    private static ItemStackKey item(String path) {
+        return new ItemStackKey(Identifier.fromNamespaceAndPath("minecraft", path), Map.of());
     }
 
     /**

@@ -118,6 +118,11 @@ public final class EmcReloadProcessor {
           RecipeConversion conversion,
           Function<TagStackKey, ? extends Collection<ItemStackKey>> tagResolver
     ) {
+        List<NormalizedStackKey> outputs = expandKey(conversion.output(), tagResolver);
+        if (outputs.size() > MAX_TAG_EXPANSIONS) {
+            return;
+        }
+        int maximumIngredientVariants = MAX_TAG_EXPANSIONS / outputs.size();
         List<Map<NormalizedStackKey, Integer>> ingredientVariants = List.of(new LinkedHashMap<>());
         List<Map.Entry<NormalizedStackKey, Integer>> ingredients = conversion.ingredients().entrySet().stream()
               .sorted(Map.Entry.comparingByKey())
@@ -127,7 +132,7 @@ public final class EmcReloadProcessor {
             List<Map<NormalizedStackKey, Integer>> next = new ArrayList<>();
             for (Map<NormalizedStackKey, Integer> variant : ingredientVariants) {
                 for (NormalizedStackKey choice : choices) {
-                    if (next.size() >= MAX_TAG_EXPANSIONS) {
+                    if (next.size() >= maximumIngredientVariants) {
                         return;
                     }
                     Map<NormalizedStackKey, Integer> expanded = new LinkedHashMap<>(variant);
@@ -137,7 +142,7 @@ public final class EmcReloadProcessor {
             }
             ingredientVariants = next;
         }
-        for (NormalizedStackKey output : expandKey(conversion.output(), tagResolver)) {
+        for (NormalizedStackKey output : outputs) {
             for (Map<NormalizedStackKey, Integer> ingredientsForOutput : ingredientVariants) {
                 collector.addConversion(conversion.outputCount(), output, Map.copyOf(ingredientsForOutput));
             }

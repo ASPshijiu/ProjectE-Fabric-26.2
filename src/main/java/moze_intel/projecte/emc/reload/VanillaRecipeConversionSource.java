@@ -52,7 +52,8 @@ public class VanillaRecipeConversionSource implements RecipeConversionSource {
 
             try {
                 List<RecipeDisplay> displays = recipe.display();
-                for (RecipeDisplay display : displays) {
+                for (int displayIndex = 0; displayIndex < displays.size(); displayIndex++) {
+                    RecipeDisplay display = displays.get(displayIndex);
                     ItemStack resultStack = display.result().resolveForStacks(displayContext)
                           .stream().findFirst().orElse(ItemStack.EMPTY);
                     if (resultStack.isEmpty()) continue;
@@ -80,8 +81,11 @@ public class VanillaRecipeConversionSource implements RecipeConversionSource {
 
                     if (ingredientChoices.isEmpty()) continue;
 
-                    all.addAll(collector.collect(
-                          recipeId,
+                    Identifier conversionId = displays.size() == 1 ? recipeId
+                          : Identifier.fromNamespaceAndPath(
+                                recipeId.getNamespace(), recipeId.getPath() + "/display_" + displayIndex);
+                    all.addAll(collector.collectCondensed(
+                          conversionId,
                           resultStack.getCount(),
                           outputKey.get(),
                           ingredientChoices,

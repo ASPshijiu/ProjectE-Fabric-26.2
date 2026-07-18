@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import java.util.Map;
+import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
 import moze_intel.projecte.emc.NormalizedStackKey;
+import moze_intel.projecte.emc.reload.EmcReloadProcessor;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +50,46 @@ class RecipeConversionCollectorTest {
               Map.of(A, 1, C, 1),
               Map.of(B, 1, C, 1)
         ), conversions.stream().map(RecipeConversion::ingredients).toList());
+    }
+
+    @Test
+    void removesPermutationDuplicatesBeforeEnforcingExpansionLimit() {
+        List<NormalizedStackKey> choices = List.of(A, B, C);
+        List<RecipeConversion> conversions = collector.collect(
+              id("repeated_alternatives"),
+              1,
+              OUTPUT,
+              List.of(choices, choices, choices),
+              Map.of(),
+              10
+        );
+
+        assertEquals(10, conversions.size());
+        assertEquals(1, conversions.stream()
+              .filter(conversion -> conversion.ingredients().equals(Map.of(A, 2, B, 1)))
+              .count());
+    }
+
+    @Test
+    void condensesLargeIndependentAlternativeGroupsWithoutChangingMinimumCost() {
+        List<NormalizedStackKey> firstGroup = List.of(A, B, C);
+        List<NormalizedStackKey> secondGroup = List.of(B, C);
+        List<RecipeConversion> conversions = collector.collectCondensed(
+              id("condensed"),
+              1,
+              OUTPUT,
+              List.of(
+                    firstGroup, firstGroup, firstGroup, firstGroup, firstGroup, firstGroup,
+                    secondGroup, secondGroup),
+              Map.of(),
+              5
+        );
+
+        Map<NormalizedStackKey, EmcValue> values = new EmcReloadProcessor().extend(
+              Map.of(A, EmcValue.of(10), B, EmcValue.of(2), C, EmcValue.of(4)), conversions);
+
+        assertEquals(6, conversions.size());
+        assertEquals(EmcValue.of(16), values.get(OUTPUT));
     }
 
     @Test
