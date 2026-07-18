@@ -25,8 +25,8 @@ public abstract class ActiveEmcItem extends Item {
     public abstract long getEmcPerTick();
 
     /**
-     * Called every tick while the player has this item equipped and active.
-     * The base implementation deducts EMC; subclasses should call super.
+     * Called every tick while the player has this item equipped and active. The base implementation
+     * deducts EMC and deactivates the stack when the player cannot pay; subclasses should call super.
      *
      * @param player  the owning player
      * @param stack   the item stack
@@ -34,8 +34,8 @@ public abstract class ActiveEmcItem extends Item {
      */
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         long cost = getEmcPerTick();
-        if (cost > 0) {
-            service.tryRemoveEmc(EmcValue.of(cost));
+        if (cost > 0 && !service.tryRemoveEmc(EmcValue.of(cost))) {
+            setActive(stack, false);
         }
     }
 

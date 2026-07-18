@@ -1,10 +1,11 @@
 package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.content.ModDataComponents;
-import moze_intel.projecte.emc.EmcValue;
+import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Item;
@@ -44,24 +45,16 @@ public class SwiftwolfRendingGaleItem extends ActiveEmcItem {
     @Override
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         if (!isActive(stack)) return;
-        if (service.emc().compareTo(EmcValue.of(EMC_PER_TICK)) < 0) {
-            setActive(stack, false);
-            revokeFlight(player);
-            return;
-        }
         super.onTick(player, stack, service);
-        if (!player.getAbilities().mayfly) {
-            player.getAbilities().mayfly = true;
-            player.onUpdateAbilities();
-        }
     }
 
     @Override
     public InteractionResult use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         boolean wasActive = isActive(stack);
-        if (!level.isClientSide() && wasActive && !player.isCreative() && !player.isSpectator()) {
-            revokeFlight(player);
+        if (!level.isClientSide() && wasActive && player instanceof ServerPlayer serverPlayer) {
+            updateFlight(serverPlayer, new PlayerDataService(
+                  PlayerAttachmentKeys.fabricAdapter(serverPlayer)), false);
         }
         setActive(stack, !wasActive);
         if (!level.isClientSide()) {
@@ -70,6 +63,21 @@ public class SwiftwolfRendingGaleItem extends ActiveEmcItem {
                         + (wasActive ? "off" : "on")));
         }
         return InteractionResult.SUCCESS;
+    }
+
+    public static void updateFlight(
+          ServerPlayer player, PlayerDataService service, boolean active
+    ) {
+        if (active) {
+            if (!player.getAbilities().mayfly) {
+                player.getAbilities().mayfly = true;
+                service.setSwiftwolfFlightGranted(true);
+                player.onUpdateAbilities();
+            }
+        } else if (service.swiftwolfFlightGranted()) {
+            service.setSwiftwolfFlightGranted(false);
+            revokeFlight(player);
+        }
     }
 
     private static void revokeFlight(Player player) {

@@ -43,6 +43,7 @@ public class HarvestGoddessBandItem extends ActiveEmcItem {
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         if (!isActive(stack)) return;
         super.onTick(player, stack, service);
+        if (!isActive(stack)) return;
         Level level = player.level();
         if (level.isClientSide() || level.getGameTime() % 20 != 0) return;
         for (BlockPos pos : BlockPos.betweenClosed(

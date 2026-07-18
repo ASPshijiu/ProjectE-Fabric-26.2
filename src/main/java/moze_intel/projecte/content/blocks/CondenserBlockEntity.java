@@ -4,6 +4,7 @@ import java.util.function.ToLongFunction;
 import moze_intel.projecte.content.menu.CondenserMenu;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -204,7 +205,8 @@ public final class CondenserBlockEntity {
             }
             var snapshot = ProjectEEmc.service().current();
             ToLongFunction<ItemStack> emcValue = stack -> entity.stackKeys.optionalKey(stack)
-                  .flatMap(snapshot::valueFor)
+                  .flatMap(key -> StackEmcResolver.resolve(stack, key, snapshot))
+                  .map(StackEmcResolver.Resolved::value)
                   .orElse(EmcValue.ZERO)
                   .longValue();
             entity.refreshTargetEmc(emcValue);

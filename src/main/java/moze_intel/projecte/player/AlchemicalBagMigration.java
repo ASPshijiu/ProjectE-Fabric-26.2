@@ -1,5 +1,6 @@
 package moze_intel.projecte.player;
 
+import java.util.List;
 import java.util.Objects;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
@@ -15,8 +16,8 @@ public final class AlchemicalBagMigration {
     ) {
         Objects.requireNonNull(sharedContents, "sharedContents");
         Objects.requireNonNull(legacyContents, "legacyContents");
-        NonNullList<ItemStack> shared = slots(sharedContents);
-        NonNullList<ItemStack> legacy = slots(legacyContents);
+        NonNullList<ItemStack> shared = fixedSlots(sharedContents);
+        NonNullList<ItemStack> legacy = allSlots(legacyContents);
 
         for (int legacySlot = 0; legacySlot < legacy.size(); legacySlot++) {
             ItemStack remaining = legacy.get(legacySlot).copy();
@@ -65,10 +66,20 @@ public final class AlchemicalBagMigration {
         }
     }
 
-    private static NonNullList<ItemStack> slots(ItemContainerContents contents) {
+    private static NonNullList<ItemStack> fixedSlots(ItemContainerContents contents) {
         NonNullList<ItemStack> slots = NonNullList.withSize(
               AlchemicalBagData.SLOTS, ItemStack.EMPTY);
         contents.copyInto(slots);
+        return slots;
+    }
+
+    private static NonNullList<ItemStack> allSlots(ItemContainerContents contents) {
+        List<ItemStack> items = contents.allItemsCopyStream().toList();
+        NonNullList<ItemStack> slots = NonNullList.withSize(
+              Math.max(AlchemicalBagData.SLOTS, items.size()), ItemStack.EMPTY);
+        for (int slot = 0; slot < items.size(); slot++) {
+            slots.set(slot, items.get(slot));
+        }
         return slots;
     }
 

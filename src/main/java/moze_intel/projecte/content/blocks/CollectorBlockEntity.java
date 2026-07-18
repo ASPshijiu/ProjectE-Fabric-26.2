@@ -10,6 +10,7 @@ import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.content.menu.CollectorMenu;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -130,7 +131,8 @@ public final class CollectorBlockEntity {
                 }
                 var snapshot = ProjectEEmc.service().current();
                 ToLongFunction<ItemStack> emcValue = stack -> entity.stackKeys.optionalKey(stack)
-                      .flatMap(snapshot::valueFor)
+                      .flatMap(key -> StackEmcResolver.resolve(stack, key, snapshot))
+                      .map(StackEmcResolver.Resolved::value)
                       .orElse(EmcValue.ZERO)
                       .longValue();
                 handled = entity.upgradeFuel(
@@ -278,6 +280,15 @@ public final class CollectorBlockEntity {
         }
 
         void compactInputs() {
+            boolean hasInput = false;
+            for (int slot = 0; slot < inputSlots; slot++) {
+                if (!items.get(slot).isEmpty()) {
+                    hasInput = true;
+                    break;
+                }
+            }
+            if (!hasInput) return;
+
             List<ItemStack> stacks = new ArrayList<>();
             int upgradingSlot = inputSlots;
             if (!items.get(upgradingSlot).isEmpty()) {

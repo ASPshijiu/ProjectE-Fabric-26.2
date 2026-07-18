@@ -42,6 +42,12 @@ public final class PlayerAttachments {
           .copyOnDeath()
           .buildAndRegister(id("gem_armor_state"));
 
+    public static final AttachmentType<Boolean> SWIFTWOLF_FLIGHT = AttachmentRegistry.<Boolean>builder()
+          .initializer(() -> false)
+          .persistent(com.mojang.serialization.Codec.BOOL)
+          .copyOnDeath()
+          .buildAndRegister(id("swiftwolf_flight"));
+
     public static final AttachmentType<AlchemicalBagData> ALCHEMICAL_BAGS =
           AttachmentRegistry.<AlchemicalBagData>builder()
                 .initializer(AlchemicalBagData::empty)
@@ -59,7 +65,9 @@ public final class PlayerAttachments {
     public static void init() {
         // Touching each field forces class-load and registration.
         @SuppressWarnings("unused")
-        Object touch = new Object[]{KNOWLEDGE, EMC, INPUT_LOCKS, GEM_ARMOR, ALCHEMICAL_BAGS};
+        Object touch = new Object[]{
+              KNOWLEDGE, EMC, INPUT_LOCKS, GEM_ARMOR, SWIFTWOLF_FLIGHT, ALCHEMICAL_BAGS
+        };
     }
 
     private static Identifier id(String path) {

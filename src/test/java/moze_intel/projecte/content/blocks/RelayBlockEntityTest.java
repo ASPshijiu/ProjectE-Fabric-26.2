@@ -161,6 +161,33 @@ class RelayBlockEntityTest {
     }
 
     @Test
+    void skipsEmptyKleinStarAndBurnsLaterInput() throws Exception {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setItem(0, kleinStarStack(0));
+        relay.setItem(1, stack(Items.REDSTONE, 1));
+
+        assertTrue(burnOneInput(relay, ignored -> 64));
+
+        assertEquals(64, relay.getStoredEmc());
+        assertTrue(relay.getItem(0).getItem() instanceof KleinStarItem);
+        assertTrue(relay.getItem(1).isEmpty());
+    }
+
+    @Test
+    void skipsFuelThatDoesNotFitAndBurnsLaterInput() {
+        TestRelay relay = new TestRelay(1, 64);
+        relay.setStoredEmc(relay.getMaximumEmc() - 32);
+        relay.setItem(0, stack(Items.DIAMOND, 1));
+        relay.setItem(1, stack(Items.REDSTONE, 1));
+
+        assertTrue(burnOneInput(relay, stack -> stack.is(Items.DIAMOND) ? 64 : 16));
+
+        assertEquals(relay.getMaximumEmc() - 16, relay.getStoredEmc());
+        assertEquals(1, relay.getItem(0).getCount());
+        assertTrue(relay.getItem(1).isEmpty());
+    }
+
+    @Test
     void dischargesKleinStarAtRelayTierRate() throws Exception {
         TestRelay mk1 = new TestRelay(1, 64);
         TestRelay mk2 = new TestRelay(2, 192);

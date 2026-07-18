@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
@@ -99,7 +100,8 @@ public final class CondenserItemStorage {
         ItemStack stack = variant.toStack();
         var snapshot = ProjectEEmc.service().current();
         return condenser.stackKeys.optionalKey(stack)
-              .flatMap(snapshot::valueFor)
+              .flatMap(key -> StackEmcResolver.resolve(stack, key, snapshot))
+              .map(StackEmcResolver.Resolved::value)
               .orElse(EmcValue.ZERO)
               .longValue() > 0;
     }

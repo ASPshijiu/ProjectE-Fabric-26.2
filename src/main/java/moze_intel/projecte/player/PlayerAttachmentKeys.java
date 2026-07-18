@@ -14,6 +14,7 @@ public final class PlayerAttachmentKeys {
     public static final String EMC = "projecte:emc";
     public static final String INPUT_LOCKS = "projecte:input_locks";
     public static final String GEM_ARMOR = "projecte:gem_armor_state";
+    public static final String SWIFTWOLF_FLIGHT = "projecte:swiftwolf_flight";
     public static final String ALCHEMICAL_BAGS = "projecte:alchemical_bags";
 
     private PlayerAttachmentKeys() {
@@ -42,6 +43,7 @@ public final class PlayerAttachmentKeys {
                     case EMC -> PlayerAttachments.EMC;
                     case INPUT_LOCKS -> PlayerAttachments.INPUT_LOCKS;
                     case GEM_ARMOR -> PlayerAttachments.GEM_ARMOR;
+                    case SWIFTWOLF_FLIGHT -> PlayerAttachments.SWIFTWOLF_FLIGHT;
                     case ALCHEMICAL_BAGS -> PlayerAttachments.ALCHEMICAL_BAGS;
                     default -> throw new IllegalArgumentException("unknown attachment key: " + key);
                 };
@@ -59,6 +61,7 @@ public final class PlayerAttachmentKeys {
             case EMC -> EmcValue.ZERO;
             case INPUT_LOCKS -> PlayerInputLocks.empty();
             case GEM_ARMOR -> Boolean.FALSE;
+            case SWIFTWOLF_FLIGHT -> Boolean.FALSE;
             case ALCHEMICAL_BAGS -> AlchemicalBagData.empty();
             default -> throw new IllegalArgumentException("unknown attachment key: " + key);
         };

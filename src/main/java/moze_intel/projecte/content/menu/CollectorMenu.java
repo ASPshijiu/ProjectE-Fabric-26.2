@@ -8,6 +8,7 @@ import moze_intel.projecte.content.blocks.CollectorBlockEntity;
 import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -400,7 +401,9 @@ public final class CollectorMenu extends AbstractContainerMenu {
         MinecraftStackKeyFactory stackKeys = new MinecraftStackKeyFactory(
               player.level().registryAccess());
         ToLongFunction<ItemStack> emcValue = stack -> stackKeys.optionalKey(stack)
-              .flatMap(ProjectEEmc.service().current()::valueFor)
+              .flatMap(key -> StackEmcResolver.resolve(
+                    stack, key, ProjectEEmc.service().current()))
+              .map(StackEmcResolver.Resolved::value)
               .orElse(EmcValue.ZERO)
               .longValue();
         return new Rules(

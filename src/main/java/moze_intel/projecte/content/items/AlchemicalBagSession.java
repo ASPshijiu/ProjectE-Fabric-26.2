@@ -1,7 +1,10 @@
 package moze_intel.projecte.content.items;
 
+import java.util.List;
 import java.util.Objects;
+import moze_intel.projecte.player.AlchemicalBagData;
 import moze_intel.projecte.player.PlayerDataService;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -49,7 +52,25 @@ public final class AlchemicalBagSession {
     }
 
     public void save(ItemContainerContents contents) {
-        service.setAlchemicalBagContents(color, contents);
+        service.setAlchemicalBagContents(color, preserveOverflow(contents));
+    }
+
+    private ItemContainerContents preserveOverflow(ItemContainerContents visibleContents) {
+        List<ItemStack> stored = contents().allItemsCopyStream().toList();
+        if (stored.size() <= AlchemicalBagData.SLOTS) {
+            return visibleContents;
+        }
+        NonNullList<ItemStack> merged = NonNullList.withSize(stored.size(), ItemStack.EMPTY);
+        for (int slot = 0; slot < stored.size(); slot++) {
+            merged.set(slot, stored.get(slot));
+        }
+        NonNullList<ItemStack> visible = NonNullList.withSize(
+              AlchemicalBagData.SLOTS, ItemStack.EMPTY);
+        visibleContents.copyInto(visible);
+        for (int slot = 0; slot < visible.size(); slot++) {
+            merged.set(slot, visible.get(slot));
+        }
+        return ItemContainerContents.fromItems(merged);
     }
 
     public void repairContents() {

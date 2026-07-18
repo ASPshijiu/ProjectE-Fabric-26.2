@@ -97,6 +97,10 @@ public final class ToolHelper {
         if (!stack.isCorrectToolForDrops(state)) {
             return false;
         }
+        if (!level.mayInteract(player, pos)
+              || !player.mayUseItemAt(pos, Direction.UP, stack)) {
+            return false;
+        }
         return player.gameMode.destroyBlock(pos);
     }
 
@@ -224,7 +228,7 @@ public final class ToolHelper {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = origin.getZ() - radius; z <= origin.getZ() + radius; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (!pos.equals(origin)) {
+                    if (!pos.equals(origin) && canUseAt(context, pos)) {
                         vanillaBehavior.useOn(adjustedContext(context, pos));
                     }
                 }
@@ -232,6 +236,13 @@ public final class ToolHelper {
         }
         stack.setDamageValue(damage);
         return result;
+    }
+
+    private static boolean canUseAt(UseOnContext context, BlockPos pos) {
+        Player player = context.getPlayer();
+        return player != null
+              && context.getLevel().mayInteract(player, pos)
+              && player.mayUseItemAt(pos, context.getClickedFace(), context.getItemInHand());
     }
 
     private static UseOnContext adjustedContext(UseOnContext source, BlockPos pos) {

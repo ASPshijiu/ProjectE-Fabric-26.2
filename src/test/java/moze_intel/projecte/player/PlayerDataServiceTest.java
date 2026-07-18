@@ -140,6 +140,16 @@ class PlayerDataServiceTest {
     }
 
     @Test
+    void swiftwolfFlightOwnershipRoundTrips() {
+        PlayerDataService svc = service();
+        assertFalse(svc.swiftwolfFlightGranted());
+        svc.setSwiftwolfFlightGranted(true);
+        assertTrue(svc.swiftwolfFlightGranted());
+        svc.setSwiftwolfFlightGranted(false);
+        assertFalse(svc.swiftwolfFlightGranted());
+    }
+
+    @Test
     void samePlayerServicesShareAlchemicalBagContentsByColor() {
         PlayerAttachmentAccess access = PlayerAttachmentAccess.inMemory(
               PlayerAttachmentKeys::initialValue);

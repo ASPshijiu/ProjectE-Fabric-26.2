@@ -2,6 +2,7 @@ package moze_intel.projecte.event;
 
 import moze_intel.projecte.content.items.ActiveEmcItem;
 import moze_intel.projecte.content.items.RepairTalismanItem;
+import moze_intel.projecte.content.items.SwiftwolfRendingGaleItem;
 import moze_intel.projecte.content.items.armor.GemArmorItem;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
@@ -34,10 +35,10 @@ public final class PlayerInventoryTickHandler {
                 if (player.isSpectator() || !player.isAlive()) continue;
 
                 var access = PlayerAttachmentKeys.fabricAdapter(player);
-                if (access == null) continue;
                 var service = new PlayerDataService(access);
 
                 boolean hasTalisman = false;
+                boolean hasActiveSwiftwolf = false;
 
                 var inventory = player.getInventory();
                 // Check all slots: main, armor, offhand
@@ -53,8 +54,14 @@ public final class PlayerInventoryTickHandler {
                     // Active items (rings, amulets, stones): onTick every tick
                     if (stack.getItem() instanceof ActiveEmcItem activeItem) {
                         activeItem.onTick(player, stack, service);
+                        if (activeItem instanceof SwiftwolfRendingGaleItem
+                              && activeItem.isActive(stack)) {
+                            hasActiveSwiftwolf = true;
+                        }
                     }
                 }
+
+                SwiftwolfRendingGaleItem.updateFlight(player, service, hasActiveSwiftwolf);
 
                 if (doSecondTick) {
                     // Repair once per second if talisman present

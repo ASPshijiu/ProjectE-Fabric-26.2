@@ -1,7 +1,9 @@
 package moze_intel.projecte.content.menu;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import moze_intel.projecte.content.ModBlocks;
 import moze_intel.projecte.content.ModMenuTypes;
 import moze_intel.projecte.content.menu.slots.TransmuteConsumeSlot;
 import moze_intel.projecte.content.menu.slots.TransmuteInputSlot;
@@ -16,6 +18,7 @@ import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
+import moze_intel.projecte.player.PlayerKnowledge;
 import moze_intel.projecte.transmutation.table.TransmutationOutputResolver;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +26,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -70,6 +74,7 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     private static final int PLAYER_HOTBAR_Y = 175;
 
     private final Player player;
+    private final ContainerLevelAccess levelAccess;
     private final PlayerDataService service;
     private final SimpleContainer inputLocksContainer;
     private final SimpleContainer unlearnContainer;
@@ -80,10 +85,22 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     private final DataSlot currentPage;
     private final DataSlot pageCount;
     private boolean loadingInputLocks;
+    private long renderedMappingVersion = -1;
+    private PlayerKnowledge renderedKnowledge;
+    private EmcValue renderedAvailable;
+    private Optional<EmcValue> renderedLockLimit;
+    private int renderedPage = -1;
 
     public TransmutationTableMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, ContainerLevelAccess.NULL);
+    }
+
+    public TransmutationTableMenu(
+          int containerId, Inventory playerInventory, ContainerLevelAccess levelAccess
+    ) {
         super(ModMenuTypes.TRANSMUTATION_TABLE, containerId);
         this.player = playerInventory.player;
+        this.levelAccess = Objects.requireNonNull(levelAccess, "levelAccess");
         this.service = new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player));
         this.keyFactory = new MinecraftStackKeyFactory(player.level().registryAccess());
         this.syncedEmc = new SyncedLong(() -> service.emc().longValue());
@@ -163,10 +180,19 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
     public void refreshOutputs() {
         EmcMappingSnapshot<NormalizedStackKey> snapshot = ProjectEEmc.service().current();
         EmcValue available = service.emc();
+        PlayerKnowledge knowledge = service.knowledge();
         Optional<EmcValue> lockLimit = keyFactory.optionalKey(inputLocksContainer.getItem(INPUT_SLOTS))
               .flatMap(snapshot::valueFor);
+        int requestedPage = currentPage.get();
+        if (snapshot.version() == renderedMappingVersion
+              && knowledge.equals(renderedKnowledge)
+              && available.equals(renderedAvailable)
+              && lockLimit.equals(renderedLockLimit)
+              && requestedPage == renderedPage) {
+            return;
+        }
         TransmutationOutputResolver.Page page = TransmutationOutputResolver.resolvePage(
-              snapshot, service.knowledge(), available, lockLimit, currentPage.get());
+              snapshot, knowledge, available, lockLimit, requestedPage);
         currentPage.set(page.pageIndex());
         pageCount.set(page.pageCount());
         List<NormalizedStackKey> candidates = page.outputs();
@@ -180,6 +206,11 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
                 outputContainer.setItem(i, display);
             }
         }
+        renderedMappingVersion = snapshot.version();
+        renderedKnowledge = knowledge;
+        renderedAvailable = available;
+        renderedLockLimit = lockLimit;
+        renderedPage = page.pageIndex();
     }
 
     private ItemStack displayStackFor(NormalizedStackKey key) {
@@ -251,7 +282,7 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         for (int slot = 0; slot < INPUT_SLOTS + 1; slot++) {
             ItemStack stack = inputLocksContainer.getItem(slot);
             NormalizedStackKey key = stack.isEmpty() ? null : keyFactory.key(stack);
-            if (!java.util.Objects.equals(persisted.get(slot), key)) {
+            if (!Objects.equals(persisted.get(slot), key)) {
                 service.setInputLock(slot, key);
             }
         }
@@ -294,7 +325,8 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return this.player.equals(player) && !player.isDeadOrDying();
+        return this.player.equals(player) && !player.isDeadOrDying()
+              && stillValid(levelAccess, player, ModBlocks.TRANSMUTATION_TABLE);
     }
 
     @Override

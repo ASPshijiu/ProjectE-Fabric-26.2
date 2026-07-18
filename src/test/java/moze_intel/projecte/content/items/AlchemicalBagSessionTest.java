@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import moze_intel.projecte.player.AlchemicalBagData;
 import moze_intel.projecte.player.PlayerAttachmentAccess;
 import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
@@ -45,7 +46,8 @@ class AlchemicalBagSessionTest {
     @Test
     void openingLegacyBagPreservesOverflowOnItsStack() {
         PlayerDataService service = service();
-        NonNullList<ItemStack> full = NonNullList.withSize(104, ItemStack.EMPTY);
+        NonNullList<ItemStack> full = NonNullList.withSize(
+              AlchemicalBagData.SLOTS, ItemStack.EMPTY);
         for (int slot = 0; slot < full.size(); slot++) {
             full.set(slot, stack(Items.COBBLESTONE, 64));
         }
@@ -78,6 +80,27 @@ class AlchemicalBagSessionTest {
         assertEquals(6, slots(session.contents()).get(1).getDamageValue());
     }
 
+    @Test
+    void savingVisibleSlotsPreservesExistingOverflow() {
+        PlayerDataService service = service();
+        NonNullList<ItemStack> stored = NonNullList.withSize(
+              AlchemicalBagData.SLOTS + 1, ItemStack.EMPTY);
+        stored.set(AlchemicalBagData.SLOTS, stack(Items.DIAMOND, 4));
+        service.setAlchemicalBagContents(
+              DyeColor.WHITE, ItemContainerContents.fromItems(stored));
+        AlchemicalBagSession session = AlchemicalBagSession.open(
+              service, DyeColor.WHITE, new ItemStack(Items.SHULKER_BOX));
+
+        session.save(ItemContainerContents.fromItems(
+              List.of(stack(Items.COBBLESTONE, 1))));
+
+        List<ItemStack> saved = session.contents().allItemsCopyStream().toList();
+        assertEquals(AlchemicalBagData.SLOTS + 1, saved.size());
+        assertEquals(Items.COBBLESTONE, saved.getFirst().getItem());
+        assertEquals(4, saved.get(AlchemicalBagData.SLOTS).getCount());
+        assertEquals(Items.DIAMOND, saved.get(AlchemicalBagData.SLOTS).getItem());
+    }
+
     private static PlayerDataService service() {
         return new PlayerDataService(PlayerAttachmentAccess.inMemory(
               PlayerAttachmentKeys::initialValue));
@@ -91,7 +114,8 @@ class AlchemicalBagSessionTest {
     }
 
     private static NonNullList<ItemStack> slots(ItemContainerContents contents) {
-        NonNullList<ItemStack> slots = NonNullList.withSize(104, ItemStack.EMPTY);
+        NonNullList<ItemStack> slots = NonNullList.withSize(
+              AlchemicalBagData.SLOTS, ItemStack.EMPTY);
         contents.copyInto(slots);
         return slots;
     }

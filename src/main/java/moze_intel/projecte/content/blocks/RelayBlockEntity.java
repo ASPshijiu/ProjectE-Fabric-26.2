@@ -7,6 +7,7 @@ import moze_intel.projecte.content.items.KleinStarItem;
 import moze_intel.projecte.content.menu.RelayMenu;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
+import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -143,12 +144,12 @@ public final class RelayBlockEntity {
                         insertEmc(transferred);
                         return true;
                     }
-                    return false;
+                    continue;
                 }
 
                 long value = emcValue.applyAsLong(stack);
                 if (value <= 0) continue;
-                if (value > getNeededEmc()) return false;
+                if (value > getNeededEmc()) continue;
 
                 insertEmc(value);
                 stack.shrink(1);
@@ -216,7 +217,8 @@ public final class RelayBlockEntity {
             }
             var snapshot = ProjectEEmc.service().current();
             entity.burnOneInput(stack -> entity.stackKeys.optionalKey(stack)
-                  .flatMap(snapshot::valueFor)
+                  .flatMap(key -> StackEmcResolver.resolve(stack, key, snapshot))
+                  .map(StackEmcResolver.Resolved::value)
                   .orElse(EmcValue.ZERO)
                   .longValue());
             entity.chargeOutput();

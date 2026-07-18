@@ -28,6 +28,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class GemArmorItem extends MatterArmorItem {
+    static final int EXPLOSION_COOLDOWN_TICKS = 20;
+    static final int ZAP_COOLDOWN_TICKS = 5;
     private static final AttributeModifier STEP_ASSIST_MODIFIER = new AttributeModifier(
           ProjectEAPI.id("gem_step_assist"), 0.4D, AttributeModifier.Operation.ADD_VALUE);
     private static final ItemAttributeModifiers BOOT_MODIFIERS =
@@ -117,20 +119,24 @@ public class GemArmorItem extends MatterArmorItem {
     }
 
     public static void explode(ServerPlayer player) {
-        if (!canUseActiveAbility(player)
-              || !isPiece(player, EquipmentSlot.CHEST, ArmorType.CHESTPLATE)) {
+        ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (!canUseActiveAbility(player) || !isPiece(chestplate, ArmorType.CHESTPLATE)
+              || player.getCooldowns().isOnCooldown(chestplate)) {
             return;
         }
         player.level().explode(
               player, player.getX(), player.getY(), player.getZ(), 9.0F,
               Level.ExplosionInteraction.BLOCK);
+        player.getCooldowns().addCooldown(chestplate, EXPLOSION_COOLDOWN_TICKS);
     }
 
     public static void zap(ServerPlayer player) {
-        if (!canUseActiveAbility(player)
-              || !isPiece(player, EquipmentSlot.HEAD, ArmorType.HELMET)) {
+        ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
+        if (!canUseActiveAbility(player) || !isPiece(helmet, ArmorType.HELMET)
+              || player.getCooldowns().isOnCooldown(helmet)) {
             return;
         }
+        player.getCooldowns().addCooldown(helmet, ZAP_COOLDOWN_TICKS);
         HitResult target = player.pick(120.0D, 1.0F, false);
         if (target.getType() == HitResult.Type.MISS) {
             return;

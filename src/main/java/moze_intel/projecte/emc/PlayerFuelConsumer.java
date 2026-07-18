@@ -41,7 +41,8 @@ public final class PlayerFuelConsumer {
               player.getInventory(), minimumEmc,
               stack -> stack.is(COLLECTOR_FUEL),
               stack -> keys.optionalKey(stack)
-                    .flatMap(snapshot::valueFor)
+                    .flatMap(key -> StackEmcResolver.resolve(stack, key, snapshot))
+                    .map(StackEmcResolver.Resolved::value)
                     .orElse(EmcValue.ZERO)
                     .longValue());
         if (consumed >= 0) {

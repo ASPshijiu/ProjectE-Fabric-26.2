@@ -116,6 +116,14 @@ public final class PlayerDataService {
         access.modify(PlayerAttachmentKeys.GEM_ARMOR, Boolean.class, current -> enabled);
     }
 
+    public boolean swiftwolfFlightGranted() {
+        return access.get(PlayerAttachmentKeys.SWIFTWOLF_FLIGHT, Boolean.class);
+    }
+
+    public void setSwiftwolfFlightGranted(boolean granted) {
+        access.modify(PlayerAttachmentKeys.SWIFTWOLF_FLIGHT, Boolean.class, current -> granted);
+    }
+
     public ItemContainerContents alchemicalBagContents(DyeColor color) {
         Objects.requireNonNull(color, "color");
         return access.get(PlayerAttachmentKeys.ALCHEMICAL_BAGS, AlchemicalBagData.class)

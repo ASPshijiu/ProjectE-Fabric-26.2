@@ -52,6 +52,24 @@ class AlchemicalBagMigrationTest {
         assertEquals(Items.DIAMOND, remaining.getFirst().getItem());
     }
 
+    @Test
+    void preservesLegacySlotsBeyondTheVisibleBagInventory() {
+        NonNullList<ItemStack> full = NonNullList.withSize(104, ItemStack.EMPTY);
+        for (int slot = 0; slot < full.size(); slot++) {
+            full.set(slot, stack(Items.COBBLESTONE, 64));
+        }
+        NonNullList<ItemStack> legacy = NonNullList.withSize(105, ItemStack.EMPTY);
+        legacy.set(104, stack(Items.DIAMOND, 4));
+
+        AlchemicalBagMigration.Result result = AlchemicalBagMigration.merge(
+              ItemContainerContents.fromItems(full), ItemContainerContents.fromItems(legacy));
+
+        List<ItemStack> remaining = result.remaining().allItemsCopyStream().toList();
+        assertEquals(105, remaining.size());
+        assertEquals(4, remaining.get(104).getCount());
+        assertEquals(Items.DIAMOND, remaining.get(104).getItem());
+    }
+
     private static NonNullList<ItemStack> slots(ItemContainerContents contents) {
         NonNullList<ItemStack> slots = NonNullList.withSize(104, ItemStack.EMPTY);
         contents.copyInto(slots);

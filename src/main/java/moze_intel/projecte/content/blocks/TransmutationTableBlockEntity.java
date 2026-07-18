@@ -7,7 +7,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -33,17 +33,9 @@ public final class TransmutationTableBlockEntity extends BlockEntity {
 
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-                return new TransmutationTableMenu(containerId, playerInventory);
+                return new TransmutationTableMenu(containerId, playerInventory,
+                      ContainerLevelAccess.create(player.level(), worldPosition));
             }
         };
-    }
-
-    /**
-     * Used by the menu to read the player's current EMC and knowledge. Currently delegated to the
-     * menu's own service; kept for future per-block extensions.
-     */
-    @SuppressWarnings("unused")
-    private Level levelReference() {
-        return getLevel();
     }
 }
