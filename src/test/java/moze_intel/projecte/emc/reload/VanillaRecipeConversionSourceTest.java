@@ -1,7 +1,10 @@
 package moze_intel.projecte.emc.reload;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +80,26 @@ class VanillaRecipeConversionSourceTest {
               key("netherite_ingot"), EmcValue.of(57_344)
         ), List.of(byOutput.get(key("netherite_pickaxe"))));
         assertEquals(EmcValue.of(89_425), values.get(key("netherite_pickaxe")));
+    }
+
+    @Test
+    void recipeFailureIncludesItsIdentifierAndAbortsCollection() {
+        Recipe<?> broken = (Recipe<?>) Proxy.newProxyInstance(
+              Recipe.class.getClassLoader(), new Class<?>[]{Recipe.class},
+              (proxy, method, arguments) -> {
+                  if (method.getName().equals("display")) {
+                      throw new IllegalStateException("broken display");
+                  }
+                  return method.getReturnType() == boolean.class ? false : null;
+              });
+        RecipeManager manager = new FixedRecipeManager(
+              registries, List.of(holder("broken_recipe", broken)));
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+              () -> new VanillaRecipeConversionSource(manager, registries).conversions());
+
+        assertTrue(error.getMessage().contains("minecraft:broken_recipe"));
+        assertEquals("broken display", error.getCause().getMessage());
     }
 
     private static RecipeHolder<?> holder(String path, Recipe<?> recipe) {

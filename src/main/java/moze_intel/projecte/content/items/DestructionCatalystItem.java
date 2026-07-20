@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import moze_intel.projecte.content.ModDataComponents;
 import moze_intel.projecte.emc.PlayerFuelConsumer;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Destroys a charged 3x3 tunnel while consuming eight EMC per block. */
@@ -60,12 +62,21 @@ public final class DestructionCatalystItem extends ChargeableItem {
                   || !serverPlayer.mayUseItemAt(pos, context.getClickedFace(), catalyst)) {
                 continue;
             }
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (!PlayerBlockBreakEvents.BEFORE.invoker().beforeBlockBreak(
+                  level, serverPlayer, pos, state, blockEntity)) {
+                PlayerBlockBreakEvents.CANCELED.invoker().onBlockBreakCanceled(
+                      level, serverPlayer, pos, state, blockEntity);
+                continue;
+            }
             if (!consumeEmc(serverPlayer, catalyst)) {
                 break;
             }
             List<ItemStack> blockDrops = Block.getDrops(
-                  state, level, pos, level.getBlockEntity(pos), serverPlayer, catalyst);
+                  state, level, pos, blockEntity, serverPlayer, catalyst);
             if (level.removeBlock(pos, false)) {
+                PlayerBlockBreakEvents.AFTER.invoker().afterBlockBreak(
+                      level, serverPlayer, pos, state, blockEntity);
                 drops.addAll(blockDrops);
                 changed = true;
                 if (level.getRandom().nextInt(8) == 0) {
@@ -74,6 +85,8 @@ public final class DestructionCatalystItem extends ChargeableItem {
                           pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                           2, 0.1, 0.1, 0.1, 0.0);
                 }
+            } else {
+                refundEmc(serverPlayer, catalyst);
             }
         }
         if (changed) {
@@ -119,5 +132,12 @@ public final class DestructionCatalystItem extends ChargeableItem {
         }
         stack.set(ModDataComponents.STORED_EMC, stored - EMC_PER_BLOCK);
         return true;
+    }
+
+    private static void refundEmc(ServerPlayer player, ItemStack stack) {
+        if (!player.isCreative()) {
+            long stored = stack.getOrDefault(ModDataComponents.STORED_EMC, 0L);
+            stack.set(ModDataComponents.STORED_EMC, Math.addExact(stored, EMC_PER_BLOCK));
+        }
     }
 }

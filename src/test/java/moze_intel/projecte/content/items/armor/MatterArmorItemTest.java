@@ -1,11 +1,21 @@
 package moze_intel.projecte.content.items.armor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import moze_intel.projecte.testsupport.MinecraftTestHarness;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.equipment.ArmorType;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class MatterArmorItemTest {
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        MinecraftTestHarness.bootstrap();
+    }
+
     @Test
     void armorSlotWeightsAddUpToAFullSet() {
         float fullSet = MatterArmorItem.pieceEffectiveness(ArmorType.HELMET)
@@ -20,5 +30,11 @@ class MatterArmorItemTest {
         assertEquals(0.8F, MatterArmorItem.Tier.DARK_MATTER.fullSetReduction(), 0.0001F);
         assertEquals(0.9F, MatterArmorItem.Tier.RED_MATTER.fullSetReduction(), 0.0001F);
         assertEquals(0.9F, MatterArmorItem.Tier.GEM.fullSetReduction(), 0.0001F);
+    }
+
+    @Test
+    void armorOnlyContributesFromItsDeclaredSlot() {
+        assertTrue(MatterArmorItem.matchesSlot(EquipmentSlot.HEAD, ArmorType.HELMET));
+        assertFalse(MatterArmorItem.matchesSlot(EquipmentSlot.CHEST, ArmorType.HELMET));
     }
 }

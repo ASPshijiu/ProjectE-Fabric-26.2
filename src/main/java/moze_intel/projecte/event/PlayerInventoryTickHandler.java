@@ -52,7 +52,8 @@ public final class PlayerInventoryTickHandler {
                     }
 
                     // Active items (rings, amulets, stones): onTick every tick
-                    if (stack.getItem() instanceof ActiveEmcItem activeItem) {
+                    if (stack.getItem() instanceof ActiveEmcItem activeItem
+                          && activeItem.isActive(stack)) {
                         activeItem.onTick(player, stack, service);
                         if (activeItem instanceof SwiftwolfRendingGaleItem
                               && activeItem.isActive(stack)) {

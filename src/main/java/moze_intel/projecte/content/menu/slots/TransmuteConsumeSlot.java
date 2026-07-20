@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import moze_intel.projecte.content.items.TomeOfKnowledgeItem;
+import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.StackEmcResolver;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
@@ -56,9 +57,20 @@ public class TransmuteConsumeSlot extends Slot {
                 if (TomeOfKnowledgeItem.isTome(stack)) {
                     TomeOfKnowledgeItem.learnAll(service);
                 } else {
-                    service.learn(resolved.orElseThrow().key());
+                    StackEmcResolver.Resolved entry = resolved.orElseThrow();
+                    EmcValue total;
+                    try {
+                        total = entry.value().multiply(stack.getCount());
+                    } catch (ArithmeticException overflow) {
+                        super.set(stack);
+                        return;
+                    }
+                    if (!service.tryAddEmc(total)) {
+                        super.set(stack);
+                        return;
+                    }
+                    service.learn(entry.key());
                 }
-                resolved.ifPresent(entry -> service.addEmc(entry.value().multiply(stack.getCount())));
                 super.set(ItemStack.EMPTY);
                 return;
             }

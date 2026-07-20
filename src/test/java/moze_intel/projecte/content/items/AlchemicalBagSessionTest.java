@@ -101,6 +101,33 @@ class AlchemicalBagSessionTest {
         assertEquals(Items.DIAMOND, saved.get(AlchemicalBagData.SLOTS).getItem());
     }
 
+    @Test
+    void concurrentMovesDoNotDuplicateItems() {
+        PlayerDataService service = service();
+        service.setAlchemicalBagContents(DyeColor.WHITE,
+              ItemContainerContents.fromItems(List.of(stack(Items.DIAMOND, 1))));
+        AlchemicalBagSession firstSession = AlchemicalBagSession.open(
+              service, DyeColor.WHITE, new ItemStack(Items.SHULKER_BOX));
+        AlchemicalBagSession secondSession = AlchemicalBagSession.open(
+              service, DyeColor.WHITE, new ItemStack(Items.SHULKER_BOX));
+        NonNullList<ItemStack> firstView = slots(firstSession.contents());
+        NonNullList<ItemStack> secondView = slots(secondSession.contents());
+
+        firstView.set(0, ItemStack.EMPTY);
+        firstView.set(1, stack(Items.DIAMOND, 1));
+        firstSession.save(ItemContainerContents.fromItems(firstView));
+        secondView.set(0, ItemStack.EMPTY);
+        secondView.set(2, stack(Items.DIAMOND, 1));
+        secondSession.save(ItemContainerContents.fromItems(secondView));
+
+        long diamonds = secondSession.contents().allItemsCopyStream()
+              .filter(item -> item.is(Items.DIAMOND))
+              .mapToLong(ItemStack::getCount)
+              .sum();
+        assertEquals(1, diamonds);
+        assertEquals(Items.DIAMOND, slots(secondSession.contents()).get(2).getItem());
+    }
+
     private static PlayerDataService service() {
         return new PlayerDataService(PlayerAttachmentAccess.inMemory(
               PlayerAttachmentKeys::initialValue));

@@ -1,10 +1,14 @@
 package moze_intel.projecte.content.menu.slots;
 
-import moze_intel.projecte.emc.EmcValue;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import moze_intel.projecte.emc.EmcMappingSnapshot;
 import moze_intel.projecte.emc.NormalizedStackKey;
 import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.emc.recipe.MinecraftStackKeyFactory;
 import moze_intel.projecte.player.PlayerDataService;
+import moze_intel.projecte.transmutation.table.TransmutationTransaction;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -18,16 +22,28 @@ import net.minecraft.world.item.ItemStack;
  * amount the extraction returns nothing.
  */
 public class TransmuteOutputSlot extends Slot {
-    private final Player player;
+    private final BooleanSupplier serverSide;
     private final PlayerDataService service;
-    private final MinecraftStackKeyFactory keyFactory;
+    private final Function<ItemStack, NormalizedStackKey> keyResolver;
+    private final Supplier<EmcMappingSnapshot<NormalizedStackKey>> snapshot;
 
     public TransmuteOutputSlot(Container container, int index, int x, int y,
           Player player, PlayerDataService service, MinecraftStackKeyFactory keyFactory) {
+        this(container, index, x, y, () -> !player.level().isClientSide(), service,
+              stack -> keyFactory.optionalKey(stack).orElseThrow(
+                    () -> new IllegalArgumentException("unregistered item: " + stack)),
+              () -> ProjectEEmc.service().current());
+    }
+
+    TransmuteOutputSlot(Container container, int index, int x, int y,
+          BooleanSupplier serverSide, PlayerDataService service,
+          Function<ItemStack, NormalizedStackKey> keyResolver,
+          Supplier<EmcMappingSnapshot<NormalizedStackKey>> snapshot) {
         super(container, index, x, y);
-        this.player = player;
+        this.serverSide = serverSide;
         this.service = service;
-        this.keyFactory = keyFactory;
+        this.keyResolver = keyResolver;
+        this.snapshot = snapshot;
     }
 
     @Override
@@ -38,36 +54,22 @@ public class TransmuteOutputSlot extends Slot {
     @Override
     public ItemStack remove(int amount) {
         ItemStack stored = getItem();
-        if (stored.isEmpty() || player.level().isClientSide()) {
+        if (stored.isEmpty() || !serverSide.getAsBoolean()) {
             return super.remove(amount);
         }
         NormalizedStackKey key = keyOf(stored);
-        EmcValue perItem = ProjectEEmc.service().current().valueFor(key).orElse(EmcValue.ZERO);
-        if (perItem.longValue() <= 0) {
-            return ItemStack.EMPTY;
-        }
-        int affordable = affordableCount(perItem.longValue(), amount);
-        if (affordable <= 0) {
-            return ItemStack.EMPTY;
-        }
-        long cost = Math.multiplyExact(perItem.longValue(), affordable);
-        if (!service.tryRemoveEmc(EmcValue.of(cost))) {
+        TransmutationTransaction.Outcome outcome = TransmutationTransaction.extract(
+              service, snapshot.get(), key, amount, stored.getMaxStackSize());
+        if (!outcome.success()) {
             return ItemStack.EMPTY;
         }
         ItemStack taken = stored.copy();
-        taken.setCount(affordable);
+        taken.setCount(outcome.producedCount());
         // Output slots are virtual: they always show the resolver candidate, so leave the slot as-is.
         return taken;
     }
 
-    private int affordableCount(long perItem, int requested) {
-        long balance = service.emc().longValue();
-        long max = balance / perItem;
-        return (int) Math.min(Math.min(requested, max), 64);
-    }
-
     private NormalizedStackKey keyOf(ItemStack stack) {
-        return keyFactory.optionalKey(stack)
-              .orElseThrow(() -> new IllegalArgumentException("unregistered item: " + stack));
+        return keyResolver.apply(stack);
     }
 }

@@ -93,7 +93,10 @@ public class VanillaRecipeConversionSource implements RecipeConversionSource {
                           MAX_COMBINATIONS
                     ));
                 }
-            } catch (Exception ignored) {}
+            } catch (RuntimeException exception) {
+                throw new IllegalStateException(
+                      "Failed collecting EMC conversion for recipe " + recipeId, exception);
+            }
         }
         return List.copyOf(all);
     }

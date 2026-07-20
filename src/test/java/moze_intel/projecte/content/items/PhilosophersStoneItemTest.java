@@ -2,6 +2,7 @@ package moze_intel.projecte.content.items;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -21,6 +22,8 @@ import net.minecraft.network.chat.contents.KeybindContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
@@ -140,6 +143,14 @@ class PhilosophersStoneItemTest {
         KeybindContents keybind = assertInstanceOf(
               KeybindContents.class, keyArgument.getContents());
         assertEquals("key.projecte.extra_function", keybind.getName());
+    }
+
+    @Test
+    void worldTransmutationCannotReplaceIndestructibleBlocks() {
+        assertFalse(PhilosophersStoneItem.isDestructible(
+              Blocks.BEDROCK.defaultBlockState(), EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
+        assertTrue(PhilosophersStoneItem.isDestructible(
+              Blocks.STONE.defaultBlockState(), EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
     }
 
     private static PhilosophersStoneItem allocateWithoutRegistering() throws Exception {

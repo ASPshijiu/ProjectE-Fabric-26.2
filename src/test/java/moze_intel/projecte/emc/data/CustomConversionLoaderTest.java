@@ -79,6 +79,43 @@ class CustomConversionLoaderTest {
         assertTrue(result.conversions().isEmpty());
     }
 
+    @Test
+    void rejectsNonIntegralAndOutOfRangeNumbers() {
+        CustomConversionLoader.Result result = loader.load(Map.of(
+              projecteId("pe_custom_conversions/fractional.json"), """
+                    {"values":{"before":[
+                      {"id":"minecraft:stone","emc_value":1.9}
+                    ]}}
+                    """,
+              projecteId("pe_custom_conversions/emc_overflow.json"), """
+                    {"values":{"before":[
+                      {"id":"minecraft:diamond","emc_value":18446744073709551617}
+                    ]}}
+                    """,
+              projecteId("pe_custom_conversions/amount_overflow.json"), """
+                    {"groups":{"broken":{"conversions":[{
+                      "ingredients":[{"id":"minecraft:dirt","amount":4294967297}],
+                      "output":{"id":"minecraft:grass_block"}
+                    }]}}}
+                    """,
+              projecteId("pe_custom_conversions/invalid_count.json"), """
+                    {"groups":{"broken":{"conversions":[{
+                      "ingredients":[{"id":"minecraft:dirt"}],
+                      "output":{"id":"minecraft:grass_block"},
+                      "count":0
+                    }]}}}
+                    """,
+              projecteId("pe_custom_conversions/negative_emc.json"), """
+                    {"values":{"before":[
+                      {"id":"minecraft:stone","emc_value":1},
+                      {"id":"minecraft:diamond","emc_value":-1}
+                    ]}}
+                    """));
+
+        assertTrue(result.explicit().isEmpty());
+        assertTrue(result.conversions().isEmpty());
+    }
+
     private static RecipeConversion conversionFor(
           CustomConversionLoader.Result result, NormalizedStackKey output
     ) {

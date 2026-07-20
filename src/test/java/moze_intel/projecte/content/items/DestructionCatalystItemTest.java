@@ -4,12 +4,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import moze_intel.projecte.testsupport.MinecraftTestHarness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class DestructionCatalystItemTest {
     private static final BlockPos CLICKED = new BlockPos(10, 64, 10);
+
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        MinecraftTestHarness.bootstrap();
+    }
 
     @Test
     void zeroChargeTargetsOneThreeByThreeLayer() {

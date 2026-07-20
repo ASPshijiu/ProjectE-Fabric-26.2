@@ -3,6 +3,7 @@ package moze_intel.projecte.emc.data;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,12 +126,12 @@ public final class CustomConversionLoader {
             if (rawValue == null || !rawValue.isJsonPrimitive() || !rawValue.getAsJsonPrimitive().isNumber()) {
                 continue;
             }
-            try {
-                long value = rawValue.getAsJsonPrimitive().getAsLong();
-                if (value < 0) continue;
-                explicit.add(new ExplicitEmcEntry(key, moze_intel.projecte.emc.EmcValue.of(value), phase, source));
-            } catch (NumberFormatException ignored) {
+            long value = exactLong(rawValue, "emc_value");
+            if (value < 0) {
+                throw new IllegalArgumentException("emc_value must not be negative");
             }
+            explicit.add(new ExplicitEmcEntry(
+                  key, moze_intel.projecte.emc.EmcValue.of(value), phase, source));
         }
     }
 
@@ -174,7 +175,7 @@ public final class CustomConversionLoader {
             NormalizedStackKey ingredient = parseTarget(ingredientElement.getAsJsonObject());
             if (ingredient == null) return;
             int amount = ingredientElement.getAsJsonObject().has("amount")
-                  ? ingredientElement.getAsJsonObject().get("amount").getAsInt()
+                  ? exactInt(ingredientElement.getAsJsonObject().get("amount"), "ingredient amount")
                   : 1;
             ingredients.merge(ingredient, amount, Math::addExact);
         }
@@ -182,12 +183,42 @@ public final class CustomConversionLoader {
         if (ingredients.isEmpty()) return;
 
         int outputCount = conversion.has("count")
-              ? Math.max(1, conversion.get("count").getAsInt())
+              ? exactInt(conversion.get("count"), "output count")
               : 1;
+        if (outputCount <= 0) {
+            throw new IllegalArgumentException("output count must be positive");
+        }
 
         Identifier recipeId = Identifier.fromNamespaceAndPath(
               source.getNamespace(), source.getPath() + "/" + groupName);
         conversions.add(new RecipeConversion(recipeId, outputCount, output, ingredients));
+    }
+
+    private static long exactLong(JsonElement raw, String field) {
+        try {
+            return exactInteger(raw, field).longValueExact();
+        } catch (ArithmeticException exception) {
+            throw new IllegalArgumentException(field + " is out of long range", exception);
+        }
+    }
+
+    private static int exactInt(JsonElement raw, String field) {
+        try {
+            return exactInteger(raw, field).intValueExact();
+        } catch (ArithmeticException exception) {
+            throw new IllegalArgumentException(field + " is out of int range", exception);
+        }
+    }
+
+    private static BigInteger exactInteger(JsonElement raw, String field) {
+        if (raw == null || !raw.isJsonPrimitive() || !raw.getAsJsonPrimitive().isNumber()) {
+            throw new IllegalArgumentException(field + " must be an integral number");
+        }
+        try {
+            return new BigInteger(raw.getAsString());
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(field + " must be an integral number", exception);
+        }
     }
 
     /**

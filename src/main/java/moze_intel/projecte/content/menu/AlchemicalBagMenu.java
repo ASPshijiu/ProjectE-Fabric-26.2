@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import moze_intel.projecte.content.ModMenuTypes;
+import moze_intel.projecte.content.items.AlchemicalBagItem;
 import moze_intel.projecte.content.items.AlchemicalBagSession;
+import moze_intel.projecte.content.items.RepairTalismanItem;
 import moze_intel.projecte.player.AlchemicalBagData;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -12,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 
@@ -136,6 +139,35 @@ public final class AlchemicalBagMenu extends AbstractContainerMenu {
     public boolean stillValid(Player player) {
         return this.player.equals(player) && !player.isDeadOrDying()
               && bagStack.getItem() instanceof moze_intel.projecte.content.items.AlchemicalBagItem;
+    }
+
+    public boolean isForColor(DyeColor color) {
+        return bagStack.getItem() instanceof AlchemicalBagItem bag && bag.getColor() == color;
+    }
+
+    public boolean isOpenStack(ItemStack stack) {
+        return bagStack == stack;
+    }
+
+    /** Repairs the live menu inventory so a later persistence flush cannot restore stale damage. */
+    public void repairContents() {
+        if (repairContents(bagInventory)) {
+            persistBag();
+        }
+    }
+
+    static boolean repairContents(SimpleContainer contents) {
+        boolean hasTalisman = false;
+        for (int slot = 0; slot < contents.getContainerSize(); slot++) {
+            if (RepairTalismanItem.isTalisman(contents.getItem(slot))) {
+                hasTalisman = true;
+                break;
+            }
+        }
+        if (hasTalisman) {
+            RepairTalismanItem.tickRepair(contents, true);
+        }
+        return hasTalisman;
     }
 
     /** Flushes the menu inventory back to the player's color-linked bag attachment. */

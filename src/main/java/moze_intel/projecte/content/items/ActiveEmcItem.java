@@ -1,7 +1,6 @@
 package moze_intel.projecte.content.items;
 
 import moze_intel.projecte.emc.EmcValue;
-import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -33,6 +32,9 @@ public abstract class ActiveEmcItem extends Item {
      * @param service the player's data service
      */
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
+        if (!isActive(stack)) {
+            return;
+        }
         long cost = getEmcPerTick();
         if (cost > 0 && !service.tryRemoveEmc(EmcValue.of(cost))) {
             setActive(stack, false);

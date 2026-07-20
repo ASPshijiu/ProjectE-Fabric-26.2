@@ -56,7 +56,8 @@ public class MatterArmorItem extends Item {
         float maximum = 0.0F;
         for (EquipmentSlot slot : ARMOR_SLOTS) {
             ItemStack stack = player.getItemBySlot(slot);
-            if (stack.getItem() instanceof MatterArmorItem armor) {
+            if (stack.getItem() instanceof MatterArmorItem armor
+                  && matchesSlot(slot, armor.armorType)) {
                 Reduction piece = armor.reduction(source);
                 reduction += piece.percent;
                 maximum += piece.maximum;
@@ -64,6 +65,10 @@ public class MatterArmorItem extends Item {
         }
         float absorbed = Math.min(amount * Math.min(1.0F, reduction), maximum);
         return Math.max(0.0F, amount - absorbed);
+    }
+
+    static boolean matchesSlot(EquipmentSlot slot, ArmorType armorType) {
+        return armorType.getSlot() == slot;
     }
 
     public static float pieceEffectiveness(ArmorType type) {

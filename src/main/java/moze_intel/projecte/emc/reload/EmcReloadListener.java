@@ -127,13 +127,8 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
     }
 
     private List<RecipeConversionSource> resolveServerRecipeSources() {
-        try {
-            List<RecipeConversionSource> resolved = serverRecipeSources.get();
-            return resolved == null ? List.of() : List.copyOf(resolved);
-        } catch (Exception ignored) {
-            // The server may not be available (e.g. unit tests); treat as no server sources.
-            return List.of();
-        }
+        List<RecipeConversionSource> resolved = serverRecipeSources.get();
+        return resolved == null ? List.of() : List.copyOf(resolved);
     }
 
     @Override
@@ -154,7 +149,15 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
      * sources cannot participate until this second, recipe-only pass.
      */
     public void refreshRecipeMappings() {
-        List<RecipeConversion> conversions = collectConversions();
+        List<RecipeConversion> conversions;
+        try {
+            conversions = collectConversions();
+        } catch (RuntimeException exception) {
+            ProjectE.LOGGER.warn(
+                  "EMC recipe refresh failed while collecting conversions; preserving snapshot version {}",
+                  service.current().version(), exception);
+            return;
+        }
         if (conversions.isEmpty()) {
             ProjectE.LOGGER.warn("EMC recipe refresh found no recipe conversions; keeping {} values",
                   service.current().values().size());
@@ -195,11 +198,7 @@ public final class EmcReloadListener extends SimpleReloadListener<EmcReloadListe
             all.addAll(source.conversions());
         }
         for (RecipeConversionSource source : resolveServerRecipeSources()) {
-            try {
-                all.addAll(source.conversions());
-            } catch (Exception ignored) {
-                // A failing recipe source must not break the EMC reload; omit its conversions.
-            }
+            all.addAll(source.conversions());
         }
         return List.copyOf(all);
     }

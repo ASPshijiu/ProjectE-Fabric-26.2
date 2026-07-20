@@ -73,6 +73,13 @@ public class AlchemicalBagItem extends Item {
     ) {
         super.inventoryTick(stack, level, entity, equipmentSlot);
         if (entity.tickCount % 20 == 0 && entity instanceof Player player) {
+            if (player.containerMenu instanceof AlchemicalBagMenu menu
+                  && menu.isForColor(color)) {
+                if (menu.isOpenStack(stack)) {
+                    menu.repairContents();
+                }
+                return;
+            }
             AlchemicalBagSession session = AlchemicalBagSession.connect(
                   new PlayerDataService(PlayerAttachmentKeys.fabricAdapter(player)),
                   color);

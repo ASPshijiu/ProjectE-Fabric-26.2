@@ -40,6 +40,21 @@ public final class PlayerDataService {
         access.modify(PlayerAttachmentKeys.EMC, EmcValue.class, current -> current.add(delta));
     }
 
+    /**
+     * @return true if the addition succeeded, false if it would overflow (balance unchanged).
+     */
+    public boolean tryAddEmc(EmcValue delta) {
+        Objects.requireNonNull(delta, "delta");
+        EmcValue updated;
+        try {
+            updated = emc().add(delta);
+        } catch (ArithmeticException overflow) {
+            return false;
+        }
+        setEmc(updated);
+        return true;
+    }
+
     public void removeEmc(EmcValue delta) {
         Objects.requireNonNull(delta, "delta");
         access.modify(PlayerAttachmentKeys.EMC, EmcValue.class, current -> current.subtract(delta));

@@ -60,6 +60,17 @@ class PlayerDataServiceTest {
     }
 
     @Test
+    void tryAddEmcRejectsOverflowWithoutMutating() {
+        PlayerDataService svc = service();
+        svc.setEmc(EmcValue.of(Long.MAX_VALUE - 1));
+
+        assertFalse(svc.tryAddEmc(EmcValue.of(2)));
+        assertEquals(EmcValue.of(Long.MAX_VALUE - 1), svc.emc());
+        assertTrue(svc.tryAddEmc(EmcValue.of(1)));
+        assertEquals(EmcValue.of(Long.MAX_VALUE), svc.emc());
+    }
+
+    @Test
     void removeEmcUnderflowRejectedAndBalanceUnchanged() {
         PlayerDataService svc = service();
         svc.setEmc(EmcValue.of(3));

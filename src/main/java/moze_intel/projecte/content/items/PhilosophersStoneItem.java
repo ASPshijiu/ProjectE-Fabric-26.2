@@ -8,6 +8,7 @@ import moze_intel.projecte.content.entity.MobRandomizerProjectile;
 import moze_intel.projecte.transmutation.world.SimpleWorldTransmutation;
 import moze_intel.projecte.transmutation.world.WorldTransmutationAction;
 import moze_intel.projecte.transmutation.world.WorldTransmutationStore;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,8 +30,11 @@ import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
@@ -244,7 +248,25 @@ public class PhilosophersStoneItem extends ChargeableItem implements FabricItem 
                   || !serverPlayer.mayUseItemAt(target, clickedFace, stack))) {
                 continue;
             }
+            BlockState originalState = level.getBlockState(target);
+            if (transmutation.result(originalState, alternate) == null
+                  || !isDestructible(originalState, level, target)) {
+                continue;
+            }
+            BlockEntity originalBlockEntity = level.getBlockEntity(target);
+            ServerPlayer serverPlayer = player instanceof ServerPlayer value ? value : null;
+            if (serverPlayer != null && !PlayerBlockBreakEvents.BEFORE.invoker()
+                  .beforeBlockBreak(level, serverPlayer, target, originalState,
+                        originalBlockEntity)) {
+                PlayerBlockBreakEvents.CANCELED.invoker().onBlockBreakCanceled(
+                      level, serverPlayer, target, originalState, originalBlockEntity);
+                continue;
+            }
             if (WorldTransmutationAction.apply(level, target, transmutation, alternate)) {
+                if (serverPlayer != null) {
+                    PlayerBlockBreakEvents.AFTER.invoker().afterBlockBreak(
+                          level, serverPlayer, target, originalState, originalBlockEntity);
+                }
                 changed++;
                 if (level instanceof ServerLevel serverLevel && level.getRandom().nextInt(8) == 0) {
                     serverLevel.sendParticles(
@@ -260,5 +282,9 @@ public class PhilosophersStoneItem extends ChargeableItem implements FabricItem 
         level.playSound(
               null, center, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8F, 0.8F);
         return InteractionResult.SUCCESS;
+    }
+
+    static boolean isDestructible(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getDestroySpeed(level, pos) >= 0;
     }
 }

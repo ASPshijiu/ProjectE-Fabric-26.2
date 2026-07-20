@@ -48,7 +48,7 @@ public final class TransmutationTransaction {
         Objects.requireNonNull(service, "service");
         Objects.requireNonNull(snapshot, "snapshot");
         Objects.requireNonNull(item, "item");
-        if (requestedCount <= 0) {
+        if (requestedCount <= 0 || maxCount <= 0) {
             return Outcome.failure("requested count must be positive");
         }
         EmcValue unitEmc = snapshot.valueFor(item).orElse(EmcValue.ZERO);
@@ -60,22 +60,13 @@ public final class TransmutationTransaction {
         }
         int count = Math.min(requestedCount, maxCount);
         EmcValue available = service.emc();
-        // totalCost = unitEmc * count, but must not overflow; compute via checked multiply.
-        EmcValue totalCost;
-        try {
-            totalCost = EmcValue.of(Math.multiplyExact(unitEmc.longValue(), count));
-        } catch (ArithmeticException overflow) {
-            return Outcome.failure("requested count exceeds EMC capacity");
+        long affordable = available.longValue() / unitEmc.longValue();
+        if (affordable <= 0) {
+            return Outcome.failure("insufficient EMC");
         }
-        if (available.compareTo(totalCost) < 0) {
-            // Try to give as many whole items as affordable.
-            long affordable = available.longValue() / unitEmc.longValue();
-            if (affordable <= 0) {
-                return Outcome.failure("insufficient EMC");
-            }
-            count = (int) Math.min(affordable, count);
-            totalCost = EmcValue.of(Math.multiplyExact(unitEmc.longValue(), count));
-        }
+        count = (int) Math.min(affordable, count);
+        // count is bounded by available / unitEmc, so this checked multiplication cannot overflow.
+        EmcValue totalCost = EmcValue.of(Math.multiplyExact(unitEmc.longValue(), count));
         // Final atomic deduction; tryRemoveEmc guards against races.
         if (!service.tryRemoveEmc(totalCost)) {
             return Outcome.failure("insufficient EMC");

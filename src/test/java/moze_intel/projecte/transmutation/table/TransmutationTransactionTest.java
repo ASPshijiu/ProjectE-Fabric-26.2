@@ -99,6 +99,23 @@ class TransmutationTransactionTest {
     }
 
     @Test
+    void hugeUnitValueStillProducesOneAffordableItem() {
+        NormalizedStackKey item = key("huge_item");
+        EmcMappingSnapshot<NormalizedStackKey> snap = new EmcMappingSnapshot<>(
+              1, Map.of(item, EmcValue.of(Long.MAX_VALUE)));
+        PlayerDataService svc = service();
+        svc.learn(item);
+        svc.setEmc(EmcValue.of(Long.MAX_VALUE));
+
+        TransmutationTransaction.Outcome outcome = TransmutationTransaction.extract(
+              svc, snap, item, 2, 64);
+
+        assertTrue(outcome.success());
+        assertEquals(1, outcome.producedCount());
+        assertEquals(EmcValue.ZERO, svc.emc());
+    }
+
+    @Test
     void totalInsufficiencyRejects() {
         NormalizedStackKey item = key("item");
         EmcMappingSnapshot<NormalizedStackKey> snap = new EmcMappingSnapshot<>(1, Map.of(item, EmcValue.of(100)));

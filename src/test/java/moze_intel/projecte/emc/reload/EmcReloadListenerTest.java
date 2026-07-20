@@ -114,6 +114,30 @@ class EmcReloadListenerTest {
     }
 
     @Test
+    void failingRecipeSourceDoesNotPublishPartialRefresh() {
+        FakeStackKey gem = new FakeStackKey(Identifier.fromNamespaceAndPath("projecte", "gem"));
+        FakeStackKey ring = new FakeStackKey(Identifier.fromNamespaceAndPath("projecte", "ring"));
+        RecipeConversion conversion = new RecipeConversion(
+              Identifier.fromNamespaceAndPath("projecte", "ring_recipe"),
+              1, ring, Map.of(gem, 2));
+        EmcMappingService<NormalizedStackKey> service = new EmcMappingService<>();
+        EmcMappingSnapshot<NormalizedStackKey> previous = service.replace(Map.of(
+              gem, EmcValue.of(3), ring, EmcValue.of(99)));
+        java.util.List<EmcMappingSnapshot<NormalizedStackKey>> fired = new java.util.ArrayList<>();
+        EmcReloadListener listener = new EmcReloadListener(
+              service, new EmcReloadProcessor(), List.of(),
+              () -> List.of(
+                    () -> List.of(conversion),
+                    () -> { throw new IllegalStateException("broken recipe source"); }),
+              List.of(fired::add));
+
+        listener.refreshRecipeMappings();
+
+        assertEquals(previous, service.current());
+        assertTrue(fired.isEmpty());
+    }
+
+    @Test
     void lateRecipeRefreshReappliesPreviouslyUnresolvedCustomConversions() throws Exception {
         ItemStackKey iron = item("iron_ingot");
         ItemStackKey anvil = item("anvil");
