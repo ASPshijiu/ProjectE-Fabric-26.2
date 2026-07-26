@@ -20,6 +20,7 @@ import moze_intel.projecte.player.PlayerAttachmentKeys;
 import moze_intel.projecte.player.PlayerDataService;
 import moze_intel.projecte.player.PlayerKnowledge;
 import moze_intel.projecte.transmutation.table.TransmutationOutputResolver;
+import moze_intel.projecte.transmutation.table.TransmutationTransaction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
@@ -298,14 +299,16 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         int firstPlayer = firstPlayerSlot();
 
         if (index >= firstOutput && index < firstPlayer) {
-            // Work out the real destination capacity before the output slot charges EMC.
+            // Work out the real destination capacity before charging EMC.
             int room = MenuQuickMove.roomForOneStack(
                   slot.getItem(), slots.subList(firstPlayer, slots.size()));
             if (room <= 0) {
                 return ItemStack.EMPTY;
             }
+            // remove() 只按余额限量不扣费（扣费统一在 onTake/此处），先扣全额再移动，
+            // 放不下的部分按原有语义退款，保证任何时刻都不会出现"有物品没付费"。
             ItemStack taken = slot.remove(room);
-            if (taken.isEmpty()) {
+            if (taken.isEmpty() || !chargeOutputEmc(taken)) {
                 return ItemStack.EMPTY;
             }
             moveItemStackTo(taken, firstPlayer, slots.size(), false);
@@ -342,6 +345,16 @@ public final class TransmutationTableMenu extends AbstractContainerMenu {
         } else {
             player.getInventory().placeItemBackInInventory(unlearn);
         }
+    }
+
+    private boolean chargeOutputEmc(ItemStack stack) {
+        if (player.level().isClientSide()) {
+            return true;
+        }
+        return keyFactory.optionalKey(stack)
+              .map(key -> TransmutationTransaction.charge(
+                    service, ProjectEEmc.service().current(), key, stack.getCount()))
+              .orElse(false);
     }
 
     private void refundOutputEmc(ItemStack stack) {

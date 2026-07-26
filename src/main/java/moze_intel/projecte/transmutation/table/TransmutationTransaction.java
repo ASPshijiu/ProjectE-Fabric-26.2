@@ -45,6 +45,29 @@ public final class TransmutationTransaction {
           int requestedCount,
           int maxCount
     ) {
+        Outcome quoted = quote(service, snapshot, item, requestedCount, maxCount);
+        if (!quoted.success()) {
+            return quoted;
+        }
+        if (!charge(service, snapshot, item, quoted.producedCount())) {
+            return Outcome.failure("insufficient EMC");
+        }
+        return quoted;
+    }
+
+    /**
+     * Validation-only variant of {@link #extract}: sizes the extraction (knowledge, EMC value,
+     * affordability, stack limit) without deducting any EMC. Callers that materialize items
+     * through paths outside {@link net.minecraft.world.inventory.Slot#remove} must follow up with
+     * {@link #charge} for the count actually taken.
+     */
+    public static Outcome quote(
+          PlayerDataService service,
+          EmcMappingSnapshot<NormalizedStackKey> snapshot,
+          NormalizedStackKey item,
+          int requestedCount,
+          int maxCount
+    ) {
         Objects.requireNonNull(service, "service");
         Objects.requireNonNull(snapshot, "snapshot");
         Objects.requireNonNull(item, "item");
@@ -65,12 +88,31 @@ public final class TransmutationTransaction {
             return Outcome.failure("insufficient EMC");
         }
         count = (int) Math.min(affordable, count);
-        // count is bounded by available / unitEmc, so this checked multiplication cannot overflow.
-        EmcValue totalCost = EmcValue.of(Math.multiplyExact(unitEmc.longValue(), count));
-        // Final atomic deduction; tryRemoveEmc guards against races.
-        if (!service.tryRemoveEmc(totalCost)) {
-            return Outcome.failure("insufficient EMC");
-        }
         return Outcome.success(count);
+    }
+
+    /**
+     * Deduct the EMC cost of {@code count} already-materialized items. Returns {@code false}
+     * without mutation when the item has no positive EMC value or the balance no longer covers
+     * the cost（{@link PlayerDataService#tryRemoveEmc} 先验后扣）。
+     */
+    public static boolean charge(
+          PlayerDataService service,
+          EmcMappingSnapshot<NormalizedStackKey> snapshot,
+          NormalizedStackKey item,
+          int count
+    ) {
+        Objects.requireNonNull(service, "service");
+        Objects.requireNonNull(snapshot, "snapshot");
+        Objects.requireNonNull(item, "item");
+        if (count <= 0) {
+            return false;
+        }
+        EmcValue unitEmc = snapshot.valueFor(item).orElse(EmcValue.ZERO);
+        if (unitEmc.longValue() <= 0) {
+            return false;
+        }
+        EmcValue totalCost = EmcValue.of(Math.multiplyExact(unitEmc.longValue(), count));
+        return service.tryRemoveEmc(totalCost);
     }
 }

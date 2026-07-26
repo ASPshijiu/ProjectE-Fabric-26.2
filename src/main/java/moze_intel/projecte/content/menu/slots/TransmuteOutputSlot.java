@@ -51,6 +51,24 @@ public class TransmuteOutputSlot extends Slot {
         return false;
     }
 
+    /**
+     * 原版 doClick 的 SWAP 分支不经 {@link #remove}，但所有取物路径（PICKUP/SWAP/THROW/
+     * PICKUP_ALL）都会调用 mayPickup 与 onTake。因此这里只做"买得起至少一个"的门禁，
+     * 实际扣费统一发生在 {@link #onTake}。
+     */
+    @Override
+    public boolean mayPickup(Player player) {
+        if (!serverSide.getAsBoolean()) {
+            return true;
+        }
+        ItemStack stored = getItem();
+        if (stored.isEmpty()) {
+            return false;
+        }
+        return TransmutationTransaction.quote(
+              service, snapshot.get(), keyOf(stored), 1, stored.getMaxStackSize()).success();
+    }
+
     @Override
     public ItemStack remove(int amount) {
         ItemStack stored = getItem();
@@ -58,7 +76,7 @@ public class TransmuteOutputSlot extends Slot {
             return super.remove(amount);
         }
         NormalizedStackKey key = keyOf(stored);
-        TransmutationTransaction.Outcome outcome = TransmutationTransaction.extract(
+        TransmutationTransaction.Outcome outcome = TransmutationTransaction.quote(
               service, snapshot.get(), key, amount, stored.getMaxStackSize());
         if (!outcome.success()) {
             return ItemStack.EMPTY;
@@ -66,7 +84,27 @@ public class TransmuteOutputSlot extends Slot {
         ItemStack taken = stored.copy();
         taken.setCount(outcome.producedCount());
         // Output slots are virtual: they always show the resolver candidate, so leave the slot as-is.
+        // 此处不扣费：扣费在 onTake 统一进行，避免 SWAP 绕过。
         return taken;
+    }
+
+    @Override
+    public void onTake(Player player, ItemStack taken) {
+        chargeOnTake(taken);
+        super.onTake(player, taken);
+    }
+
+    /**
+     * 对实际取走的堆叠扣费。mayPickup/remove 已按余额限量，正常流程必然成功；
+     * 万一失败（同 tick 内余额被其他路径耗尽）则没收物品，保证不会免费取物。
+     */
+    void chargeOnTake(ItemStack taken) {
+        if (!serverSide.getAsBoolean() || taken.isEmpty()) {
+            return;
+        }
+        if (!TransmutationTransaction.charge(service, snapshot.get(), keyOf(taken), taken.getCount())) {
+            taken.setCount(0);
+        }
     }
 
     private NormalizedStackKey keyOf(ItemStack stack) {
