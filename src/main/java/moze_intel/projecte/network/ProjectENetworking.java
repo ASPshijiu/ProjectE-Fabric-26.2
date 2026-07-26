@@ -1,5 +1,6 @@
 package moze_intel.projecte.network;
 
+import java.util.List;
 import java.util.Map;
 import moze_intel.projecte.content.items.IItemCharge;
 import moze_intel.projecte.content.items.IItemMode;
@@ -12,6 +13,10 @@ import moze_intel.projecte.network.payloads.ArmorTogglePayload;
 import moze_intel.projecte.content.items.armor.GemArmorItem;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
 import moze_intel.projecte.network.payloads.PhilosophersStoneActionPayload;
+import moze_intel.projecte.network.payloads.WorldTransmutationSyncPayload;
+import moze_intel.projecte.transmutation.world.SimpleWorldTransmutation;
+import moze_intel.projecte.transmutation.world.WorldTransmutationRegistry;
+import moze_intel.projecte.transmutation.world.WorldTransmutationStore;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
@@ -46,6 +51,10 @@ public final class ProjectENetworking {
         // mapping (hundreds of entries) can exceed the default play-payload size budget.
         PayloadTypeRegistry.clientboundPlay().registerLarge(
               EmcMappingSyncPayload.TYPE, EmcMappingSyncPayload.STREAM_CODEC, 1_000_000);
+
+        // Server-to-client: the world transmutation table (data-pack loaded, server-only otherwise).
+        PayloadTypeRegistry.clientboundPlay().registerLarge(
+              WorldTransmutationSyncPayload.TYPE, WorldTransmutationSyncPayload.STREAM_CODEC, 1_000_000);
 
         // Client-to-server: charge the held item.
         PayloadTypeRegistry.serverboundPlay().register(
@@ -148,5 +157,29 @@ public final class ProjectENetworking {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
+    }
+
+    /** Sends the current world transmutation table to a single (joining) player. */
+    public static void sendWorldTransmutations(ServerPlayer player) {
+        ServerPlayNetworking.send(player, worldTransmutationPayload());
+    }
+
+    /** Fans the reloaded world transmutation table out to every online player. */
+    public static void sendWorldTransmutationsToAll(MinecraftServer server) {
+        if (server == null) {
+            return;
+        }
+        WorldTransmutationSyncPayload payload = worldTransmutationPayload();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            ServerPlayNetworking.send(player, payload);
+        }
+    }
+
+    private static WorldTransmutationSyncPayload worldTransmutationPayload() {
+        WorldTransmutationRegistry registry = WorldTransmutationStore.current();
+        List<SimpleWorldTransmutation> flattened = registry.entries().values().stream()
+              .flatMap(List::stream)
+              .toList();
+        return new WorldTransmutationSyncPayload(flattened);
     }
 }

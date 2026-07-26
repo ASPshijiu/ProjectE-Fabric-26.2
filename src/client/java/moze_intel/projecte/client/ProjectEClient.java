@@ -19,6 +19,9 @@ import moze_intel.projecte.emc.ProjectEEmc;
 import moze_intel.projecte.network.payloads.ChargeItemPayload;
 import moze_intel.projecte.network.payloads.ArmorTogglePayload;
 import moze_intel.projecte.network.payloads.EmcMappingSyncPayload;
+import moze_intel.projecte.network.payloads.WorldTransmutationSyncPayload;
+import moze_intel.projecte.transmutation.world.WorldTransmutationRegistry;
+import moze_intel.projecte.transmutation.world.WorldTransmutationStore;
 import moze_intel.projecte.network.payloads.PhilosophersStoneActionPayload;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.api.ClientModInitializer;
@@ -93,6 +96,17 @@ public final class ProjectEClient implements ClientModInitializer {
                   int size = payload.values().size();
                   LOGGER.info("Received EMC mapping sync payload with {} values", size);
                   ProjectEEmc.service().replace(payload.values());
+              }));
+
+        // Receive the world transmutation table. 集成服务器与客户端共享同一张静态表且以
+        // 服务端数据包加载为权威，单人场景跳过写入以免与服务端 tick 竞争。
+        ClientPlayNetworking.registerGlobalReceiver(WorldTransmutationSyncPayload.TYPE,
+              (payload, ctx) -> ctx.client().execute(() -> {
+                  if (ctx.client().hasSingleplayerServer()) {
+                      return;
+                  }
+                  WorldTransmutationStore.replace(
+                        WorldTransmutationRegistry.of(payload.transmutations()));
               }));
 
         // Charge keybind (V): adjust the held item's charge. Shift = discharge. Find the chargeable

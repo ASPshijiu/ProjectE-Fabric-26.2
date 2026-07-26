@@ -73,6 +73,8 @@ public final class ProjectE implements ModInitializer {
             // Push the authoritative shared EMC mapping to the joining client so tooltips and the
             // transmutation resolver work immediately, before the next reload.
             ProjectENetworking.sendEmcMapping(player, ProjectEEmc.service().current());
+            // 世界转化同样只在服务端加载：不同步则贤者之石在专服上的客户端预测恒为 PASS。
+            ProjectENetworking.sendWorldTransmutations(player);
         });
 
         // EMC reload from data/projecte/emc/*.json files plus pe_custom_conversions and the live
@@ -96,6 +98,7 @@ public final class ProjectE implements ModInitializer {
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((s, resourceManager, success) -> {
             if (success && server != null) {
                 reloadListener.refreshRecipeMappings();
+                ProjectENetworking.sendWorldTransmutationsToAll(server);
             }
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(s -> server = null);
