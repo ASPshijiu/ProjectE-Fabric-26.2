@@ -26,12 +26,15 @@ public final class ClientPlayerData {
 
     public static EmcValue emc() {
         LocalPlayer player = player();
-        return player == null ? EmcValue.ZERO : player.getAttached(PlayerAttachments.EMC);
+        // getAttached 在同步包到达前返回 null；用 OrElse 保证空默认值契约。
+        return player == null ? EmcValue.ZERO
+              : player.getAttachedOrElse(PlayerAttachments.EMC, EmcValue.ZERO);
     }
 
     public static PlayerKnowledge knowledge() {
         LocalPlayer player = player();
-        return player == null ? PlayerKnowledge.empty() : player.getAttached(PlayerAttachments.KNOWLEDGE);
+        return player == null ? PlayerKnowledge.empty()
+              : player.getAttachedOrElse(PlayerAttachments.KNOWLEDGE, PlayerKnowledge.empty());
     }
 
     public static boolean hasKnowledge(NormalizedStackKey key) {
@@ -40,7 +43,8 @@ public final class ClientPlayerData {
 
     public static PlayerInputLocks inputLocks() {
         LocalPlayer player = player();
-        return player == null ? PlayerInputLocks.empty() : player.getAttached(PlayerAttachments.INPUT_LOCKS);
+        return player == null ? PlayerInputLocks.empty()
+              : player.getAttachedOrElse(PlayerAttachments.INPUT_LOCKS, PlayerInputLocks.empty());
     }
 
     public static Optional<NormalizedStackKey> inputLock(int slot) {

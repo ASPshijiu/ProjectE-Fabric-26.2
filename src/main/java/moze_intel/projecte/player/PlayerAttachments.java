@@ -40,6 +40,10 @@ public final class PlayerAttachments {
           .initializer(() -> false)
           .persistent(com.mojang.serialization.Codec.BOOL)
           .copyOnDeath()
+          // 客户端需要该状态渲染/预测宝石护甲行为，且加入时的"强制首次同步"
+          // 只覆盖注册了 syncWith 的附件。
+          .syncWith(net.minecraft.network.codec.ByteBufCodecs.BOOL.cast(),
+                AttachmentSyncPredicate.targetOnly())
           .buildAndRegister(id("gem_armor_state"));
 
     public static final AttachmentType<Boolean> SWIFTWOLF_FLIGHT = AttachmentRegistry.<Boolean>builder()
