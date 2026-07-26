@@ -74,7 +74,9 @@ public final class WorldTransmutationReloadListener
                       new IllegalStateException(id + ": " + message));
                 all.addAll(file.transmutations());
             } catch (IOException | RuntimeException exception) {
-                throw new IllegalStateException("Failed reading world transmutation resource " + id, exception);
+                // 单个损坏文件只跳过自己：整包 reload 失败会让所有世界转化一起消失，
+                // 与"逐文件降级"的既定行为约定不符。
+                ProjectE.LOGGER.warn("Skipping malformed world transmutation resource {}", id, exception);
             }
         }
         return List.copyOf(all);

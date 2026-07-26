@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import moze_intel.projecte.emc.EmcValue;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
@@ -37,15 +38,28 @@ class ExplicitEmcLoaderTest {
     }
 
     @Test
-    void rejectsDuplicateKeysAcrossResources() {
+    void laterResourceOverridesDuplicateKeyFromEarlierResource() {
         Map<Identifier, String> resources = Map.of(
               Identifier.fromNamespaceAndPath("projecte", "emc/one.json"),
               "{\"item|minecraft:stone|{}\":{\"value\":1}}",
               Identifier.fromNamespaceAndPath("projecte", "emc/two.json"),
               "{\"item|minecraft:stone|{}\":{\"value\":2}}"
         );
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> loader.load(resources));
-        assertTrue(error.getMessage().contains("projecte:emc/two.json"));
+        // 跨文件重复按后者覆盖处理：数据包必须能调整本模组自带的 EMC 值，
+        // 抛异常会让整张 EMC 表重建失败并归零。
+        List<ExplicitEmcEntry> entries = loader.load(resources);
+        assertEquals(1, entries.size());
+        assertEquals(EmcValue.of(2), entries.getFirst().value());
+    }
+
+    @Test
+    void rejectsDuplicateKeyWithinSingleResource() {
+        Map<Identifier, String> resources = Map.of(
+              Identifier.fromNamespaceAndPath("projecte", "emc/dup.json"),
+              "{\"item|minecraft:stone|{}\":{\"value\":1},\"item|minecraft:stone|{ }\":{\"value\":2}}"
+        );
+        IllegalArgumentException error = assertThrows(
+              IllegalArgumentException.class, () -> loader.load(resources));
         assertTrue(error.getMessage().contains("duplicate"));
     }
 

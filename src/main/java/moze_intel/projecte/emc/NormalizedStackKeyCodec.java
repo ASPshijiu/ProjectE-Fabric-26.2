@@ -28,8 +28,13 @@ public final class NormalizedStackKeyCodec {
                 value -> {
                     try {
                         return DataResult.success(fromCanonical(value));
-                    } catch (IllegalArgumentException exception) {
-                        return DataResult.error(() -> exception.getMessage());
+                    } catch (RuntimeException exception) {
+                        // 26.2 的 IdentifierException 与 Gson 的 JsonSyntaxException 都不是
+                        // IllegalArgumentException 的子类，只捕获后者会让解码直接抛出而非
+                        // 返回 DataResult.error，破坏 codec 的错误契约。
+                        String message = exception.getMessage() == null
+                              ? exception.getClass().getSimpleName() : exception.getMessage();
+                        return DataResult.error(() -> "invalid EMC key '" + value + "': " + message);
                     }
                 },
                 NormalizedStackKey::canonicalString);

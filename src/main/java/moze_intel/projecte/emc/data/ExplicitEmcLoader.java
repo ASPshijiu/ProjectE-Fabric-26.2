@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import moze_intel.projecte.ProjectE;
 import moze_intel.projecte.emc.EmcValue;
 import moze_intel.projecte.emc.FakeStackKey;
 import moze_intel.projecte.emc.ItemStackKey;
@@ -45,11 +46,20 @@ public final class ExplicitEmcLoader {
             parsed.getAsJsonObject().entrySet().forEach(entry -> entries.put(entry.getKey(), entry.getValue()));
             entries.forEach((rawKey, rawEntry) -> {
                 ExplicitEmcEntry entry = decodeEntry(source, rawKey, rawEntry);
-                Identifier previous = seen.putIfAbsent(entry.key(), source);
+                Identifier previous = seen.put(entry.key(), source);
                 if (previous != null) {
-                    throw new IllegalArgumentException(
-                          source + ": duplicate EMC key " + entry.key().canonicalString() + " previously declared by " + previous
-                    );
+                    if (previous.equals(source)) {
+                        // 同一文件内重复：属于该文件自身的错误，仍然拒绝。
+                        throw new IllegalArgumentException(
+                              source + ": duplicate EMC key " + entry.key().canonicalString()
+                                    + " declared twice in the same file");
+                    }
+                    // 跨文件重复按"后者覆盖前者"处理（上游语义）：数据包需要能调整
+                    // 本模组自带的 EMC 值，直接抛异常会让整张 EMC 表重建失败并归零。
+                    ProjectE.LOGGER.warn(
+                          "EMC key {} declared by {} overrides the value from {}",
+                          entry.key().canonicalString(), source, previous);
+                    result.removeIf(existing -> existing.key().equals(entry.key()));
                 }
                 result.add(entry);
             });
