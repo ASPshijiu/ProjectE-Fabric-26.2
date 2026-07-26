@@ -110,9 +110,12 @@ public final class FastFurnaceBlockEntity {
             int vanillaDuration = super.getBurnDuration(fuelValues, stack);
             if (vanillaDuration <= 0) return 0;
 
-            long scaled = (long) vanillaDuration * targetCookingTime
-                  / BURN_TIME_STANDARD * efficiencyBonus;
-            return (int) Math.min(Integer.MAX_VALUE, scaled);
+            // 先乘后除：先除会把 vanillaDuration * targetCookingTime < BURN_TIME_STANDARD 的
+            // 低燃烧值燃料截断为 0，使其在 DM/RM 熔炉里完全不可用。
+            long scaled = (long) vanillaDuration * targetCookingTime * efficiencyBonus
+                  / BURN_TIME_STANDARD;
+            // 原版认可的燃料至少能烧 1 tick，避免缩放把它变成"不是燃料"。
+            return (int) Math.clamp(scaled, 1L, Integer.MAX_VALUE);
         }
 
         private void prepareCookingTime(ServerLevel level) {

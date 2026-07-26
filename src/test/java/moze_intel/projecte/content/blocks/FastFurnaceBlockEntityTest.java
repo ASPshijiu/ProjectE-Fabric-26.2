@@ -1,6 +1,7 @@
 package moze_intel.projecte.content.blocks;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import moze_intel.projecte.testsupport.MinecraftTestHarness;
@@ -65,6 +66,13 @@ class FastFurnaceBlockEntityTest {
 
         assertEquals(240, burnDuration(dm, fuelValues));
         assertEquals(96, burnDuration(rm, fuelValues));
+
+        // 低燃烧值燃料不得被缩放截断为 0（先除后乘的老写法会让它在两种熔炉里都不可用）。
+        FuelValues.Builder lowBuilder = new FuelValues.Builder(registries, FeatureFlags.VANILLA_SET);
+        lowBuilder.add(Items.COAL, 4);
+        FuelValues lowFuel = lowBuilder.build();
+        assertTrue(burnDuration(dm, lowFuel) > 0, "DM 熔炉不应把低值燃料截断为 0");
+        assertTrue(burnDuration(rm, lowFuel) > 0, "RM 熔炉不应把低值燃料截断为 0");
     }
 
     @Test
