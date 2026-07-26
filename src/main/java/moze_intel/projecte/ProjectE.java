@@ -90,6 +90,14 @@ public final class ProjectE implements ModInitializer {
             server = s;
             reloadListener.refreshRecipeMappings();
         });
+        // /reload 期间 reload listener 读到的仍是旧 RecipeManager（新的 ReloadableServerResources
+        // 在整个 reload 结束后才换入）。必须在 END_DATA_PACK_RELOAD 再做一次仅配方的刷新，
+        // 否则 EMC 定价永远滞后数据包一轮。
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((s, resourceManager, success) -> {
+            if (success && server != null) {
+                reloadListener.refreshRecipeMappings();
+            }
+        });
         ServerLifecycleEvents.SERVER_STOPPED.register(s -> server = null);
 
         // World transmutations
