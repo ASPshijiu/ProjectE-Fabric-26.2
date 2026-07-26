@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 public class HarvestGoddessBandItem extends ActiveEmcItem {
     private static final long EMC_PER_TICK = 4L;
     private static final int RADIUS = 7;
+    private static final int BONEMEAL_INTERVAL = 20;
 
     public HarvestGoddessBandItem(Properties properties) {
         super(properties);
@@ -42,10 +43,12 @@ public class HarvestGoddessBandItem extends ActiveEmcItem {
     @Override
     public void onTick(Player player, ItemStack stack, PlayerDataService service) {
         if (!isActive(stack)) return;
+        Level level = player.level();
+        // 骨粉效果每 20 tick 施加一次，计费必须同频；此前每 tick 扣费，
+        // 实际花费是生效频率的 20 倍。
+        if (level.isClientSide() || level.getGameTime() % BONEMEAL_INTERVAL != 0) return;
         super.onTick(player, stack, service);
         if (!isActive(stack)) return;
-        Level level = player.level();
-        if (level.isClientSide() || level.getGameTime() % 20 != 0) return;
         for (BlockPos pos : BlockPos.betweenClosed(
               BlockPos.containing(player.getBoundingBox().minX - RADIUS, player.getBoundingBox().minY - RADIUS, player.getBoundingBox().minZ - RADIUS),
               BlockPos.containing(player.getBoundingBox().maxX + RADIUS, player.getBoundingBox().maxY + RADIUS, player.getBoundingBox().maxZ + RADIUS))) {
