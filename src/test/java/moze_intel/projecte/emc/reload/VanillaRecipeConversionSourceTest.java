@@ -25,10 +25,13 @@ import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.CookingBookCategory;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
@@ -80,6 +83,37 @@ class VanillaRecipeConversionSourceTest {
               key("netherite_ingot"), EmcValue.of(57_344)
         ), List.of(byOutput.get(key("netherite_pickaxe"))));
         assertEquals(EmcValue.of(89_425), values.get(key("netherite_pickaxe")));
+    }
+
+    @Test
+    void containerIngredientsCreditTheirCraftingRemainder() {
+        RecipeManager manager = new FixedRecipeManager(registries, List.of(
+              holder("simple_cake", new ShapelessRecipe(
+                    new Recipe.CommonInfo(true),
+                    new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""),
+                    new ItemStackTemplate(Items.CAKE),
+                    List.of(Ingredient.of(Items.MILK_BUCKET), Ingredient.of(Items.SUGAR))))
+        ));
+
+        Map<ItemStackKey, RecipeConversion> byOutput = new VanillaRecipeConversionSource(manager, registries)
+              .conversions().stream()
+              .collect(Collectors.toMap(conversion -> (ItemStackKey) conversion.output(), Function.identity()));
+
+        // 牛奶桶合成后归还空桶：配料账目必须记 bucket:-1
+        RecipeConversion cake = byOutput.get(key("cake"));
+        assertEquals(Map.of(
+              key("milk_bucket"), 1,
+              key("sugar"), 1,
+              key("bucket"), -1
+        ), cake.ingredients());
+
+        // 推导出的蛋糕 EMC 应扣除空桶残值：784 + 15 - 768 = 31
+        var values = new EmcReloadProcessor().extend(Map.of(
+              key("milk_bucket"), EmcValue.of(784),
+              key("sugar"), EmcValue.of(15),
+              key("bucket"), EmcValue.of(768)
+        ), List.of(cake));
+        assertEquals(EmcValue.of(31), values.get(key("cake")));
     }
 
     @Test
