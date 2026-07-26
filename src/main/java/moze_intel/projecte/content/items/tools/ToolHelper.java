@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -86,6 +87,10 @@ public final class ToolHelper {
     /**
      * Breaks a single block as if the player mined it, respecting tool requirements and gamemode.
      * Drops are produced at the block's position. Matter tools are intentionally not damaged.
+     *
+     * <p>{@link net.minecraft.server.level.ServerPlayerGameMode#destroyBlock} 固定按主手物品
+     * 判定掉落与耐久，因此副手触发的范围破坏必须在破坏期间把工具临时放到主手，
+     * 否则矿物会被无掉落销毁。
      */
     private static boolean breakBlock(
           Level level, ServerPlayer player, ItemStack stack, BlockPos pos) {
@@ -101,7 +106,18 @@ public final class ToolHelper {
               || !player.mayUseItemAt(pos, Direction.UP, stack)) {
             return false;
         }
-        return player.gameMode.destroyBlock(pos);
+        ItemStack mainHand = player.getMainHandItem();
+        boolean needsSwap = mainHand != stack;
+        if (needsSwap) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        }
+        try {
+            return player.gameMode.destroyBlock(pos);
+        } finally {
+            if (needsSwap) {
+                player.setItemInHand(InteractionHand.MAIN_HAND, mainHand);
+            }
+        }
     }
 
     /**
